@@ -57,7 +57,7 @@ try {
     }
     return m;
   });
-  ok('recovered people + items', counts.People === 8 && counts.Items === 30);
+  ok('recovered people + items', counts.People === 8 && counts.Items === 31);
   ok('recovered attachments (Files restored)', counts.Files === 3);
   // Open a file to confirm the blob URL resolves (attachment actually rebuilt).
   await p2.evaluate(() => [...document.querySelectorAll('nav .navlink-section')].find((b) => /Files/.test(b.textContent))?.click());

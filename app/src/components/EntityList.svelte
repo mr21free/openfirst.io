@@ -16,7 +16,7 @@
       return path.length ? path.map((a) => pkg.name(a.id)).join(' › ') : 'Location';
     }
     if (e.kind === 'guide') return 'Guide';
-    if (e.kind === 'attachment') return 'Attachment';
+    if (e.kind === 'attachment') return pkg.fileType(id);
     return e.kind;
   }
 </script>

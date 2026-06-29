@@ -530,7 +530,7 @@ export class Store {
     const rm = (arr) => this.#rm(arr, id);
     for (const p of this.data.people || []) if (p.location_id === id) delete p.location_id;
     for (const l of this.data.locations || []) { if (l.parent_id === id) delete l.parent_id; rm(l.access_person_ids); rm(l.depends_on_ids); }
-    for (const it of this.data.items || []) { rm(it.location_ids); rm(it.access_person_ids); rm(it.depends_on_ids); rm(it.guide_ids); rm(it.attachment_ids); }
+    for (const it of this.data.items || []) { rm(it.location_ids); rm(it.container_ids); rm(it.access_person_ids); rm(it.depends_on_ids); rm(it.guide_ids); rm(it.attachment_ids); }
     for (const g of this.data.guides || []) {
       rm(g.audience_person_ids);
       if (g.references) for (const key of Object.keys(g.references)) rm(g.references[key]);

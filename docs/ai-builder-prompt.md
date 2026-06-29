@@ -54,7 +54,8 @@ SCHEMA SUMMARY
 - locations[]: { id, name, parent_id?, order?, notes?, access_person_ids?,
   importance? }   // nest with parent_id: Country > City > Home > Safe
 - items[]: { id, name, description?, notes?, price?, importance?, location_ids?,
-  access_person_ids?, depends_on_ids?, attachment_ids?, guide_ids?, sensitive? }
+  container_ids?, access_person_ids?, depends_on_ids?, attachment_ids?, guide_ids?, sensitive? }
+  (container_ids = item ids this is stored INSIDE, e.g. a PIN inside a password manager)
 - guide_groups[]: { id, name, order? }
 - guides[]: { id, title, group?, order?, importance?, draft?: bool,
   content: { "en": "## ...markdown..." },

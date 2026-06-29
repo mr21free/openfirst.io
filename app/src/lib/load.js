@@ -18,6 +18,26 @@ import sharesUrl from '../sample/attachments/investments/companyX_shares.png';
 
 const norm = (p) => (p || '').replace(/^\.?\//, '');
 
+// Normalize item<->attachment links to ONE canonical direction: attachment.item_ids.
+// Some plans stored links the other way (item.attachment_ids); fold those in so the
+// item form, the file form, and the heir view all show the same set. No link is lost
+// — only its storage side is unified.
+function normalizeAttachmentLinks(data) {
+  if (!data || !Array.isArray(data.items) || !Array.isArray(data.attachments)) return data;
+  const byId = new Map(data.attachments.map((a) => [a.id, a]));
+  for (const it of data.items) {
+    if (!Array.isArray(it.attachment_ids) || !it.attachment_ids.length) continue;
+    for (const aid of it.attachment_ids) {
+      const a = byId.get(aid);
+      if (!a) continue;
+      if (!Array.isArray(a.item_ids)) a.item_ids = [];
+      if (!a.item_ids.includes(it.id)) a.item_ids.push(it.id);
+    }
+    delete it.attachment_ids;
+  }
+  return data;
+}
+
 function findSourceBase(paths) {
   const candidates = paths.filter((p) => /(^|\/)inheritance\.json$/i.test(p));
   if (!candidates.length) return [null, ''];
@@ -28,6 +48,7 @@ function findSourceBase(paths) {
 
 // fileMap: Map<relpath, () => Blob>. Resolve attachment blobs + object URLs.
 function buildLoaded(data, fileMap, base) {
+  normalizeAttachmentLinks(data);
   const attachmentUrls = {};
   const blobs = new Map();
   for (const att of data.attachments || []) {
@@ -64,6 +85,7 @@ export async function loadFromFiles(fileList) {
     try { obj = JSON.parse(await files[0].text()); }
     catch { throw new Error('That file is not valid JSON.'); }
     if (isEncryptedEnvelope(obj)) return needsPassword(obj);
+    normalizeAttachmentLinks(obj);
     const problems = validatePackage(obj);
     if (problems.length) {
       const shown = problems.slice(0, 12).map((p) => '• ' + p).join('\n');
@@ -136,6 +158,7 @@ export function loadFromReaderHtml(htmlText) {
   if (payload.encrypted) return needsPassword(payload.encrypted);
   const data = payload.data;
   if (!data) throw new Error('This reader has no plan to recover.');
+  normalizeAttachmentLinks(data);
 
   const problems = validatePackage(data);
   if (problems.length) {
@@ -174,7 +197,7 @@ async function urlToBlob(url) {
 
 export async function loadSample() {
   const map = { att_taxreturn_2009: taxUrl, att_multisig_descriptor: descUrl, att_companyx_shares: sharesUrl };
-  const data = JSON.parse(JSON.stringify(sampleData));
+  const data = normalizeAttachmentLinks(JSON.parse(JSON.stringify(sampleData)));
   const attachmentUrls = {};
   const blobs = new Map();
   for (const [id, url] of Object.entries(map)) {

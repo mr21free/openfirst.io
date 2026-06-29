@@ -114,12 +114,27 @@ export class InheritancePackage {
       }
     }
 
-    // Items located at / accessible by, for location & person detail views.
+    // Items located at / accessible by / stored inside a container item.
+    // container_ids is the digital/logical counterpart of location_ids: "where
+    // it is" can be a place OR another item (a password manager, a USB, a safe-
+    // deposit envelope). itemsInContainer is the reverse — what a container holds.
     this.itemsAtLocation = new Map();
     this.itemsAccessibleBy = new Map();
+    this.itemsInContainer = new Map();
     for (const it of this.items) {
       for (const loc of it.location_ids || []) push(this.itemsAtLocation, loc, it.id);
       for (const p of it.access_person_ids || []) push(this.itemsAccessibleBy, p, it.id);
+      for (const c of it.container_ids || []) push(this.itemsInContainer, c, it.id);
+    }
+
+    // Which files an item carries (either link direction) — drives the list badge.
+    this.attachmentsByItem = new Map();
+    for (const a of this.attachments) {
+      for (const iid of a.item_ids || []) push(this.attachmentsByItem, iid, a.id);
+      if (a.item_id) push(this.attachmentsByItem, a.item_id, a.id);
+    }
+    for (const it of this.items) {
+      for (const aid of it.attachment_ids || []) push(this.attachmentsByItem, it.id, aid);
     }
 
     // Attachment URLs (blob:/data:) keyed by attachment id, resolved from the loader.
@@ -181,6 +196,22 @@ export class InheritancePackage {
     if (!e) return [];
     const o = e.obj;
     return [o.name, o.nickname, o.title, o.filename, o.id].filter(Boolean);
+  }
+
+  /** A short, human file type for an attachment — "PDF", "JPG image", "File". */
+  fileType(id) {
+    const o = this.byId.get(id)?.obj;
+    if (!o) return 'File';
+    const name = o.filename || o.path || '';
+    const ext = name.includes('.') ? name.split('.').pop().toLowerCase() : '';
+    const mime = (o.mime || '').toLowerCase();
+    if (mime === 'application/pdf' || ext === 'pdf') return 'PDF';
+    if (mime.startsWith('image/') || /^(png|jpe?g|gif|webp|avif|bmp|svg|heic|tiff?)$/.test(ext)) {
+      const t = (mime.split('/')[1] || ext).toUpperCase().replace(/^JPEG$/, 'JPG').replace(/\+XML$/, '');
+      return t ? `${t} image` : 'Image';
+    }
+    if (ext && ext.length <= 5) return ext.toUpperCase();
+    return 'File';
   }
 
   text(localized) {

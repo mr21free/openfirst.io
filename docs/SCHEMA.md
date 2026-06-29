@@ -73,6 +73,7 @@ Accounts, wallets, keys, documents, devices, assets.
 | `price` |  | optional value, e.g. "45 EUR / year" |
 | `importance` |  | high/medium/low |
 | `location_ids` |  | where it lives (≥1 = redundant copies) |
+| `container_ids` |  | container **item** ids it's stored inside (e.g. a PIN inside a password manager) — digital counterpart of `location_ids` |
 | `access_person_ids` |  | who can access it |
 | `depends_on_ids` |  | other item ids it needs (e.g. a PIN item) |
 | `attachment_ids` |  | files documenting it |

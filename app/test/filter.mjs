@@ -42,12 +42,12 @@ try {
   // ---- Items: importance + location ----
   await goSection('Items'); await pause();
   const total = await rows();
-  ok('items list shows all items', total === 30);
+  ok('items list shows all items', total === 31);
 
   await openFilter(); await pause(150);
   const high = await facetCount('Importance', 'High');
   const medium = await facetCount('Importance', 'Medium');
-  ok('facet counts match the data', high === 21 && medium === 7);
+  ok('facet counts match the data', high === 21 && medium === 8);
 
   await tick('Importance', 'High'); await pause(250);
   ok('single facet value filters (High)', (await rows()) === high);

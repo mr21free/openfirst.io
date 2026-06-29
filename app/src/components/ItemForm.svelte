@@ -29,6 +29,12 @@
     <div class="f"><span class="lbl">Where it is (locations)</span>
       <EntityPicker {pkg} target={raw} key="location_ids" kinds={['location']} placeholder="Add a location…" />
     </div>
+    <div class="f"><span class="lbl">Stored inside (item)</span>
+      <EntityPicker {pkg} target={raw} key="container_ids" kinds={['item']} exclude={[raw.id]} placeholder="Add a container item…" />
+    </div>
+    <div class="f"><span class="lbl">Holds these items</span>
+      <EntityPicker {pkg} target={raw} reverse reverseKey="container_ids" kinds={['item']} exclude={[raw.id]} placeholder="Add an item kept inside this…" />
+    </div>
     <div class="f"><span class="lbl">Who can access</span>
       <EntityPicker {pkg} target={raw} key="access_person_ids" kinds={['person']} placeholder="Add a person…" />
     </div>
@@ -42,7 +48,7 @@
       <EntityPicker {pkg} target={raw} key="guide_ids" kinds={['guide']} placeholder="Add a guide…" />
     </div>
     <div class="f"><span class="lbl">Attachments</span>
-      <EntityPicker {pkg} target={raw} key="attachment_ids" kinds={['attachment']} placeholder="Add a file…" />
+      <EntityPicker {pkg} target={raw} reverse reverseKey="item_ids" kinds={['attachment']} placeholder="Add a file…" />
     </div>
 
     <label class="toggle"><input type="checkbox" checked={raw.sensitive || false} onchange={toggleSensitive} /> <span>Sensitive — may hold a raw secret</span></label>

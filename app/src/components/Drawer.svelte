@@ -1,6 +1,5 @@
 <script>
   import EntityList from './EntityList.svelte';
-  import Importance from './Importance.svelte';
   import PersonForm from './PersonForm.svelte';
   import LocationForm from './LocationForm.svelte';
   import ItemForm from './ItemForm.svelte';
@@ -15,6 +14,7 @@
 
   const e = $derived(pkg.entity(id));
   const obj = $derived(e?.obj);
+  const impLabel = (l) => ({ high: 'High', medium: 'Medium', low: 'Low' }[l] || l);
 
   const dependents = $derived(e?.kind === 'item' ? (pkg.dependentsOf.get(id) || []) : []);
   const itemsHere = $derived(e?.kind === 'location' ? (pkg.itemsAtLocation.get(id) || []) : []);
@@ -31,6 +31,18 @@
     }
     return [...ids];
   });
+  // Show image attachments inline (a photo is worth far more than a filename);
+  // other files stay as openable rows.
+  const IMG_EXT = /\.(png|jpe?g|gif|webp|avif|bmp|svg)$/i;
+  const attIsImage = (aid) => {
+    const a = pkg.entity(aid)?.obj;
+    return !!(a && pkg.attachmentUrls[aid] && ((a.mime || '').startsWith('image/') || IMG_EXT.test(a.path || a.filename || '')));
+  };
+  const itemImages = $derived(attachmentsForItem.filter(attIsImage));
+  const itemOtherFiles = $derived(attachmentsForItem.filter((aid) => !attIsImage(aid)));
+  // Containment: the container items this item sits in, and what it holds.
+  const itemContainers = $derived(e?.kind === 'item' ? (obj.container_ids || []) : []);
+  const itemsInside = $derived(e?.kind === 'item' ? (pkg.itemsInContainer.get(id) || []) : []);
   // Full ancestor path (root → parent) for a location, e.g. Country › City › Home.
   const path = $derived(e?.kind === 'location' ? pkg.locationPath(id) : []);
   const attUrl = $derived(e?.kind === 'attachment' ? pkg.attachmentUrls[id] : null);
@@ -152,17 +164,31 @@
       {/if}
     {:else}
     <div class="dbody stack">
-      <!-- Human summary first: name (in the header above) → description → notes. -->
+      <!-- Human summary first: name (header) → description → attachments → notes. -->
       {#if obj.display_as}<p class="soft"><span class="muted">Known as</span> {obj.display_as}</p>{/if}
       {#if obj.description}<p class="soft">{obj.description}</p>{/if}
+      {#if e.kind === 'item' && attachmentsForItem.length}
+        <div class="field"><span class="muted small">Attachments</span>
+          {#each itemImages as aid (aid)}
+            {@const a = pkg.entity(aid)?.obj}
+            <button class="att-figure" onclick={() => onOpen?.(aid)} title={a?.description || a?.filename || 'Open file'}>
+              <img class="att-img" src={pkg.attachmentUrls[aid]} alt={a?.description || a?.filename || ''} loading="lazy" />
+              {#if a?.description}<span class="att-cap tiny muted">{a.description}</span>{/if}
+            </button>
+          {/each}
+          {#if itemOtherFiles.length}<EntityList {pkg} ids={itemOtherFiles} {onOpen} />{/if}
+        </div>
+      {/if}
       {#if obj.notes}<div class="field"><span class="muted small">Notes</span><p class="soft small">{obj.notes}</p></div>{/if}
 
-      <!-- chips row: importance / sensitive (only when there's something to show) -->
-      {#if (obj.importance && e.kind !== 'person') || obj.sensitive}
-        <div class="row wrap">
-          {#if obj.importance && e.kind !== 'person'}<span class="chip"><Importance level={obj.importance} /></span>{/if}
-          {#if obj.sensitive}<span class="chip caution-chip">● sensitive</span>{/if}
+      <!-- Importance gets a titled section like every other field; sensitive stays a chip. -->
+      {#if obj.importance && e.kind !== 'person'}
+        <div class="field"><span class="muted small">Importance</span>
+          <p class="soft small">{impLabel(obj.importance)}</p>
         </div>
+      {/if}
+      {#if obj.sensitive}
+        <div class="row wrap"><span class="chip caution-chip">● sensitive</span></div>
       {/if}
 
       <!-- ROLE -->
@@ -260,6 +286,16 @@
             <EntityList {pkg} ids={obj.location_ids} {onOpen} />
           </div>
         {/if}
+        {#if itemContainers.length}
+          <div class="field"><span class="muted small">Stored inside</span>
+            <EntityList {pkg} ids={itemContainers} {onOpen} />
+          </div>
+        {/if}
+        {#if itemsInside.length}
+          <div class="field"><span class="muted small">What's inside</span>
+            <EntityList {pkg} ids={itemsInside} {onOpen} />
+          </div>
+        {/if}
         {#if obj.access_person_ids?.length}
           <div class="field"><span class="muted small">Who can access</span>
             <EntityList {pkg} ids={obj.access_person_ids} {onOpen} />
@@ -283,21 +319,11 @@
             <EntityList {pkg} ids={obj.guide_ids} {onOpen} />
           </div>
         {/if}
-        {#if attachmentsForItem.length}
-          <div class="field"><span class="muted small">Attachments</span>
-            <EntityList {pkg} ids={attachmentsForItem} {onOpen} />
-          </div>
-        {/if}
       {/if}
 
       <!-- ATTACHMENT -->
       {#if e.kind === 'attachment'}
         {#if obj.path}<div class="field"><span class="muted small">Path</span><p class="soft small">{obj.path}</p></div>{/if}
-        {#if attachmentParentIds.length}
-          <div class="field"><span class="muted small">Attached to</span>
-            <EntityList {pkg} ids={attachmentParentIds} {onOpen} />
-          </div>
-        {/if}
         {#if attUrl}
           {#if (obj.mime || '').startsWith('image/')}
             <img class="att-img" src={attUrl} alt={obj.description || obj.filename} />
@@ -305,6 +331,16 @@
             <!-- The browser's built-in PDF viewer — no library needed. -->
             <iframe class="att-pdf no-print" src={`${attUrl}#toolbar=0&navpanes=0&view=FitH`} title={obj.description || obj.filename}></iframe>
           {/if}
+        {:else}
+          <p class="soft small">File <code>{obj.path}</code> is referenced but wasn’t found in the opened file
+            (open the whole folder/zip to include it).</p>
+        {/if}
+        {#if attachmentParentIds.length}
+          <div class="field"><span class="muted small">Attached to</span>
+            <EntityList {pkg} ids={attachmentParentIds} {onOpen} />
+          </div>
+        {/if}
+        {#if attUrl}
           <div class="attachment-actions row wrap">
             <a class="btn btn-primary" href={attUrl} download={obj.filename}>Download</a>
             <button class="iconbtn-print" onclick={printAttachment} title="Print" aria-label="Print">
@@ -315,9 +351,6 @@
               </svg>
             </button>
           </div>
-        {:else}
-          <p class="soft small">File <code>{obj.path}</code> is referenced but wasn’t found in the opened file
-            (open the whole folder/zip to include it).</p>
         {/if}
       {/if}
     </div>
@@ -367,6 +400,10 @@
   .plain li + li { margin-top: 4px; }
   .caution-chip { color: var(--warn); border-color: oklch(0.85 0.06 50); }
   .secret { font-weight: 600; margin-top: 6px; word-break: break-all; color: var(--ink); }
-  .att-img { width: 100%; border-radius: 10px; border: 1px solid var(--rule-soft); margin-top: 16px; margin-bottom: 12px; }
+  .att-img { width: 100%; border-radius: 10px; border: 1px solid var(--rule-soft); margin-top: 16px; margin-bottom: 12px; display: block; }
   .att-pdf { width: 100%; min-height: 78vh; border-radius: 10px; border: 1px solid var(--rule-soft); margin-top: 16px; margin-bottom: 12px; background: var(--paper); }
+  /* Inline image attachment in an item's read view — clickable to open full. */
+  .att-figure { display: block; width: 100%; padding: 0; border: none; background: none; text-align: left; cursor: pointer; }
+  .att-figure:hover .att-img { border-color: var(--accent); }
+  .att-cap { display: block; margin: -6px 0 12px; }
 </style>

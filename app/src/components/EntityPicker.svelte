@@ -24,12 +24,16 @@
         for (const o of [...lead, ...ppl.filter((p) => !primary.includes(p.id))]) out.push({ id: o.id, depth: 0 });
         continue;
       }
-      const arr =
+      const base =
         k === 'item' ? pkg.items :
         k === 'guide' ? pkg.guides :
         k === 'folder' ? pkg.folders :
         k === 'attachment' ? pkg.attachments : [];
-      for (const o of arr || []) out.push({ id: o.id, depth: 0 });
+      // Files are easiest to scan alphabetically.
+      const arr = k === 'attachment'
+        ? [...(base || [])].sort((a, b) => pkg.name(a.id).localeCompare(pkg.name(b.id)))
+        : (base || []);
+      for (const o of arr) out.push({ id: o.id, depth: 0 });
     }
     return out;
   });
@@ -72,10 +76,10 @@
     const e = pkg.entity(id);
     if (!e) return 'missing';
     if (e.kind === 'person') return (e.obj.roles || []).map((r) => pkg.roleLabel(r)).join(', ');
-    if (e.kind === 'item') return e.obj.price || 'item';
+    if (e.kind === 'item') return e.obj.price || ''; // the name already says it's an item
     if (e.kind === 'location') return '';
     if (e.kind === 'guide') return 'guide';
-    if (e.kind === 'attachment') return 'file';
+    if (e.kind === 'attachment') return ''; // the filename already says what it is
     return e.kind;
   }
 </script>

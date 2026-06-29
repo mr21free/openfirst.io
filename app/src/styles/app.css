@@ -220,6 +220,7 @@ strong { font-weight: 600; }
 .ulist-aside { flex: none; display: flex; align-items: center; gap: 12px; }
 .ulist-indent { flex: none; color: var(--rule); }
 .lock-dot { color: var(--warn); font-size: 9px; }
+.clip-ico { color: var(--ink-mute); display: inline-flex; align-items: center; }
 
 /* Editor forms (shared across all entity forms) */
 .frm { display: flex; flex-direction: column; gap: 16px; margin-top: 4px; }

@@ -183,6 +183,7 @@
         "importance": { "$ref": "#/$defs/importance" },
         "description": { "type": "string" },
         "location_ids": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "Where it lives. Multiple = redundant copies (e.g. duplicated across countries)." },
+        "container_ids": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "Container ITEM ids this one is stored inside (e.g. a PIN kept inside a password manager) — the digital counterpart of location_ids. Many-to-many." },
         "access_person_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
         "depends_on_ids": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "Other items this one needs (e.g. an account depends on the SIM for 2FA; a multisig wallet depends on its seeds). Powers single-point-of-failure / circular-dependency checks." },
         "guide_ids": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "Guides that explain how to use / recover this item." },

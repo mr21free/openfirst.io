@@ -55,6 +55,8 @@ export function validatePackage(data) {
   }
   for (const it of data.items || []) {
     ref(`Item "${it.id}"`, 'locations', it.location_ids);
+    ref(`Item "${it.id}"`, 'items', it.container_ids);
+    if ((it.container_ids || []).includes(it.id)) errors.push(`Item "${it.id}" can't be stored inside itself.`);
     ref(`Item "${it.id}"`, 'people', it.access_person_ids);
     ref(`Item "${it.id}"`, 'items', it.depends_on_ids);
     ref(`Item "${it.id}"`, 'attachments', it.attachment_ids);
@@ -68,6 +70,10 @@ export function validatePackage(data) {
     ref(`Guide "${g.id}"`, 'locations', r.location_ids);
     ref(`Guide "${g.id}"`, 'guides', r.guide_ids);
     ref(`Guide "${g.id}"`, 'attachments', r.attachment_ids);
+  }
+  for (const a of data.attachments || []) {
+    ref(`Attachment "${a.id}"`, 'items', a.item_ids);
+    ref(`Attachment "${a.id}"`, 'guides', a.guide_ids);
   }
   return errors;
 }

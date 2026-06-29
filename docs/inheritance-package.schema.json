@@ -86,6 +86,7 @@
           "price": { "type": "string", "description": "Optional value, e.g. '45 EUR / year'." },
           "importance": { "type": "string", "enum": ["high", "medium", "low"] },
           "location_ids": { "type": "array", "items": { "type": "string" }, "description": "where it lives (location ids). More than one = redundant copies." },
+          "container_ids": { "type": "array", "items": { "type": "string" }, "description": "container ITEM ids this one is stored inside (e.g. a PIN inside a password manager) — the digital counterpart of location_ids." },
           "access_person_ids": { "type": "array", "items": { "type": "string" }, "description": "people who can access it." },
           "depends_on_ids": { "type": "array", "items": { "type": "string" }, "description": "other item ids this one needs (e.g. a PIN item)." },
           "attachment_ids": { "type": "array", "items": { "type": "string" }, "description": "files documenting it (attachment ids)." },

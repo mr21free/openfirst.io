@@ -169,6 +169,9 @@ strong { font-weight: 600; }
 .prose h1:first-child, .prose h2:first-child, .prose h3:first-child { margin-top: 0; }
 .prose ul, .prose ol { padding-left: 1.4rem; }
 .prose li + li { margin-top: 6px; }
+/* A list that hugs the line above it (no blank line — e.g. a "Next steps:" label)
+   gets a minimal gap instead of a full paragraph break. */
+.prose ul.tight, .prose ol.tight { margin-top: 0.4em; }
 .prose code {
   background: var(--accent-wash);
   border-radius: 5px;

@@ -1,0 +1,40 @@
+{
+  "name": "lifepackage",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "lifepackage.io — local-first, offline, no-server inheritance package builder + reader. Reader phase.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test:smoke": "node test/smoke.mjs",
+    "test:edit": "node test/edit.mjs",
+    "test:guide-reorder": "node test/guide-reorder.mjs",
+    "test:guide-draft": "node test/guide-draft.mjs",
+    "test:guide-i18n": "node test/guide-i18n.mjs",
+    "test:files-tags": "node test/files-tags.mjs",
+    "test:filter": "node test/filter.mjs",
+    "test:autolink": "node test/autolink.mjs",
+    "test:guide-importance": "node test/guide-importance.mjs",
+    "test:print": "node test/print.mjs",
+    "test:reminder": "node test/reminder.mjs",
+    "test:map": "node test/map.mjs",
+    "test:import": "node test/import.mjs",
+    "test:reader": "node test/reader.mjs",
+    "test:selfcontained": "node test/selfcontained.mjs",
+    "test": "node test/smoke.mjs && node test/edit.mjs && node test/guide-reorder.mjs && node test/guide-draft.mjs && node test/guide-i18n.mjs && node test/files-tags.mjs && node test/filter.mjs && node test/autolink.mjs && node test/guide-importance.mjs && node test/print.mjs && node test/reminder.mjs && node test/primary.mjs && node test/map.mjs && node test/import.mjs && node test/reader.mjs && node test/selfcontained.mjs && node test/recover.mjs",
+    "test:primary": "node test/primary.mjs",
+    "test:recover": "node test/recover.mjs"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "svelte": "^5.19.0",
+    "vite": "^6.0.7",
+    "vite-plugin-singlefile": "^2.1.0"
+  },
+  "dependencies": {
+    "fflate": "^0.8.2"
+  }
+}

@@ -1,0 +1,76 @@
+<script>
+  let { prompt, onResolve } = $props();
+
+  const cancelable = $derived(prompt?.cancelLabel !== null);
+
+  function close(value) {
+    onResolve?.(value);
+  }
+
+  function onKeydown(e) {
+    if (prompt && e.key === 'Escape' && cancelable) close(false);
+  }
+</script>
+
+<svelte:window onkeydown={onKeydown} />
+
+{#if prompt}
+  <div class="modal-scrim" onclick={() => cancelable && close(false)} role="presentation"></div>
+  <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message">
+    <div class="modal-head">
+      <span class="eyebrow">{prompt.eyebrow || 'Confirm'}</span>
+      <h2 id="modal-title">{prompt.title}</h2>
+    </div>
+    <p id="modal-message" class="modal-message">{prompt.message}</p>
+    <div class="modal-actions">
+      {#if cancelable}
+        <button class="btn btn-ghost" onclick={() => close(false)}>{prompt.cancelLabel || 'Cancel'}</button>
+      {/if}
+      <button class="btn" class:btn-primary={prompt.tone !== 'danger'} class:btn-danger={prompt.tone === 'danger'} onclick={() => close(true)}>
+        {prompt.confirmLabel || 'OK'}
+      </button>
+    </div>
+  </div>
+{/if}
+
+<style>
+  .modal-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: oklch(0.2 0.03 255 / 0.42);
+  }
+  .modal-card {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    z-index: 101;
+    width: min(440px, calc(100vw - 32px));
+    transform: translate(-50%, -50%);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    box-shadow: 0 30px 80px oklch(0.2 0.03 255 / 0.26);
+    padding: 20px;
+  }
+  .modal-head h2 { margin-top: 6px; font-size: 22px; }
+  .modal-message {
+    margin-top: 14px;
+    color: var(--ink-soft);
+    font-size: 14px;
+    white-space: pre-line;
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 22px;
+    flex-wrap: wrap;
+  }
+  .btn-danger {
+    background: var(--warn);
+    border-color: var(--warn);
+    color: oklch(0.99 0 0);
+  }
+  .btn-danger:hover { background: oklch(0.56 0.16 35); border-color: oklch(0.56 0.16 35); }
+</style>

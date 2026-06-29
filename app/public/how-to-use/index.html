@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>How to use · Life Plan</title>
+  <meta name="description" content="Build an inheritance plan your loved ones can open offline, with no app or account — optionally scaffolded by your own AI." />
+  <link rel="icon" href="/logo.svg" />
+  <style>
+    /* IBM Plex Mono — the same family as the app. */
+    @font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 300; font-display: swap; src: url("/fonts/ibm-plex-mono-300-latin.woff2") format("woff2"); }
+    @font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/ibm-plex-mono-400-latin.woff2") format("woff2"); }
+    @font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/ibm-plex-mono-500-latin.woff2") format("woff2"); }
+    @font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 600; font-display: swap; src: url("/fonts/ibm-plex-mono-600-latin.woff2") format("woff2"); }
+
+    /* The app's heaven-blue tokens, light theme (kept in sync with src/styles/app.css).
+       The app's marketing pages are always light, so this page is too — no dark variant. */
+    :root {
+      --bg: oklch(0.965 0.012 240); --bg-deep: oklch(0.935 0.016 240); --paper: oklch(0.985 0.008 240);
+      --ink: oklch(0.25 0.02 250); --ink-soft: oklch(0.42 0.02 250); --ink-mute: oklch(0.58 0.015 250);
+      --rule: oklch(0.88 0.012 245); --rule-soft: oklch(0.92 0.010 245);
+      --accent: oklch(0.72 0.10 240); --accent-deep: oklch(0.55 0.12 250); --accent-wash: oklch(0.95 0.03 240);
+      --warn: oklch(0.62 0.15 35); --warn-wash: oklch(0.95 0.04 50);
+      --screen: oklch(0.22 0.03 255); --screen-px: oklch(0.86 0.03 245);
+      --maxw: 1480px; --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      background: radial-gradient(1200px 600px at 50% -10%, var(--paper), transparent 70%), var(--bg);
+      color: var(--ink); font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-weight: 400; line-height: 1.6; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+      min-height: 100vh;
+    }
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+    a { color: var(--accent-deep); text-decoration: none; }
+    a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+    .container { max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
+    .row { display: flex; align-items: center; gap: 10px; }
+    .wrap { flex-wrap: wrap; }
+    .spacer { flex: 1; }
+    main { flex: 1; width: 100%; }
+
+    /* Top bar — identical to the app's landing header. */
+    .topbar {
+      position: sticky; top: 0; z-index: 20;
+      background: color-mix(in oklch, var(--paper) 86%, transparent);
+      backdrop-filter: blur(12px); border-bottom: 1px solid var(--rule-soft);
+    }
+    .topbar .row { height: 60px; }
+    .brand { font-weight: 500; gap: 10px; color: var(--ink); }
+    .brand:hover { text-decoration: none; }
+    .logo { width: 24px; height: 24px; display: block; }
+    .topnav { display: flex; align-items: center; gap: 24px; }
+    .topnav a { color: var(--ink-soft); font-size: 14px; }
+    .topnav a:hover { color: var(--ink); text-decoration: none; }
+
+    .content { max-width: 820px; margin: 0 auto; padding: 48px 28px 56px; }
+    .eyebrow { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-deep); font-weight: 600; }
+    h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 300; letter-spacing: -0.01em; line-height: 1.1; margin: 10px 0 12px; }
+    .lede { color: var(--ink-soft); font-size: 17px; }
+    h2 { font-size: 22px; font-weight: 500; letter-spacing: -0.005em; margin: 46px 0 10px; }
+    p { margin: 10px 0; } ul { padding-left: 1.3rem; } li { margin: 7px 0; }
+    code { background: var(--accent-wash); color: var(--accent-deep); padding: 1px 5px; border-radius: 5px; font-size: 0.92em; }
+    .pill { display: inline-block; background: var(--accent-wash); color: var(--accent-deep); border-radius: 999px; padding: 2px 10px; font-size: 12px; }
+    .steps { counter-reset: s; list-style: none; padding: 0; }
+    .steps > li { counter-increment: s; position: relative; padding-left: 46px; margin: 18px 0; }
+    .steps > li::before { content: counter(s); position: absolute; left: 0; top: -2px; width: 30px; height: 30px; border-radius: 999px; background: var(--accent-wash); color: var(--accent-deep); display: grid; place-items: center; font-weight: 600; font-size: 14px; }
+    .card { background: var(--paper); border: 1px solid var(--rule-soft); border-left: 2px solid var(--accent); border-radius: var(--radius); padding: 16px 18px; margin: 16px 0; color: var(--ink-soft); font-size: 14.5px; }
+    .card.warn { border-left-color: var(--warn); background: var(--warn-wash); }
+
+    /* The copyable AI prompt — styled as a code block with a corner copy icon. */
+    .promptbox { position: relative; border: 1px solid var(--rule); border-radius: 10px; background: var(--bg-deep); overflow: hidden; margin: 16px 0 6px; }
+    .copy-icon { position: absolute; top: 10px; right: 10px; z-index: 2; display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; color: var(--ink-soft); background: color-mix(in oklch, var(--paper) 82%, transparent); border: 1px solid var(--rule); cursor: pointer; backdrop-filter: blur(4px); transition: color .15s, border-color .15s, background .15s; }
+    .copy-icon:hover { color: var(--accent-deep); border-color: var(--accent-deep); }
+    .copy-icon.ok { color: #fff; background: var(--accent-deep); border-color: var(--accent-deep); }
+    pre.prompt { margin: 0; padding: 18px 20px; max-height: 440px; overflow: auto; font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", "Cascadia Code", Consolas, Menlo, monospace; font-size: 12.5px; line-height: 1.7; color: var(--ink); white-space: pre; tab-size: 2; }
+    pre.prompt code { background: none; color: inherit; padding: 0; font-size: inherit; }
+
+    .screen { background: var(--screen); color: var(--screen-px); border-radius: var(--radius); padding: 30px 0; }
+    .footer-tag { color: var(--accent); font-size: 13px; }
+    .screen .tiny { color: var(--screen-px); font-size: 11px; letter-spacing: 0.04em; }
+
+    @media (max-width: 640px) { .container, .content { padding-left: 18px; padding-right: 18px; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container row">
+      <a class="brand row" href="/"><img class="logo" src="/logo.svg" alt="" /><span>Life Plan</span></a>
+      <span class="spacer"></span>
+      <nav class="topnav">
+        <a href="/how-to-use/">How to use</a>
+        <a href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener">The story</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="content">
+    <span class="eyebrow">How to use</span>
+    <h1>Put your affairs in order — calmly.</h1>
+    <p class="lede">Build a plan of where everything lives and who should receive it, then hand your loved ones a single file they open offline. No app, no account, nothing leaves your device.</p>
+
+    <h2>The picture in 60 seconds</h2>
+    <ol class="steps">
+      <li><strong>Build</strong> your plan — people, the places things live, items (accounts, wallets, keys, documents), files, and plain-language guides.</li>
+      <li><strong>Export</strong> a self-contained <code>start-here.html</code> — optionally password-protected.</li>
+      <li><strong>Give it</strong> to your heirs (a USB stick or drive; share the password separately). They double-click it; it opens offline, no app needed.</li>
+    </ol>
+
+    <h2>Option A — let AI do the heavy lifting</h2>
+    <p>Defining every person, place and item by hand is the slow part. Your own AI can scaffold it. Copy the prompt below into any capable AI — Claude, ChatGPT, Gemini, or a local model for maximum privacy — answer its questions in plain words, and it returns a <code>.json</code> plan you import with <strong>Open existing plan</strong>.</p>
+
+    <div class="card warn"><strong>Describe structure, not secrets.</strong> The AI runs on <em>your</em> side — this project never sees your data — but still never paste real PINs, seed phrases, passwords, keys or account numbers. Say “a Trezor at home, a backup at a bank abroad,” then add the real values yourself, locally, in the app. Structure alone can be sensitive, so keep it general.</div>
+
+    <div class="promptbox">
+      <button class="copy-icon" type="button" onclick="copyPrompt(this)" aria-label="Copy prompt" title="Copy prompt">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+      </button>
+      <pre class="prompt"><code id="ai-prompt">You are helping me build an inheritance / "in case I die" plan as a single JSON
+file in the format "inheritance-package/v1". The plan is a MAP of where things
+live and who should receive them — NOT a store of raw secrets.
+
+Follow these rules exactly:
+
+1. Output ONE JSON object and nothing else (no prose, no markdown fences) when I
+   ask for the final file. Until then, interview me.
+2. Conform to the schema summarized below. Unknown/extra fields are allowed but
+   prefer the documented ones.
+3. IDs are arbitrary strings but MUST be unique within their array and
+   referenced consistently. Use readable ids like "person_jane", "loc_home",
+   "item_trezor", "guide_first_steps".
+4. Every reference must resolve: ids in location_ids / access_person_ids /
+   attachment_ids / guide_ids / audience_roles / group / owner_id / parent_id /
+   references.* MUST point to an entity that exists in the file.
+5. NEVER invent or include real secrets (PINs, seeds, passwords, keys, account
+   numbers). If a value is sensitive, describe where/how to find it instead, and
+   set "sensitive": true on that item.
+6. Write the guides as clear, calm Markdown for a non-technical reader (e.g. my
+   spouse). Inside guide content you may cross-link other entities with [[id]]
+   tokens (and list those ids in that guide's "references"), and link a group of
+   files with [#tag](#tag:slug).
+7. Leave "attachments" empty — I will add real files in the app.
+
+SCHEMA SUMMARY
+- Top level: { "schema": "inheritance-package/v1", "package": {...}, "people":
+  [...], "roles": [...], "locations": [...], "items": [...], "guide_groups":
+  [...], "guides": [...], "attachments": [] }
+- package: { id, title, owner_id (a people id), created (YYYY-MM-DD), updated,
+  languages: ["en"], default_language: "en" }
+- roles[]: { id, name }  // e.g. owner, primary_heir, beneficiary, professional, friend
+- people[]: { id, name, nickname?, roles: [roleId], importance?: high|medium|low,
+  notes?, sensitive?: bool }
+- locations[]: { id, name, parent_id?, order?, notes?, access_person_ids?,
+  importance? }   // nest with parent_id: Country &gt; City &gt; Home &gt; Safe
+- items[]: { id, name, description?, notes?, price?, importance?, location_ids?,
+  access_person_ids?, depends_on_ids?, attachment_ids?, guide_ids?, sensitive? }
+- guide_groups[]: { id, name, order? }
+- guides[]: { id, title, group?, order?, importance?, draft?: bool,
+  content: { "en": "## ...markdown..." },
+  references?: { person_ids?, role_ids?, item_ids?, location_ids?, guide_ids?,
+  attachment_ids? },
+  audience_roles?: [roleId], audience_person_ids?: [personId] }
+
+MINIMAL VALID EXAMPLE (shape only):
+{
+  "schema": "inheritance-package/v1",
+  "package": { "id": "plan-1", "title": "My inheritance plan",
+    "owner_id": "person_me", "created": "2026-01-01", "updated": "2026-01-01",
+    "languages": ["en"], "default_language": "en" },
+  "roles": [ { "id": "owner", "name": "Owner" },
+             { "id": "primary_heir", "name": "Primary heir" } ],
+  "people": [ { "id": "person_me", "name": "Me", "roles": ["owner"] },
+              { "id": "person_spouse", "name": "Jane", "roles": ["primary_heir"] } ],
+  "locations": [ { "id": "loc_country", "name": "Country X", "order": 0 },
+    { "id": "loc_home", "name": "Home safe", "parent_id": "loc_country", "order": 0 } ],
+  "items": [ { "id": "item_will", "name": "Will (original)", "importance": "high",
+    "location_ids": ["loc_home"], "access_person_ids": ["person_spouse"] } ],
+  "guide_groups": [ { "id": "general", "name": "General", "order": 0 } ],
+  "guides": [ { "id": "guide_first", "title": "First steps", "group": "general",
+    "order": 0, "audience_roles": ["primary_heir"],
+    "content": { "en": "## First steps\n\nTake your time. The will is at [[loc_home]]; [[person_spouse]] can open it." },
+    "references": { "location_ids": ["loc_home"], "person_ids": ["person_spouse"] } } ],
+  "attachments": []
+}
+
+Now interview me: ask short, grouped questions about my people and their roles,
+the places I keep things, the items (accounts, wallets, keys, documents,
+devices), and what guidance each heir needs. Ask only for non-sensitive
+structure. When I say "generate", validate that every reference resolves and
+every id is unique, then output the final JSON only.</code></pre>
+    </div>
+    <p>If the file is malformed, the app lists exactly what to fix on import — paste that back to the AI and ask it to correct it.</p>
+
+    <h2>Option B — build by hand</h2>
+    <p>Click <strong>Create new plan</strong> and work down the left nav: People → Roles → Locations → Map → Items → Files → Guides. Try the in-app <strong>Demo</strong> first to see a finished example.</p>
+
+    <h2>Finish locally (always in the app)</h2>
+    <ul>
+      <li><strong>Fill in real values</strong> the AI deliberately left out.</li>
+      <li><strong>Write guides.</strong> Plain Markdown; cross-link anything, and link a set of files with a tag. Mark unfinished ones <span class="pill">Draft</span> — drafts stay in your copy but are left out of the heir’s reader.</li>
+      <li><strong>Add &amp; tag files.</strong> Upload scans/photos/PDFs and tag them (<code>tax</code>, <code>will</code>, <code>bitcoin</code>) to group and search. PDFs preview inline.</li>
+      <li><strong>Filter &amp; sort any list.</strong> People, Items, Locations and Files each have a Filter (by role, importance, location, contents, tag…) and a Sort. It only changes the view.</li>
+      <li><strong>Check the Map.</strong> A “where is what” view — each place with its items nested inside.</li>
+    </ul>
+
+    <h2>Export for your heirs</h2>
+    <ul>
+      <li><strong>Self-contained reader</strong> (<code>start-here.html</code>) — the one file they open. Drafts are excluded automatically.</li>
+      <li><strong>Password-protect it.</strong> Prefer the suggested <strong>6-word passphrase</strong> over a PIN — a 6-digit PIN can be cracked in under a minute; a 6-word passphrase is effectively uncrackable. Store the password separately from the file.</li>
+      <li>The plain <code>.zip</code> / encrypted exports keep <em>everything</em> as your own durable backup.</li>
+    </ul>
+
+    <div class="card warn"><strong>Keep it current.</strong> Revisit every 6–12 months, update what changed, re-export, and replace the copy you gave your heirs. The format is plain JSON + Markdown, so your plan stays readable far into the future — with or without this app.</div>
+  </main>
+
+  <footer class="screen">
+    <div class="container row wrap">
+      <span class="footer-tag">lifepackage.io · your plan, in safe hands</span>
+      <span class="spacer"></span>
+      <span class="tiny">Open format · MIT · works offline</span>
+    </div>
+  </footer>
+
+  <script>
+    var COPY_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    var CHECK_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    function copyPrompt(btn) {
+      var text = document.getElementById('ai-prompt').textContent;
+      var done = function () {
+        btn.classList.add('ok'); btn.innerHTML = CHECK_SVG;
+        setTimeout(function () { btn.classList.remove('ok'); btn.innerHTML = COPY_SVG; }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else { fallbackCopy(text, done); }
+    }
+    function fallbackCopy(text, done) {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+  </script>
+</body>
+</html>

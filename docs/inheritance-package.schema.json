@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lifepackage.io/schema/inheritance-package-v1.json",
+  "title": "Inheritance Package (inheritance-package/v1)",
+  "description": "A local-first inheritance / 'in case I die' plan. A MAP of where things live and who should receive them — not a place to store raw secrets. IDs are arbitrary strings but must be unique within their array and referenced consistently.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema", "package", "people"],
+  "properties": {
+    "schema": { "const": "inheritance-package/v1" },
+    "package": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "title", "languages", "default_language"],
+      "properties": {
+        "id": { "type": "string", "description": "Stable unique id for this plan (any string / UUID)." },
+        "title": { "type": "string", "description": "Plan title, e.g. 'Inheritance plan of Jane Doe'." },
+        "owner_id": { "type": "string", "description": "id of the person who owns the plan (must exist in people)." },
+        "created": { "type": "string", "description": "ISO date YYYY-MM-DD." },
+        "updated": { "type": "string", "description": "ISO date YYYY-MM-DD." },
+        "languages": { "type": "array", "items": { "type": "string" }, "description": "Language codes used, e.g. ['en','sk']." },
+        "default_language": { "type": "string", "description": "One of languages — the primary language." }
+      }
+    },
+    "roles": {
+      "type": "array",
+      "description": "Roles people can hold. If omitted, sensible defaults (owner, primary_heir, beneficiary, professional, friend) are added automatically.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "name"],
+        "properties": {
+          "id": { "type": "string", "description": "e.g. 'primary_heir'." },
+          "name": { "type": "string", "description": "Display label, e.g. 'Primary heir'." }
+        }
+      }
+    },
+    "people": {
+      "type": "array",
+      "description": "Everyone relevant: the owner, heirs, helpers, professionals.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "name"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "nickname": { "type": "string" },
+          "roles": { "type": "array", "items": { "type": "string" }, "description": "role ids from `roles`." },
+          "importance": { "type": "string", "enum": ["high", "medium", "low"] },
+          "notes": { "type": "string" },
+          "sensitive": { "type": "boolean", "description": "Marks an entry that may hold something sensitive." }
+        }
+      }
+    },
+    "locations": {
+      "type": "array",
+      "description": "Physical or logical places, nestable into a tree via parent_id (Country > City > Home > Safe).",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "name"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "parent_id": { "type": "string", "description": "id of the parent location (omit for a top-level place)." },
+          "order": { "type": "number", "description": "Sort order among siblings." },
+          "notes": { "type": "string" },
+          "access_person_ids": { "type": "array", "items": { "type": "string" }, "description": "people who can physically access this place." },
+          "importance": { "type": "string", "enum": ["high", "medium", "low"] }
+        }
+      }
+    },
+    "items": {
+      "type": "array",
+      "description": "The things: accounts, wallets, keys, documents, devices, assets.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "name"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "notes": { "type": "string" },
+          "price": { "type": "string", "description": "Optional value, e.g. '45 EUR / year'." },
+          "importance": { "type": "string", "enum": ["high", "medium", "low"] },
+          "location_ids": { "type": "array", "items": { "type": "string" }, "description": "where it lives (location ids). More than one = redundant copies." },
+          "access_person_ids": { "type": "array", "items": { "type": "string" }, "description": "people who can access it." },
+          "depends_on_ids": { "type": "array", "items": { "type": "string" }, "description": "other item ids this one needs (e.g. a PIN item)." },
+          "attachment_ids": { "type": "array", "items": { "type": "string" }, "description": "files documenting it (attachment ids)." },
+          "guide_ids": { "type": "array", "items": { "type": "string" }, "description": "guides that explain it." },
+          "sensitive": { "type": "boolean" }
+        }
+      }
+    },
+    "guide_groups": {
+      "type": "array",
+      "description": "Named groups for organising guides in the nav (e.g. 'General', 'Bitcoin').",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "name"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "name_i18n": { "type": "object", "description": "Per-language overrides, e.g. { \"sk\": \"Všeobecné\" }.", "additionalProperties": { "type": "string" } },
+          "order": { "type": "number" }
+        }
+      }
+    },
+    "guides": {
+      "type": "array",
+      "description": "The human instructions: 'First steps', 'How to access my Bitcoin', etc. Content is Markdown per language.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "title", "content"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string", "description": "Default-language title." },
+          "title_i18n": { "type": "object", "description": "Per-language title overrides.", "additionalProperties": { "type": "string" } },
+          "group": { "type": "string", "description": "guide_groups id this guide belongs to (omit for top level)." },
+          "order": { "type": "number" },
+          "draft": { "type": "boolean", "description": "If true, kept in the plan but EXCLUDED from the heir reader export." },
+          "importance": { "type": "string", "enum": ["high", "medium", "low"] },
+          "content": {
+            "type": "object",
+            "description": "Markdown body keyed by language code, e.g. { \"en\": \"## Heading...\" }. Reference other entities inline with [[id]] tokens; link a file tag with [#tag](#tag:slug).",
+            "additionalProperties": { "type": "string" }
+          },
+          "references": {
+            "type": "object",
+            "description": "Entities mentioned in the content (powers the cross-links). List the ids you used in [[id]] tokens.",
+            "additionalProperties": true,
+            "properties": {
+              "person_ids": { "type": "array", "items": { "type": "string" } },
+              "role_ids": { "type": "array", "items": { "type": "string" } },
+              "item_ids": { "type": "array", "items": { "type": "string" } },
+              "location_ids": { "type": "array", "items": { "type": "string" } },
+              "guide_ids": { "type": "array", "items": { "type": "string" } },
+              "attachment_ids": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "audience_roles": { "type": "array", "items": { "type": "string" }, "description": "role ids this guide is for (empty = everyone)." },
+          "audience_person_ids": { "type": "array", "items": { "type": "string" }, "description": "specific people this guide is for." }
+        }
+      }
+    },
+    "attachments": {
+      "type": "array",
+      "description": "Files (scans, photos, PDFs). The AI usually leaves this empty — the user adds real files in the app afterwards. May still be referenced from items via attachment_ids.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "filename"],
+        "properties": {
+          "id": { "type": "string" },
+          "filename": { "type": "string" },
+          "path": { "type": "string", "description": "Relative path inside the package, e.g. 'attachments/will.pdf'." },
+          "mime": { "type": "string" },
+          "description": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" }, "description": "lowercase slug tags for grouping/search, e.g. ['tax','2009']." }
+        }
+      }
+    },
+    "folders": {
+      "type": "array",
+      "description": "Optional; rarely needed. Leave empty.",
+      "items": { "type": "object", "additionalProperties": true, "required": ["id", "name"] }
+    }
+  }
+}

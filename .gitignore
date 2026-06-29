@@ -1,0 +1,13 @@
+# Dependencies (root + app/)
+node_modules/
+
+# Build output
+dist/
+
+# Local exported / personal plan data — never version this
+OUTPUT/
+
+# Agent state & memory, editor/OS cruft
+.claude/
+.DS_Store
+*.log

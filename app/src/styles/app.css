@@ -192,7 +192,7 @@ strong { font-weight: 600; }
 .prose a.xref:hover { text-decoration: none; border-bottom-style: solid; }
 /* Importance marker after a cross-link — same muted [High]/[Medium]/[Low] label
    as the lists, colourless on purpose (no reliance on colour). */
-.prose .xref-imp {
+.prose .xref-imp, .prose .xref-price {
   font-size: 0.8em;
   color: var(--ink-mute);
   white-space: nowrap;

@@ -13,31 +13,37 @@
   // every occurrence surprised people (a referenced name leaking its link onto
   // unrelated mentions, headings, bold labels…). What you reference is what links.
 
-  // Mark each explicit reference that points at an entity with an importance
-  // level — so a reader sees "follow Account access [Importance: high]" inline.
-  // People carry no importance, so they're skipped.
+  // Surface an entity's metadata inline after each cross-link — so a reader sees
+  // "follow Account access [Importance: high]" or "the VPN [Price: 45 EUR/year]"
+  // without opening it. Importance is shown for any non-person; price for items
+  // that have one. People carry neither.
   const IMP_LEVELS = new Set(['high', 'medium', 'low']);
-  function decorateImportance() {
+  function decorateRefMeta() {
     if (!el || !pkg) return;
     for (const a of el.querySelectorAll('a.xref[data-id]')) {
-      if (a.dataset.impDone) continue;
-      a.dataset.impDone = '1';
+      if (a.dataset.refMeta) continue;
+      a.dataset.refMeta = '1';
       const ent = pkg.entity(a.dataset.id);
       if (!ent || ent.kind === 'person') continue;
-      const imp = ent.obj?.importance;
-      if (!IMP_LEVELS.has(imp)) continue;
-      const mark = document.createElement('span');
-      mark.className = 'xref-imp imp-' + imp;
-      mark.title = 'Importance: ' + imp;
-      mark.textContent = '[Importance: ' + imp + ']';
-      a.after(mark);
-      a.after(document.createTextNode(' '));
+      const o = ent.obj || {};
+      const tags = [];
+      if (IMP_LEVELS.has(o.importance)) tags.push(['xref-imp imp-' + o.importance, 'Importance: ' + o.importance]);
+      if (ent.kind === 'item' && o.price != null && String(o.price).trim()) tags.push(['xref-price', 'Price: ' + String(o.price).trim()]);
+      let cursor = a;
+      for (const [cls, label] of tags) {
+        const space = document.createTextNode(' ');
+        const mark = document.createElement('span');
+        mark.className = cls;
+        mark.title = label;
+        mark.textContent = '[' + label + ']';
+        cursor.after(space); space.after(mark); cursor = mark;
+      }
     }
   }
 
   $effect(() => {
     html; // re-run whenever the rendered markdown changes
-    queueMicrotask(decorateImportance);
+    queueMicrotask(decorateRefMeta);
   });
 
   // Delegated handlers for the cross-link anchors we inject. Attached

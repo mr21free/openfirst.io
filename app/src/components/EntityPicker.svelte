@@ -9,19 +9,23 @@
 
   // Entries carry a `depth` so locations list in hierarchical order with an
   // indent ("-" per level); everything else stays flat (depth 0).
+  // Natural, case-insensitive name sort so long pick-lists are easy to scan.
+  const byName = (a, b) => pkg.name(a.id).localeCompare(pkg.name(b.id), undefined, { numeric: true, sensitivity: 'base' });
   const allEntries = $derived.by(() => {
     const out = [];
     for (const k of kinds) {
       if (k === 'location') {
+        // Locations keep their hierarchy (tree order) — not alphabetised.
         for (const { loc, depth } of pkg.locationTreeFlat()) out.push({ id: loc.id, depth });
         continue;
       }
       if (k === 'person') {
-        // Primary recipients lead the list (in set order), then everyone else.
+        // Primary recipients lead (in set order); everyone else follows A→Z.
         const primary = pkg.primaryRecipientIds();
         const ppl = pkg.people || [];
         const lead = primary.map((id) => ppl.find((p) => p.id === id)).filter(Boolean);
-        for (const o of [...lead, ...ppl.filter((p) => !primary.includes(p.id))]) out.push({ id: o.id, depth: 0 });
+        const rest = ppl.filter((p) => !primary.includes(p.id)).sort(byName);
+        for (const o of [...lead, ...rest]) out.push({ id: o.id, depth: 0 });
         continue;
       }
       const base =
@@ -29,11 +33,7 @@
         k === 'guide' ? pkg.guides :
         k === 'folder' ? pkg.folders :
         k === 'attachment' ? pkg.attachments : [];
-      // Files are easiest to scan alphabetically.
-      const arr = k === 'attachment'
-        ? [...(base || [])].sort((a, b) => pkg.name(a.id).localeCompare(pkg.name(b.id)))
-        : (base || []);
-      for (const o of arr) out.push({ id: o.id, depth: 0 });
+      for (const o of [...(base || [])].sort(byName)) out.push({ id: o.id, depth: 0 });
     }
     return out;
   });

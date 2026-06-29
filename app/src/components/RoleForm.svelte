@@ -5,10 +5,11 @@
   let firstInput = $state(null);
   $effect(() => { if (firstInput) firstInput.focus(); });
 
-  const assignedPeople = $derived((store?.data?.people || []).filter((p) => (p.roles || []).includes(raw?.id)));
-  const availablePeople = $derived((store?.data?.people || []).filter((p) => !(p.roles || []).includes(raw?.id)));
-  const assignedGuides = $derived((store?.data?.guides || []).filter((g) => (g.audience_roles || []).includes(raw?.id)));
-  const availableGuides = $derived((store?.data?.guides || []).filter((g) => !(g.audience_roles || []).includes(raw?.id)));
+  const byName = (a, b) => pkg.name(a.id).localeCompare(pkg.name(b.id), undefined, { numeric: true, sensitivity: 'base' });
+  const assignedPeople = $derived((store?.data?.people || []).filter((p) => (p.roles || []).includes(raw?.id)).sort(byName));
+  const availablePeople = $derived((store?.data?.people || []).filter((p) => !(p.roles || []).includes(raw?.id)).sort(byName));
+  const assignedGuides = $derived((store?.data?.guides || []).filter((g) => (g.audience_roles || []).includes(raw?.id)).sort(byName));
+  const availableGuides = $derived((store?.data?.guides || []).filter((g) => !(g.audience_roles || []).includes(raw?.id)).sort(byName));
 
   function addPerson(id) {
     const person = store?.data?.people?.find((p) => p.id === id);

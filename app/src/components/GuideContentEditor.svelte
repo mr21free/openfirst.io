@@ -36,11 +36,26 @@
       if (m) editorEl.appendChild(makeChip(m[1]));
       else if (part) editorEl.appendChild(document.createTextNode(part));
     }
+    guardChips();
+  }
+  // A chip is contenteditable=false, so when it sits at the very start of a line
+  // (first node, or after a <br>/<div>, or right after a newline) there's no caret
+  // slot before it — you can't click or arrow in front to type. Drop an invisible
+  // zero-width space there as that slot. Stripped on serialize so markdown stays clean.
+  const ZW = '\u200B';
+  function guardChips() {
+    if (!editorEl) return;
+    for (const chip of editorEl.querySelectorAll('.refchip')) {
+      const prev = chip.previousSibling;
+      const atLineStart = !prev || prev.nodeType === 1 || (prev.nodeType === 3 && /\n$/.test(prev.nodeValue));
+      const alreadyGuarded = prev && prev.nodeType === 3 && prev.nodeValue === ZW;
+      if (atLineStart && !alreadyGuarded) chip.parentNode.insertBefore(document.createTextNode(ZW), chip);
+    }
   }
   function serializeNodes(nodes) {
     let out = '';
     nodes.forEach((n) => {
-      if (n.nodeType === 3) out += n.nodeValue;
+      if (n.nodeType === 3) out += n.nodeValue.replace(/\u200B/g, '');
       else if (n.nodeType === 1) {
         if (n.dataset && n.dataset.refId) out += '[[' + n.dataset.refId + ']]';
         else if (n.tagName === 'BR') out += '\n';
@@ -49,7 +64,7 @@
     });
     return out;
   }
-  function syncFromDom() { if (editorEl) setVal(serializeNodes(editorEl.childNodes)); }
+  function syncFromDom() { if (editorEl) { guardChips(); setVal(serializeNodes(editorEl.childNodes)); } }
 
   // Re-render the DOM only when the editor mounts, the guide changes, or the
   // language changes — never on input (so the caret stays put).
@@ -204,11 +219,12 @@
     else extra = [o.name, o.title].filter(Boolean).join(' ');
     return `${base} ${extra}`.toLowerCase();
   }
+  const byName = (a, b) => pkg.name(a.id).localeCompare(pkg.name(b.id), undefined, { numeric: true, sensitivity: 'base' });
   const refCandidates = $derived.by(() => {
     const out = [];
     for (const k of ['person', 'role', 'item', 'location', 'guide', 'attachment']) {
-      const arr = k === 'person' ? pkg.people : k === 'role' ? pkg.roles : k === 'item' ? pkg.items : k === 'location' ? pkg.locations : k === 'guide' ? pkg.guides : pkg.attachments;
-      for (const o of arr || []) if (o.id !== raw.id) out.push({ id: o.id, kind: k, name: pkg.name(o.id), sub: subLabel(k, o), search: searchText(k, o) });
+      const arr = (k === 'person' ? pkg.people : k === 'role' ? pkg.roles : k === 'item' ? pkg.items : k === 'location' ? pkg.locations : k === 'guide' ? pkg.guides : pkg.attachments) || [];
+      for (const o of [...arr].sort(byName)) if (o.id !== raw.id) out.push({ id: o.id, kind: k, name: pkg.name(o.id), sub: subLabel(k, o), search: searchText(k, o) });
     }
     for (const t of pkg.allTags()) {
       const n = pkg.attachmentsWithTag(t).length;

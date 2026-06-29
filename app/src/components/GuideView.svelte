@@ -5,7 +5,7 @@
   import TrashIcon from './TrashIcon.svelte';
   import { langValue } from '../lib/package.js';
 
-  let { pkg, guide, lang, onOpen, onTag = null, editing = false, canEdit = false, onStartEditing = null, onEdit, onDelete, onToggleDraft, onContent, onAddRef, onTitle, focusTitle = false, onTitleFocused = null } = $props();
+  let { pkg, guide, lang, onOpen, onTag = null, onView = null, editing = false, canEdit = false, onStartEditing = null, onEdit, onDelete, onToggleDraft, onContent, onAddRef, onTitle, focusTitle = false, onTitleFocused = null } = $props();
 
   const shownTitle = $derived(langValue(guide.title, guide.title_i18n, lang));
 
@@ -77,7 +77,7 @@
             <p class="kbd-hint">or press <kbd>Ctrl</kbd> <kbd>E</kbd></p>
           </div>
         {:else}
-          <Prose {pkg} markdown={body} references={guide.references} {onOpen} {onTag} />
+          <Prose {pkg} markdown={body} references={guide.references} {onOpen} {onTag} {onView} />
         {/if}
       {/if}
     </article>

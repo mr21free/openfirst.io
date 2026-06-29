@@ -18,12 +18,15 @@
   function setVal(v) { onContent?.(L, v); }
 
   // ---- DOM <-> Markdown(with [[id]] tokens) ----
+  // Special, non-entity references: file tags ([[tag:slug]]) and views ([[view:map]]).
+  const special = (id) => id.startsWith('tag:') || id.startsWith('view:');
   function makeChip(id) {
     const span = document.createElement('span');
     span.className = 'refchip';
     span.setAttribute('contenteditable', 'false');
     span.dataset.refId = id;
     if (id.startsWith('tag:')) { span.classList.add('tagchip-inline'); span.textContent = id.slice(4); }
+    else if (id.startsWith('view:')) { span.classList.add('viewchip-inline'); span.textContent = id.slice(5).replace(/^./, (c) => c.toUpperCase()); }
     else span.textContent = pkg.name(id);
     return span;
   }
@@ -106,7 +109,7 @@
     let last = null;
     for (const part of (text || '').split(/(\[\[[a-z0-9_:-]+\]\])/gi)) {
       const m = part.match(/^\[\[([a-z0-9_:-]+)\]\]$/i);
-      if (m && (m[1].startsWith('tag:') || pkg.entity(m[1]))) last = frag.appendChild(makeChip(m[1]));
+      if (m && (special(m[1]) || pkg.entity(m[1]))) last = frag.appendChild(makeChip(m[1]));
       else if (part) last = frag.appendChild(document.createTextNode(part));
     }
     return { frag, last };
@@ -193,8 +196,8 @@
   // Insert an entity OR a file-tag as an atomic chip ([[id]] / [[tag:slug]]).
   // Clicking a tag chip in the reader opens Files filtered to that tag.
   function insertRef(id) {
-    if (!id.startsWith('tag:') && !pkg.entity(id)) return;
-    if (!id.startsWith('tag:')) registerRef(id);
+    if (!special(id) && !pkg.entity(id)) return;
+    if (!special(id)) registerRef(id);
     const { sel, range } = caret(); range.deleteContents();
     const frag = document.createDocumentFragment();
     const chip = makeChip(id), space = document.createTextNode(' ');
@@ -229,6 +232,10 @@
     for (const t of pkg.allTags()) {
       const n = pkg.attachmentsWithTag(t).length;
       out.push({ id: 'tag:' + t, kind: 'tag', name: '# ' + t, sub: `${n} file${n === 1 ? '' : 's'}`, search: 'tag ' + t });
+    }
+    // The Map view (where everything is) — referenceable when it has content.
+    if ((pkg.locations || []).length || (pkg.items || []).length) {
+      out.push({ id: 'view:map', kind: 'view', name: 'Map', sub: 'where everything is', search: 'map where is everything overview' });
     }
     return out;
   });
@@ -265,7 +272,7 @@
     let last = null;
     for (const part of text.split(/(\[\[[a-z0-9_:-]+\]\])/gi)) {
       const m = part.match(/^\[\[([a-z0-9_:-]+)\]\]$/i);
-      if (m && m[1].startsWith('tag:')) { last = frag.appendChild(makeChip(m[1])); }
+      if (m && special(m[1])) { last = frag.appendChild(makeChip(m[1])); }
       else if (m && pkg.entity(m[1])) { registerRef(m[1]); last = frag.appendChild(makeChip(m[1])); }
       else if (part) last = frag.appendChild(document.createTextNode(part));
     }
@@ -279,7 +286,14 @@
   // ---- "@" mention autocomplete ----
   let mention = $state(null); // { query, node, atOffset, x, y }
   let mentionIndex = $state(0);
+  let mentionPopEl = $state(null);
   const mentionOptions = $derived(mention ? filterRefs(mention.query) : []);
+  // Keep the highlighted option in view as you arrow through a long list.
+  $effect(() => {
+    if (!mention) return;
+    mentionIndex;
+    mentionPopEl?.querySelector('.refrow.on')?.scrollIntoView({ block: 'nearest' });
+  });
 
   function onEditorInput() { syncFromDom(); checkMention(); }
   function checkMention() {
@@ -299,13 +313,13 @@
     mentionIndex = 0;
   }
   function pickMention(id) {
-    if (!mention || (!pkg.entity(id) && !id.startsWith('tag:'))) return;
+    if (!mention || (!pkg.entity(id) && !special(id))) return;
     const { node, atOffset, query } = mention;
     const range = document.createRange();
     range.setStart(node, atOffset);
     range.setEnd(node, Math.min(atOffset + 1 + query.length, node.nodeValue.length));
     range.deleteContents();
-    if (!id.startsWith('tag:')) registerRef(id);
+    if (!special(id)) registerRef(id);
     const chip = makeChip(id), space = document.createTextNode(' ');
     const frag = document.createDocumentFragment();
     frag.appendChild(chip); frag.appendChild(space);
@@ -404,7 +418,7 @@
 </div>
 
 {#if mention && mentionOptions.length}
-  <div class="mentionpop" style="left:{mention.x}px; top:{mention.y}px;">
+  <div class="mentionpop" bind:this={mentionPopEl} style="left:{mention.x}px; top:{mention.y}px;">
     <div class="reflist">
       {#each mentionOptions as o, i}
         <button class="refrow" class:on={i === mentionIndex} onmousedown={(e) => { e.preventDefault(); pickMention(o.id); }}>
@@ -434,7 +448,11 @@
   .tb-ref:hover { border-color: var(--accent-deep); }
   .refpop { position: absolute; top: 36px; left: 0; z-index: 5; width: 320px; max-width: 80vw; background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18); padding: 8px; }
   .refq { width: 100%; font: inherit; font-size: 14px; border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; background: var(--paper); color: var(--ink); }
-  .reflist { max-height: 240px; overflow-y: auto; margin-top: 6px; display: flex; flex-direction: column; }
+  .reflist { max-height: 240px; overflow-y: auto; margin-top: 6px; display: flex; flex-direction: column; scrollbar-width: thin; }
+  /* Always show a slim scrollbar so it's clear when the list runs longer than the box. */
+  .reflist::-webkit-scrollbar { width: 8px; }
+  .reflist::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 4px; }
+  .reflist::-webkit-scrollbar-thumb:hover { background: var(--ink-mute); }
   .refrow { display: flex; flex-direction: column; gap: 1px; align-items: flex-start; text-align: left; padding: 7px 9px; border-radius: 7px; }
   .refrow:hover, .refrow.on { background: var(--accent-wash); }
   .mentionpop {
@@ -459,4 +477,7 @@
   .ce-edit :global(.refchip)::before { content: '#'; opacity: 0.6; }
   /* File-tag chips look like reference chips but are clearly a tag. */
   .ce-edit :global(.refchip.tagchip-inline) { background: var(--paper); border-style: dashed; }
+  /* A view reference (Map) — a solid accent pill marked with a locator, not "#". */
+  .ce-edit :global(.refchip.viewchip-inline) { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .ce-edit :global(.refchip.viewchip-inline)::before { content: '⌖'; opacity: 0.85; }
 </style>

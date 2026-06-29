@@ -785,7 +785,7 @@
           {/if}
         {/snippet}
         {#if currentGuide}
-          <GuideView {pkg} guide={currentGuide} {lang} onOpen={openEntity} onTag={openTag} {editing} canEdit={!readOnly} onStartEditing={toggleEdit} onEdit={() => editEntity(currentGuide.id)} onDelete={() => removeEntity(currentGuide.id)} onToggleDraft={() => store.toggleGuideDraft(currentGuide.id)} onContent={(l, v) => store.setGuideContent(currentGuide.id, l, v)} onAddRef={(k, id) => store.addGuideRef(currentGuide.id, k, id)} onTitle={(l, v) => store.setGuideTitle(currentGuide.id, l, v)} focusTitle={focusNewGuideTitle} onTitleFocused={() => (focusNewGuideTitle = false)} />
+          <GuideView {pkg} guide={currentGuide} {lang} onOpen={openEntity} onTag={openTag} onView={(v) => go(v)} {editing} canEdit={!readOnly} onStartEditing={toggleEdit} onEdit={() => editEntity(currentGuide.id)} onDelete={() => removeEntity(currentGuide.id)} onToggleDraft={() => store.toggleGuideDraft(currentGuide.id)} onContent={(l, v) => store.setGuideContent(currentGuide.id, l, v)} onAddRef={(k, id) => store.addGuideRef(currentGuide.id, k, id)} onTitle={(l, v) => store.setGuideTitle(currentGuide.id, l, v)} focusTitle={focusNewGuideTitle} onTitleFocused={() => (focusNewGuideTitle = false)} />
         {:else if view === 'start' && editing && pkg.guides.length === 0}
           <div class="card empty-hint">
             <span class="eyebrow">New plan</span>

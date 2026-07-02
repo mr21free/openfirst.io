@@ -6,6 +6,7 @@ dist/
 
 # Local exported / personal plan data — never version this
 OUTPUT/
+internal/
 
 # Agent state & memory, editor/OS cruft
 .claude/

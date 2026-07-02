@@ -39,21 +39,14 @@ try {
   await clickByText('Demo');
   await page.waitForFunction(() => document.body.innerText.includes('who are you'), { timeout: 8000 });
   const gateText = await page.evaluate(() => document.body.innerText);
-  ok('who-are-you gate shows owner (Miroslav Remias)', gateText.includes('Miroslav Remias'));
+  ok('who-are-you gate shows owner (John James)', gateText.includes('John James'));
   ok('gate lists an audience (Amanda)', gateText.includes('Amanda'));
 
   // Choose the primary heir
   await clickByText('Amanda');
-  await page.waitForFunction(() => document.querySelector('main h2')?.textContent.trim() === 'First steps', { timeout: 8000 });
+  await page.waitForFunction(() => /Message for Amanda/.test(document.querySelector('main h2')?.textContent || ''), { timeout: 8000 });
   const startText = await page.evaluate(() => document.querySelector('main article')?.innerText || '');
-  ok('reader shows first steps guide (EN)', startText.includes('Read Legal / practical guide') && !startText.includes('A letter to my family'));
-
-  // Switching language shows the SAME guide, translated
-  await page.select('select.lang', 'sk');
-  await page.waitForFunction(() => document.body.innerText.includes('Prvé kroky'), { timeout: 6000 });
-  ok('language switch shows the SK translation of the same guide', true);
-  await page.select('select.lang', 'en');
-  await page.waitForFunction(() => document.querySelector('main h2')?.textContent.trim() === 'First steps', { timeout: 6000 });
+  ok('reader shows Amanda her personal message first', startText.includes('Amanda,') && startText.includes('I trust you'));
 
   // Person switcher (top bar) changes who you read as
   await page.select('.sel-wrap select', '__all');
@@ -68,8 +61,8 @@ try {
   // Open the "First steps" guide — it links to other guides via explicit [[id]]
   // references, the ONLY thing that creates cross-links (plain prose never
   // auto-links). Referenced guides also show their importance inline.
-  await page.evaluate(() => [...document.querySelectorAll('nav .navlink')].find((b) => b.textContent.trim() === 'First steps')?.click());
-  await page.waitForFunction(() => document.querySelector('main h2')?.textContent.trim() === 'First steps', { timeout: 8000 });
+  await page.evaluate(() => [...document.querySelectorAll('nav .navlink')].find((b) => /First steps for Amanda/.test(b.textContent))?.click());
+  await page.waitForFunction(() => /First steps for Amanda/.test(document.querySelector('main h2')?.textContent || ''), { timeout: 8000 });
   ok('guide content renders (First steps)', true);
 
   // Cross-link: clicking an xref either opens a drawer (entity) or navigates
@@ -104,17 +97,8 @@ try {
   await page.evaluate(() => document.querySelector('.scrim')?.click());
   await page.waitForFunction(() => !document.querySelector('[role="dialog"]'), { timeout: 3000 });
 
-  // Files view collects all attachments in one place
-  await page.evaluate(() => [...document.querySelectorAll('nav .navlink-section')].find((b) => b.textContent.includes('Files'))?.click());
-  await page.waitForFunction(() => document.querySelector('main .vh')?.textContent.trim() === 'Files' && document.body.innerText.includes('companyX_shares.png'), { timeout: 6000 });
-  ok('files view lists attachments', true);
-  await page.evaluate(() => [...document.querySelectorAll('main .ulist .ulist-row')].find((x) => x.textContent.includes('companyX_shares.png'))?.querySelector('.ulist-click')?.click());
-  await page.waitForFunction(() => /attachment/i.test(document.querySelector('[role="dialog"]')?.innerText || ''), { timeout: 5000 });
-  const attachmentDrawerText = await page.evaluate(() => document.querySelector('[role="dialog"]').innerText);
-  const hasPrint = await page.evaluate(() => !!document.querySelector('[role="dialog"] [aria-label="Print"]'));
-  ok('attachment drawer opens with details', attachmentDrawerText.includes('Download') && hasPrint);
-  await page.evaluate(() => document.querySelector('.scrim')?.click());
-  await page.waitForFunction(() => !document.querySelector('[role="dialog"]'), { timeout: 3000 });
+  // The John James demo deliberately ships JSON-only, so Files is not shown.
+  ok('JSON-only demo hides the Files section', !(await page.evaluate(() => [...document.querySelectorAll('nav .navlink-section')].some((b) => b.textContent.includes('Files')))));
 
   // Locations (nested) + People views
   await clickByText('Locations');
@@ -123,7 +107,7 @@ try {
   ok('locations view renders nested (indented children)', indented);
 
   await clickByText('People');
-  await page.waitForFunction(() => document.querySelector('main .vh')?.textContent.trim() === 'People' && document.body.innerText.includes('Person G'), { timeout: 6000 });
+  await page.waitForFunction(() => document.querySelector('main .vh')?.textContent.trim() === 'People' && document.body.innerText.includes('Amanda James'), { timeout: 6000 });
   ok('people view is a unified list', true);
 
   ok('to-print section is not shown', !(await page.evaluate(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim().startsWith('To print')))));

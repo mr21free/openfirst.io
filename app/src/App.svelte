@@ -24,8 +24,20 @@
   function loadEmbeddedPlaintext(p) {
     const attachmentUrls = {};
     const blobs = new Map();
+    const mimeFor = (id, embedded) => {
+      if (embedded?.mime) return embedded.mime;
+      const att = p.data?.attachments?.find((a) => a.id === id);
+      const name = `${att?.original_filename || ''} ${att?.path || ''} ${att?.filename || ''}`.toLowerCase();
+      if (/\.mp4\b/.test(name)) return 'video/mp4';
+      if (/\.png\b/.test(name)) return 'image/png';
+      if (/\.jpe?g\b/.test(name)) return 'image/jpeg';
+      if (/\.webp\b/.test(name)) return 'image/webp';
+      if (/\.gif\b/.test(name)) return 'image/gif';
+      if (/\.pdf\b/.test(name)) return 'application/pdf';
+      return att?.mime || '';
+    };
     for (const [id, a] of Object.entries(p.attachments || {})) {
-      const blob = new Blob([base64ToBytes(a.b64)], { type: a.mime || '' });
+      const blob = new Blob([base64ToBytes(a.b64)], { type: mimeFor(id, a) });
       blobs.set(id, blob);
       attachmentUrls[id] = URL.createObjectURL(blob);
     }
@@ -115,8 +127,18 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
     if (!d?.data) return;
     const attachmentUrls = {};
     const blobs = new Map();
+    const mimeFor = (id) => {
+      const att = d.data?.attachments?.find((a) => a.id === id);
+      const name = `${att?.original_filename || ''} ${att?.path || ''} ${att?.filename || ''}`.toLowerCase();
+      if (/\.mp4\b/.test(name)) return 'video/mp4';
+      return att?.mime || '';
+    };
     for (const a of d.attachments || []) {
-      if (a.blob) { blobs.set(a.id, a.blob); attachmentUrls[a.id] = URL.createObjectURL(a.blob); }
+      if (a.blob) {
+        const blob = a.blob.type ? a.blob : a.blob.slice(0, a.blob.size, mimeFor(a.id));
+        blobs.set(a.id, blob);
+        attachmentUrls[a.id] = URL.createObjectURL(blob);
+      }
     }
     store.load({ data: d.data, attachmentUrls, blobs });
     store.startEditing();

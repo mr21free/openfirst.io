@@ -2,77 +2,104 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://inheritance.tools/schema/inheritance-package/v1",
   "title": "Inheritance Package",
-  "description": "Open, human-readable source format for a local-first inheritance plan. A property graph of People, Locations, Items, Guides, Folders and Attachments. Designed to be read by humans (plain JSON) and by any compatible reader app, and to remain understandable for 10+ years with no server, account, or proprietary runtime. By default the package is a MAP of where secrets live and how to combine them; raw secrets are stored only when an item is explicitly marked `sensitive` and carries a `secret` object.",
+  "description": "Open, human-readable source format for a local-first inheritance plan. A property graph of people, roles, locations, items, guides, guide groups, and attachments.",
   "type": "object",
   "required": ["schema", "package", "people", "locations", "items", "guides"],
   "additionalProperties": false,
   "properties": {
     "schema": {
-      "description": "Format identifier + version. Lets any future reader recognise and validate the package.",
+      "description": "Format identifier and version.",
       "const": "inheritance-package/v1"
     },
     "package": { "$ref": "#/$defs/package" },
+    "roles": { "type": "array", "items": { "$ref": "#/$defs/role" } },
     "people": { "type": "array", "items": { "$ref": "#/$defs/person" } },
     "locations": { "type": "array", "items": { "$ref": "#/$defs/location" } },
     "items": { "type": "array", "items": { "$ref": "#/$defs/item" } },
     "guides": { "type": "array", "items": { "$ref": "#/$defs/guide" } },
-    "folders": { "type": "array", "items": { "$ref": "#/$defs/folder" } },
-    "attachments": { "type": "array", "items": { "$ref": "#/$defs/attachment" } }
+    "guide_groups": { "type": "array", "items": { "$ref": "#/$defs/guideGroup" } },
+    "attachments": { "type": "array", "items": { "$ref": "#/$defs/attachment" } },
+    "readiness_checks": { "type": "array", "items": { "$ref": "#/$defs/readinessCheck" } },
+    "readiness_runs": { "type": "array", "items": { "$ref": "#/$defs/readinessRun" } },
+    "folders": {
+      "type": "array",
+      "description": "Legacy import compatibility only. Current packages should use guide_groups.",
+      "items": { "$ref": "#/$defs/legacyFolder" }
+    }
   },
-
   "$defs": {
     "id": {
       "type": "string",
-      "description": "Stable, human-readable identifier, e.g. 'person_b', 'loc_home_trezor_cx', 'item_seed1'.",
+      "description": "Stable, human-readable identifier, e.g. person_amanda or item_trezor.",
       "pattern": "^[a-z0-9][a-z0-9_-]*$"
     },
     "lang": {
       "type": "string",
-      "description": "BCP-47 language code, lowercase. e.g. 'en', 'sk', 'de'.",
+      "description": "BCP-47 language code, lowercase, e.g. en, sk, de.",
       "pattern": "^[a-z]{2}(-[a-z0-9]+)*$"
     },
     "date": {
       "type": "string",
-      "description": "ISO-8601 calendar date (YYYY-MM-DD). Shown to heirs as 'Last updated'.",
+      "description": "ISO-8601 calendar date (YYYY-MM-DD).",
       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
     },
     "importance": {
       "type": "string",
-      "description": "How critical this is for the heir. Shown as an accessible High/Medium/Low label (not colour alone).",
       "enum": ["high", "medium", "low"]
     },
     "order": {
       "type": "number",
-      "description": "Optional explicit sort position set by the plan author (lower = earlier). Items without `order` sort after those with one. Lets the owner choose the order people/items/locations/guides appear in."
+      "description": "Manual sort position set by the plan author."
     },
     "localizedText": {
-      "description": "A string keyed by language code. Keys must appear in package.languages.",
       "type": "object",
       "minProperties": 1,
       "additionalProperties": { "type": "string" }
     },
-
     "package": {
       "type": "object",
       "required": ["id", "title", "updated", "languages", "default_language"],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "description": "Unique package id (UUID recommended)." },
-        "title": { "type": "string", "description": "Human title, e.g. 'Inheritance plan of Person A'." },
-        "owner_id": { "$ref": "#/$defs/id", "description": "References the person with role 'owner'." },
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "owner_id": {
+          "$ref": "#/$defs/id",
+          "description": "The single person who owns/prepared the plan."
+        },
         "created": { "$ref": "#/$defs/date" },
-        "updated": { "$ref": "#/$defs/date", "description": "Date of the most recent change to the whole package." },
+        "updated": { "$ref": "#/$defs/date" },
         "languages": {
           "type": "array",
-          "description": "All languages used anywhere in this package.",
           "items": { "$ref": "#/$defs/lang" },
           "minItems": 1
         },
         "default_language": { "$ref": "#/$defs/lang" },
+        "primary_person_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "map_audience_roles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Roles allowed to see the Map. Empty or missing means everyone can see it."
+        },
+        "map_audience_person_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/id" },
+          "description": "Specific people allowed to see the Map. Empty or missing means everyone can see it."
+        },
+        "notes": { "type": "string" },
+        "demo_story": { "type": "string" }
+      }
+    },
+    "role": {
+      "type": "object",
+      "required": ["id", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
         "notes": { "type": "string" }
       }
     },
-
     "contact": {
       "type": "object",
       "required": ["method", "value"],
@@ -86,45 +113,31 @@
         "note": { "type": "string" }
       }
     },
-
     "person": {
       "type": "object",
-      "required": ["id", "name", "roles"],
+      "required": ["id", "name"],
       "additionalProperties": false,
       "properties": {
         "id": { "$ref": "#/$defs/id" },
-        "name": { "type": "string", "description": "Full / legal name." },
-        "nickname": { "type": "string", "description": "Familiar name shown in lists and guides instead of the legal name, when present." },
-        "display_as": { "type": "string", "description": "How the owner addresses them, e.g. 'my wife', 'Dad'." },
-        "roles": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "type": "string",
-            "enum": ["owner", "primary_heir", "helper", "beneficiary", "expert", "contact", "professional", "guardian"]
-          },
-          "description": "owner = plan author. primary_heir = the person who drives everything. helper = supports, does not act alone. beneficiary = legally inherits. expert/professional = technical or paid help. contact = person to inform. guardian = cares for dependents."
-        },
-        "languages": { "type": "array", "items": { "$ref": "#/$defs/lang" } },
-        "country": { "type": "string" },
-        "location_id": { "$ref": "#/$defs/id", "description": "Where this person is based, if relevant." },
+        "name": { "type": "string" },
+        "nickname": { "type": "string" },
+        "display_as": { "type": "string" },
+        "roles": { "type": "array", "items": { "type": "string" } },
+        "readiness_score": { "type": "string" },
         "contacts": { "type": "array", "items": { "$ref": "#/$defs/contact" } },
         "verification": {
           "type": "object",
-          "description": "A control question/answer the heir can use to confirm a person's identity (anti-scam).",
           "additionalProperties": false,
           "properties": {
             "question": { "type": "string" },
             "answer_hint": { "type": "string" }
           }
         },
-        "boundaries": { "type": "string", "description": "Role limits, e.g. 'helper only — never acts alone unless the primary heir is unavailable'." },
         "importance": { "$ref": "#/$defs/importance" },
-        "order": { "$ref": "#/$defs/order" },
-        "notes": { "type": "string" }
+        "notes": { "type": "string" },
+        "sensitive": { "type": "boolean" }
       }
     },
-
     "location": {
       "type": "object",
       "required": ["id", "name"],
@@ -132,18 +145,20 @@
       "properties": {
         "id": { "$ref": "#/$defs/id" },
         "name": { "type": "string" },
-        "parent_id": { "$ref": "#/$defs/id", "description": "Containing location. Arbitrary depth — this is how nesting works." },
-        "access_person_ids": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "Who can access this location." },
-        "depends_on_ids": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "Items this location depends on, such as keys, codes, documents or devices needed to access it." },
-        "importance": { "$ref": "#/$defs/importance" },
+        "parent_id": { "$ref": "#/$defs/id" },
+        "access_person_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "depends_on_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/id" },
+          "description": "Items this location depends on, such as keys, codes, documents, or devices."
+        },
         "order": { "$ref": "#/$defs/order" },
-        "notes": { "type": "string" }
+        "notes": { "type": "string" },
+        "importance": { "$ref": "#/$defs/importance" }
       }
     },
-
     "secret": {
       "type": "object",
-      "description": "A raw secret value. Present ONLY when the owner deliberately chose to store it (the item must also be sensitive=true). Best practice is to keep these out of the package and store a pointer instead.",
       "required": ["kind", "value"],
       "additionalProperties": false,
       "properties": {
@@ -152,126 +167,159 @@
         "note": { "type": "string" }
       }
     },
-
     "item": {
-      "type": "object",
-      "description": "An asset, credential, device, document or piece of infrastructure. `properties` is a free-form, type-specific bag so different item types can carry different fields.",
-      "required": ["id", "name", "type"],
-      "additionalProperties": false,
-      "properties": {
-        "id": { "$ref": "#/$defs/id" },
-        "name": { "type": "string" },
-        "type": {
-          "type": "string",
-          "enum": [
-            "password_record",
-            "btc_seed",
-            "btc_passphrase",
-            "btc_wallet",
-            "hw_device",
-            "twofa",
-            "secret_split_part",
-            "account_investment",
-            "bank_account",
-            "digital_service",
-            "recovery_artifact",
-            "legal_document",
-            "sim_card",
-            "other"
-          ]
-        },
-        "importance": { "$ref": "#/$defs/importance" },
-        "description": { "type": "string" },
-        "location_ids": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "Where it lives. Multiple = redundant copies (e.g. duplicated across countries)." },
-        "container_ids": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "Container ITEM ids this one is stored inside (e.g. a PIN kept inside a password manager) — the digital counterpart of location_ids. Many-to-many." },
-        "access_person_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
-        "depends_on_ids": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "Other items this one needs (e.g. an account depends on the SIM for 2FA; a multisig wallet depends on its seeds). Powers single-point-of-failure / circular-dependency checks." },
-        "guide_ids": { "type": "array", "items": { "$ref": "#/$defs/id" }, "description": "Guides that explain how to use / recover this item." },
-        "attachment_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
-        "sensitive": { "type": "boolean", "default": false, "description": "If true, this item may contain a raw secret and should be visually flagged + handled with extra care." },
-        "order": { "$ref": "#/$defs/order" },
-        "secret": { "$ref": "#/$defs/secret" },
-        "properties": {
-          "type": "object",
-          "description": "Type-specific fields, e.g. {login, url, price, notes} for a password_record; {wallet_role, device, checksum} for a btc_seed; {value, access, next_steps} for an account_investment.",
-          "additionalProperties": true
-        }
-      },
-      "allOf": [
-        {
-          "if": { "properties": { "secret": { "type": "object" } }, "required": ["secret"] },
-          "then": { "properties": { "sensitive": { "const": true } }, "required": ["sensitive"] }
-        }
-      ]
-    },
-
-    "guide": {
-      "type": "object",
-      "description": "Human-readable instructions. Content is Markdown, keyed per language. Print-type guides render to the /print folder.",
-      "required": ["id", "title", "type", "content"],
-      "additionalProperties": false,
-      "properties": {
-        "id": { "$ref": "#/$defs/id" },
-        "title": { "type": "string" },
-        "type": {
-          "type": "string",
-          "enum": ["start_here", "topic", "print_guide", "envelope", "labels"]
-        },
-        "folder_id": { "$ref": "#/$defs/id" },
-        "group": {
-          "type": "string",
-          "description": "Optional single menu group/category for this guide, e.g. 'bitcoin'. Guides with the same group are displayed together."
-        },
-        "audience_roles": {
-          "type": "array",
-          "items": { "type": "string", "enum": ["owner", "primary_heir", "helper", "beneficiary", "expert", "contact", "professional", "guardian"] }
-        },
-        "audience_person_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
-        "updated": { "$ref": "#/$defs/date" },
-        "languages": { "type": "array", "items": { "$ref": "#/$defs/lang" } },
-        "content": { "$ref": "#/$defs/localizedText", "description": "Markdown body keyed by language code." },
-        "references": {
-          "type": "object",
-          "description": "Cross-links this guide makes, so a reader can render clickable references and detect dangling links.",
-          "additionalProperties": false,
-          "properties": {
-            "person_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
-            "item_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
-            "location_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
-            "guide_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } }
-          }
-        },
-        "importance": { "$ref": "#/$defs/importance" },
-        "order": { "$ref": "#/$defs/order" }
-      }
-    },
-
-    "folder": {
       "type": "object",
       "required": ["id", "name"],
       "additionalProperties": false,
       "properties": {
         "id": { "$ref": "#/$defs/id" },
         "name": { "type": "string" },
-        "parent_id": { "$ref": "#/$defs/id" },
-        "is_print": { "type": "boolean", "default": false, "description": "True for the special PRINT group (artifacts meant to be printed)." },
-        "description": { "type": "string" }
+        "importance": { "$ref": "#/$defs/importance" },
+        "description": { "type": "string" },
+        "notes": { "type": "string" },
+        "price": { "type": ["string", "number", "boolean"] },
+        "location_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "container_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "access_person_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "depends_on_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "guide_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "attachment_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "sensitive": { "type": "boolean", "default": false },
+        "secret": { "$ref": "#/$defs/secret" },
+        "properties": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "type": {
+          "type": "string",
+          "description": "Legacy import compatibility only. Current UI does not expose item type."
+        },
+        "order": {
+          "$ref": "#/$defs/order",
+          "description": "Legacy import compatibility only. Current item ordering is list-driven."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["secret"] },
+          "then": { "properties": { "sensitive": { "const": true } }, "required": ["sensitive"] }
+        }
+      ]
+    },
+    "guide": {
+      "type": "object",
+      "required": ["id", "title", "content"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": { "type": "string" },
+        "group": { "type": "string" },
+        "order": { "$ref": "#/$defs/order" },
+        "importance": { "$ref": "#/$defs/importance" },
+        "draft": { "type": "boolean" },
+        "audience_roles": { "type": "array", "items": { "type": "string" } },
+        "audience_person_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "updated": { "$ref": "#/$defs/date" },
+        "content": { "$ref": "#/$defs/localizedText" },
+        "references": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "person_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+            "item_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+            "location_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+            "guide_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+            "attachment_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } }
+          }
+        },
+        "folder_id": {
+          "$ref": "#/$defs/id",
+          "description": "Legacy import compatibility only. Current packages should use group."
+        }
       }
     },
-
+    "guideGroup": {
+      "type": "object",
+      "required": ["id", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "order": { "$ref": "#/$defs/order" }
+      }
+    },
+    "legacyFolder": {
+      "type": "object",
+      "required": ["id", "name"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "parent_id": { "$ref": "#/$defs/id" }
+      }
+    },
     "attachment": {
       "type": "object",
-      "description": "An original file (image, PDF...) shipped alongside the package and referenced by relative path.",
       "required": ["id", "filename", "path"],
       "additionalProperties": false,
       "properties": {
         "id": { "$ref": "#/$defs/id" },
         "filename": { "type": "string" },
-        "path": { "type": "string", "description": "Relative path within the package, e.g. 'attachments/bitcoin/multisig_descriptor.png'." },
+        "original_filename": { "type": "string" },
+        "path": { "type": "string" },
         "mime": { "type": "string" },
         "description": { "type": "string" },
         "item_id": { "$ref": "#/$defs/id" },
         "guide_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "readinessCheck": {
+      "type": "object",
+      "required": ["id", "title"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": { "type": "string" },
+        "importance": { "$ref": "#/$defs/importance" },
+        "scope": { "type": "string", "enum": ["external", "internal"], "default": "external" },
+        "question": { "type": "string" },
+        "expected": { "type": "string" },
+        "owner_notes": { "type": "string" },
+        "created": { "$ref": "#/$defs/date" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "person_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "role_ids": { "type": "array", "items": { "type": "string" } },
+        "related_person_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "related_item_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "related_location_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "related_guide_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "related_attachment_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } }
+      }
+    },
+    "readinessRun": {
+      "type": "object",
+      "required": ["id", "date"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "person_id": { "$ref": "#/$defs/id" },
+        "date": { "$ref": "#/$defs/date" },
+        "started_at": { "type": "string" },
+        "submitted_at": { "type": "string" },
+        "duration_ms": { "type": "number" },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["check_id"],
+            "additionalProperties": false,
+            "properties": {
+              "check_id": { "$ref": "#/$defs/id" },
+              "status": { "type": "string", "enum": ["pass", "fail", "blocked", "not_sure", ""] },
+              "notes": { "type": "string" }
+            }
+          }
+        }
       }
     }
   }

@@ -286,11 +286,11 @@
   }
   .lock-ico { font-size: 22px; }
   .unlock h3 { font-size: 19px; }
-  .hint { background: var(--accent-wash); border-radius: 8px; padding: 8px 12px; }
+  .hint { background: var(--accent-wash); border-radius: 0; padding: 8px 12px; }
   .pw-row { display: flex; gap: 8px; }
   .pw {
     flex: 1; font: inherit; font-size: 15px;
-    border: 1px solid var(--rule); border-radius: 10px; padding: 11px 14px;
+    border: 1px solid var(--rule); border-radius: 0; padding: 11px 14px;
     background: var(--paper); color: var(--ink);
   }
   .pw:focus { outline: none; border-color: var(--accent-deep); }

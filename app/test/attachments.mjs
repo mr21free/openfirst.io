@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { zipSync } from 'fflate';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FILE = 'file://' + resolve(__dirname, '../dist/index.html');
@@ -23,20 +24,37 @@ const errs = [];
 const showEverything = (pg) => pg.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything/i.test(b.textContent))?.click());
 
 try {
-  // ---- A: inline image in the item read view (Demo has real images) ----
+  const dir = mkdtempSync(resolve(tmpdir(), 'lp-att-'));
+
+  // ---- A: inline image in the item read view ----
+  const png = Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/luz+wwAAAABJRU5ErkJggg==', 'base64'));
+  const imgPlan = {
+    schema: 'inheritance-package/v1',
+    package: { title: 'Image attachment test', languages: ['en'], default_language: 'en' },
+    people: [{ id: 'p1', name: 'Reader' }],
+    items: [{ id: 'i_img', name: 'Inline photo item', importance: 'medium', description: 'Has a photo.', attachment_ids: ['a_img'] }],
+    attachments: [{ id: 'a_img', filename: 'demo.png', path: 'attachments/demo.png', mime: 'image/png', description: 'Photo', item_ids: ['i_img'] }]
+  };
+  const imgZip = zipSync({
+    'image-package/inheritance.json': new TextEncoder().encode(JSON.stringify(imgPlan)),
+    'image-package/attachments/demo.png': png
+  });
+  const imgZipPath = resolve(dir, 'image-package.zip');
+  writeFileSync(imgZipPath, imgZip);
+
   const page = await browser.newPage();
   page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(FILE, { waitUntil: 'load' });
-  await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Demo'), { timeout: 8000 });
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Demo')?.click());
-  await page.waitForFunction(() => /who are you/i.test(document.body.innerText), { timeout: 8000 });
+  await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => /open existing plan/i.test(b.textContent)), { timeout: 8000 });
+  await (await page.$('input[type=file]:not([webkitdirectory])')).uploadFile(imgZipPath);
+  await page.waitForFunction(() => /who are you/i.test(document.body.innerText) || !!document.querySelector('nav .navlink-section'), { timeout: 8000 });
   await showEverything(page);
   await page.waitForFunction(() => !!document.querySelector('nav .navlink-section'), { timeout: 8000 });
   await page.evaluate(() => [...document.querySelectorAll('nav .navlink-section')].find((b) => /Items/.test(b.textContent))?.click());
   await page.waitForFunction(() => document.querySelector('main .vh')?.textContent.trim() === 'Items', { timeout: 6000 });
   ok('items list flags an item that has attachments (icon)', await page.evaluate(() =>
-    !![...document.querySelectorAll('main .ulist-row')].find((r) => /PUGARI/i.test(r.textContent))?.querySelector('.clip-ico')));
-  await page.evaluate(() => [...document.querySelectorAll('main .ulist .ulist-click')].find((r) => /PUGARI/i.test(r.textContent))?.click());
+    !![...document.querySelectorAll('main .ulist-row')].find((r) => /Inline photo item/i.test(r.textContent))?.querySelector('.clip-ico')));
+  await page.evaluate(() => [...document.querySelectorAll('main .ulist .ulist-click')].find((r) => /Inline photo item/i.test(r.textContent))?.click());
   await page.waitForFunction(() => !!document.querySelector('.drawer .dbody'), { timeout: 6000 });
   await pause();
   ok('item detail gives importance a section title', await page.evaluate(() => {
@@ -81,7 +99,6 @@ try {
       { id: 'a_pdf', filename: 'will.pdf', mime: 'application/pdf' } // folded onto i_legacy on load
     ]
   };
-  const dir = mkdtempSync(resolve(tmpdir(), 'lp-att-'));
   const fpath = resolve(dir, 'plan.json');
   writeFileSync(fpath, JSON.stringify(fixture));
 

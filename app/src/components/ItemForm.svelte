@@ -1,5 +1,6 @@
 <script>
   import EntityPicker from './EntityPicker.svelte';
+  import GuideContentEditor from './GuideContentEditor.svelte';
 
   let { pkg, raw, onDelete } = $props();
   const SECRET_KINDS = ['password', 'passphrase', 'pin', 'seed', 'key', 'code', 'other'];
@@ -18,7 +19,9 @@
   <div class="frm">
     <label class="f"><span class="lbl">Name</span><input bind:this={firstInput} bind:value={raw.name} placeholder="e.g. Password Manager" /></label>
     <label class="f"><span class="lbl">Description</span><textarea rows="2" bind:value={raw.description}></textarea></label>
-    <label class="f"><span class="lbl">Notes</span><textarea rows="2" bind:value={raw.notes}></textarea></label>
+    <div class="f"><span class="lbl">Notes</span>
+      <GuideContentEditor {pkg} {raw} compact value={raw.notes || ''} onValue={(v) => (raw.notes = v)} placeholder={'Notes — format text, or type “@” to mention a person, item or location.'} />
+    </div>
     <div class="grid2">
       <label class="f"><span class="lbl">Importance</span>
         <select bind:value={raw.importance}><option value={undefined}>—</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>

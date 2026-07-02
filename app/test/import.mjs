@@ -14,10 +14,10 @@ const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const results = [];
 const ok = (n, c) => results.push([c ? 'PASS' : 'FAIL', n]);
 
-// The same minimal example printed in docs/ai-builder-prompt.md.
+// The same minimal example printed in public/ai-builder-prompt.md.
 const example = {
   schema: 'inheritance-package/v1',
-  package: { id: 'plan-1', title: 'My inheritance plan', owner_id: 'person_me', created: '2026-01-01', updated: '2026-01-01', languages: ['en'], default_language: 'en' },
+  package: { id: 'plan-1', title: 'My inheritance plan', owner_id: 'person_me', created: '2026-01-01', updated: '2026-01-01', languages: ['en'], default_language: 'en', map_audience_roles: ['primary_heir'] },
   roles: [{ id: 'owner', name: 'Owner' }, { id: 'primary_heir', name: 'Primary heir' }],
   people: [{ id: 'person_me', name: 'Me', roles: ['owner'] }, { id: 'person_spouse', name: 'Jane', roles: ['primary_heir'] }],
   locations: [{ id: 'loc_country', name: 'Country X', order: 0 }, { id: 'loc_home', name: 'Home safe', parent_id: 'loc_country', order: 0 }],

@@ -1,5 +1,5 @@
-// Primary recipients lead the "who are you?" gate (and people pickers), above a
-// divider, then everyone else. Exercised on the Demo (primary = Amanda).
+// Primary recipients lead the "who are you?" gate, above a divider, then
+// everyone else. Exercised on the Demo (primary = Amanda).
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -27,17 +27,17 @@ try {
     const kids = [...document.querySelector('.gate-people').children];
     return kids[1]?.classList.contains('gate-sep') && document.querySelectorAll('.gate-people .gate-sep').length === 1;
   }));
-  ok('the rest follow after the divider', order.length > 2 && order.includes('Dad'));
+  ok('the rest follow after the divider', order.length > 2 && order.includes('John'));
 
   // Edit mode → a guide's audience picker lists the primary recipient first.
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything/i.test(b.textContent))?.click());
   await page.waitForFunction(() => !!document.querySelector('nav .navlink-section'), { timeout: 8000 });
   await page.evaluate(() => document.querySelector('.plan-edit')?.click()); await pause(400);
-  // Settings no longer offers an owner field, but offers primary recipients.
+  // Settings exposes both the explicit plan owner and primary recipients.
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => (b.getAttribute('aria-label') || '') === 'Settings')?.click());
   await page.waitForFunction(() => !!document.querySelector('[role="dialog"] .frm'), { timeout: 6000 });
   const labels = await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] .frm .lbl')].map((l) => l.textContent.trim().toLowerCase()));
-  ok('Settings drops "Owner of the plan"', !labels.some((l) => l.includes('owner')));
+  ok('Settings offers "Plan owner"', labels.some((l) => l.includes('plan owner')));
   ok('Settings offers "Primary recipients"', labels.some((l) => l.includes('primary recipients')));
 
   ok('no runtime errors', true);

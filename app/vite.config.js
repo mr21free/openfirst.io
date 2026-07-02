@@ -8,7 +8,7 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 // the network for its client + HMR).
 const PROD_CSP =
   "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; " +
-  "font-src data:; img-src 'self' data: blob:; connect-src 'none'; " +
+  "font-src data:; img-src 'self' data: blob:; media-src data: blob:; frame-src data: blob:; connect-src 'none'; " +
   "base-uri 'none'; form-action 'none'";
 
 function injectCspOnBuild() {

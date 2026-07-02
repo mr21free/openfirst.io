@@ -1,33 +1,70 @@
 <script>
-  import { untrack } from 'svelte';
+  import { tick, untrack } from 'svelte';
+  import { iconInner } from '../lib/icons.js';
 
   // Guide content editor (Markdown stored as text). References are embedded as
   // [[id]] tokens, shown here as atomic, non-editable PILLS — the Contentful /
   // Kontent / Frontify "embedded entry" pattern. A toolbar, searchable reference
   // insertion and fullscreen. The language follows the top language selector.
-  // `raw` is read-only here (the live guide); all writes go up via callbacks so
+  // `raw` is read-only here (the live entity); all writes go up via callbacks so
   // this editor never mutates a prop owned by the store.
-  let { pkg, raw, lang = null, onContent, onAddRef } = $props();
+  //
+  // Two modes:
+  //  • Guide mode (default): the per-language guide body — seeds from
+  //    raw.content[L] and writes via onContent(L, markdown) + onAddRef.
+  //  • Plain mode: any single markdown string (e.g. an object's Notes) — pass
+  //    `value` + `onValue`; language and reference tracking don't apply.
+  let { pkg, raw, lang = null, onContent, onAddRef, onUploadMedia = null, value = null, onValue = null, compact = false, placeholder = null } = $props();
 
+  const plain = $derived(typeof onValue === 'function');
+  const GUIDE_PH = '## Heading\n\nWrite the guide here. Type “@” to mention a person, item or location — or use “+ Reference”.';
   const L = $derived((lang && (pkg.languages || []).includes(lang)) ? lang : (pkg.lang || (pkg.languages || ['en'])[0]));
   let full = $state(false);
   let refOpen = $state(false);
   let refSearch = $state('');
   let editorEl = $state(null);
+  let mediaInput = $state(null);
+  let savedRange = null;
 
-  function setVal(v) { onContent?.(L, v); }
+  function setVal(v) { if (plain) onValue(v); else onContent?.(L, v); }
 
   // ---- DOM <-> Markdown(with [[id]] tokens) ----
-  // Special, non-entity references: file tags ([[tag:slug]]) and views ([[view:map]]).
-  const special = (id) => id.startsWith('tag:') || id.startsWith('view:');
+  // Special, non-entity references: file tags ([[tag:slug]]), views
+  // ([[view:map]]) and inline media attachments ([[img:attachment_id]],
+  // [[video:attachment_id]]).
+  const IMG_EXT = /\.(png|jpe?g|gif|webp|avif|bmp|svg|heic|tiff?)$/i;
+  const VIDEO_EXT = /\.mp4$/i;
+  const imageId = (id) => /^img:([a-z0-9_-]+)$/i.exec(id)?.[1] || null;
+  const videoId = (id) => /^video:([a-z0-9_-]+)$/i.exec(id)?.[1] || null;
+  const isImageAttachment = (id) => {
+    const ent = pkg.entity(id);
+    const att = ent?.kind === 'attachment' ? ent.obj : null;
+    return !!att && ((att.mime || '').startsWith('image/') || IMG_EXT.test(att.path || att.filename || ''));
+  };
+  const isVideoAttachment = (id) => {
+    const ent = pkg.entity(id);
+    const att = ent?.kind === 'attachment' ? ent.obj : null;
+    return !!att && ((att.mime || '').toLowerCase() === 'video/mp4' || VIDEO_EXT.test(att.path || att.filename || ''));
+  };
+  const special = (id) => id.startsWith('tag:') || id.startsWith('view:') || id.startsWith('img:') || id.startsWith('video:');
+  const validSpecial = (id) => id.startsWith('tag:') || id.startsWith('view:') || (!!imageId(id) && isImageAttachment(imageId(id))) || (!!videoId(id) && isVideoAttachment(videoId(id)));
+  // A small leading icon per chip type, so you can tell a person from an item at
+  // a glance while editing. (Shared icon set; inner markup only.)
+  const chipIconSvg = (kind) =>
+    `<svg class="chip-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconInner(kind)}</svg>`;
   function makeChip(id) {
     const span = document.createElement('span');
     span.className = 'refchip';
     span.setAttribute('contenteditable', 'false');
     span.dataset.refId = id;
-    if (id.startsWith('tag:')) { span.classList.add('tagchip-inline'); span.textContent = id.slice(4); }
-    else if (id.startsWith('view:')) { span.classList.add('viewchip-inline'); span.textContent = id.slice(5).replace(/^./, (c) => c.toUpperCase()); }
-    else span.textContent = pkg.name(id);
+    let kind, label;
+    if (id.startsWith('tag:')) { span.classList.add('tagchip-inline'); kind = 'tag'; label = id.slice(4); }
+    else if (id.startsWith('view:')) { span.classList.add('viewchip-inline'); kind = 'view'; label = id.slice(5).replace(/^./, (c) => c.toUpperCase()); }
+    else if (imageId(id)) { span.classList.add('imgchip-inline'); kind = 'image'; label = `Image: ${pkg.name(imageId(id))}`; }
+    else if (videoId(id)) { span.classList.add('videochip-inline'); kind = 'video'; label = `Video: ${pkg.name(videoId(id))}`; }
+    else { kind = pkg.entity(id)?.kind || 'item'; label = pkg.name(id); }
+    span.insertAdjacentHTML('afterbegin', chipIconSvg(kind)); // controlled SVG only
+    span.appendChild(document.createTextNode(label));         // user text stays text
     return span;
   }
   function renderDom(text) {
@@ -36,7 +73,8 @@
     const parts = (text || '').split(/(\[\[[a-z0-9_:-]+\]\])/gi);
     for (const part of parts) {
       const m = part.match(/^\[\[([a-z0-9_:-]+)\]\]$/i);
-      if (m) editorEl.appendChild(makeChip(m[1]));
+      if (m && (validSpecial(m[1]) || pkg.entity(m[1]))) editorEl.appendChild(makeChip(m[1]));
+      else if (m) editorEl.appendChild(document.createTextNode(part));
       else if (part) editorEl.appendChild(document.createTextNode(part));
     }
     guardChips();
@@ -74,7 +112,7 @@
   $effect(() => {
     const el = editorEl, a = L, id = raw?.id;
     if (!el) return;
-    renderDom(untrack(() => (id, raw?.content?.[a]) || ''));
+    renderDom(untrack(() => (plain ? (value || '') : ((id, raw?.content?.[a]) || ''))));
   });
 
   // ---- caret helpers ----
@@ -90,6 +128,16 @@
   function placeAfter(node, sel) {
     const r = document.createRange(); r.setStartAfter(node); r.collapse(true);
     sel.removeAllRanges(); sel.addRange(r);
+  }
+  function saveCaret() {
+    const sel = window.getSelection();
+    if (sel.rangeCount && editorEl?.contains(sel.anchorNode)) savedRange = sel.getRangeAt(0).cloneRange();
+  }
+  function restoreCaret() {
+    if (!savedRange) return;
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedRange);
   }
   function insertText(str) {
     const { sel, range } = caret(); range.deleteContents();
@@ -109,7 +157,7 @@
     let last = null;
     for (const part of (text || '').split(/(\[\[[a-z0-9_:-]+\]\])/gi)) {
       const m = part.match(/^\[\[([a-z0-9_:-]+)\]\]$/i);
-      if (m && (special(m[1]) || pkg.entity(m[1]))) last = frag.appendChild(makeChip(m[1]));
+      if (m && (validSpecial(m[1]) || pkg.entity(m[1]))) last = frag.appendChild(makeChip(m[1]));
       else if (part) last = frag.appendChild(document.createTextNode(part));
     }
     return { frag, last };
@@ -188,6 +236,11 @@
 
   const REF_KEY = { person: 'person_ids', role: 'role_ids', item: 'item_ids', location: 'location_ids', guide: 'guide_ids', attachment: 'attachment_ids' };
   function registerRef(id) {
+    const media = imageId(id) || videoId(id);
+    if (media) {
+      onAddRef?.('attachment_ids', media);
+      return;
+    }
     const ent = pkg.entity(id);
     const key = ent && REF_KEY[ent.kind];
     if (!key) return;
@@ -196,14 +249,28 @@
   // Insert an entity OR a file-tag as an atomic chip ([[id]] / [[tag:slug]]).
   // Clicking a tag chip in the reader opens Files filtered to that tag.
   function insertRef(id) {
-    if (!special(id) && !pkg.entity(id)) return;
-    if (!special(id)) registerRef(id);
+    if (!validSpecial(id) && !pkg.entity(id)) return;
+    if (!id.startsWith('tag:') && !id.startsWith('view:')) registerRef(id);
     const { sel, range } = caret(); range.deleteContents();
     const frag = document.createDocumentFragment();
     const chip = makeChip(id), space = document.createTextNode(' ');
     frag.appendChild(chip); frag.appendChild(space); range.insertNode(frag);
     placeAfter(space, sel); syncFromDom();
     refOpen = false; refSearch = '';
+  }
+
+  async function onMediaPicked(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    const isImage = !!file && ((file.type || '').startsWith('image/') || IMG_EXT.test(file.name || ''));
+    const isVideo = !!file && ((file.type || '').toLowerCase() === 'video/mp4' || VIDEO_EXT.test(file.name || ''));
+    if (!file || (!isImage && !isVideo) || !onUploadMedia) return;
+    const result = await onUploadMedia(file);
+    if (result?.id && result?.kind) {
+      await tick();
+      restoreCaret();
+      insertRef(result.kind + ':' + result.id);
+    }
   }
 
   // Secondary line in the reference list — only meaningful detail, never a
@@ -218,9 +285,25 @@
     const base = pkg.name(o.id);
     let extra = '';
     if (kind === 'person') extra = [o.nickname, o.name, o.display_as, ...(o.roles || []).map((r) => pkg.roleLabel(r))].filter(Boolean).join(' ');
-    else if (kind === 'attachment') extra = [o.filename, o.description].filter(Boolean).join(' ');
+    else if (kind === 'attachment') extra = [o.filename, o.path, o.mime, o.description].filter(Boolean).join(' ');
     else extra = [o.name, o.title].filter(Boolean).join(' ');
     return `${base} ${extra}`.toLowerCase();
+  }
+  function imageSearchAliases(a) {
+    const path = a.path || '';
+    const ext = (path || a.filename || '').match(/\.([a-z0-9]+)$/i)?.[1] || '';
+    const name = pkg.name(a.id);
+    return [
+      `img:${name}`,
+      ext ? `img:${name}.${ext}` : '',
+      path.split('/').pop() || '',
+      ext
+    ].filter(Boolean).join(' ');
+  }
+  function videoSearchAliases(a) {
+    const path = a.path || '';
+    const name = pkg.name(a.id);
+    return [`video:${name}`, `video:${name}.mp4`, path.split('/').pop() || '', 'mp4'].filter(Boolean).join(' ');
   }
   const byName = (a, b) => pkg.name(a.id).localeCompare(pkg.name(b.id), undefined, { numeric: true, sensitivity: 'base' });
   const refCandidates = $derived.by(() => {
@@ -228,6 +311,24 @@
     for (const k of ['person', 'role', 'item', 'location', 'guide', 'attachment']) {
       const arr = (k === 'person' ? pkg.people : k === 'role' ? pkg.roles : k === 'item' ? pkg.items : k === 'location' ? pkg.locations : k === 'guide' ? pkg.guides : pkg.attachments) || [];
       for (const o of [...arr].sort(byName)) if (o.id !== raw.id) out.push({ id: o.id, kind: k, name: pkg.name(o.id), sub: subLabel(k, o), search: searchText(k, o) });
+    }
+    for (const a of [...(pkg.attachments || [])].filter((att) => isImageAttachment(att.id)).sort(byName)) {
+      out.push({
+        id: 'img:' + a.id,
+        kind: 'image',
+        name: 'Image: ' + pkg.name(a.id),
+        sub: a.description || a.filename || '',
+        search: `${imageSearchAliases(a)} image ${searchText('attachment', a)}`.toLowerCase()
+      });
+    }
+    for (const a of [...(pkg.attachments || [])].filter((att) => isVideoAttachment(att.id)).sort(byName)) {
+      out.push({
+        id: 'video:' + a.id,
+        kind: 'video',
+        name: 'Video: ' + pkg.name(a.id),
+        sub: a.description || a.filename || '',
+        search: `${videoSearchAliases(a)} video ${searchText('attachment', a)}`.toLowerCase()
+      });
     }
     for (const t of pkg.allTags()) {
       const n = pkg.attachmentsWithTag(t).length;
@@ -272,7 +373,7 @@
     let last = null;
     for (const part of text.split(/(\[\[[a-z0-9_:-]+\]\])/gi)) {
       const m = part.match(/^\[\[([a-z0-9_:-]+)\]\]$/i);
-      if (m && special(m[1])) { last = frag.appendChild(makeChip(m[1])); }
+      if (m && validSpecial(m[1])) { if (imageId(m[1]) || videoId(m[1])) registerRef(m[1]); last = frag.appendChild(makeChip(m[1])); }
       else if (m && pkg.entity(m[1])) { registerRef(m[1]); last = frag.appendChild(makeChip(m[1])); }
       else if (part) last = frag.appendChild(document.createTextNode(part));
     }
@@ -302,7 +403,7 @@
     const range = sel.getRangeAt(0);
     const node = range.startContainer;
     if (node.nodeType !== 3) { mention = null; return; }
-    const m = node.nodeValue.slice(0, range.startOffset).match(/(?:^|\s)@([\p{L}\p{N}_-]*)$/u);
+    const m = node.nodeValue.slice(0, range.startOffset).match(/(?:^|\s)@([\p{L}\p{N}_:.-]*)$/u);
     if (!m) { mention = null; return; }
     const rect = range.getBoundingClientRect();
     const er = editorEl.getBoundingClientRect();
@@ -313,13 +414,13 @@
     mentionIndex = 0;
   }
   function pickMention(id) {
-    if (!mention || (!pkg.entity(id) && !special(id))) return;
+    if (!mention || (!pkg.entity(id) && !validSpecial(id))) return;
     const { node, atOffset, query } = mention;
     const range = document.createRange();
     range.setStart(node, atOffset);
     range.setEnd(node, Math.min(atOffset + 1 + query.length, node.nodeValue.length));
     range.deleteContents();
-    if (!special(id)) registerRef(id);
+    if (!id.startsWith('tag:') && !id.startsWith('view:')) registerRef(id);
     const chip = makeChip(id), space = document.createTextNode(' ');
     const frag = document.createDocumentFragment();
     frag.appendChild(chip); frag.appendChild(space);
@@ -367,7 +468,10 @@
   });
 </script>
 
-<div class="ce" class:full>
+<div class="ce" class:full class:compact>
+  {#if onUploadMedia}
+    <input bind:this={mediaInput} type="file" accept="image/*,video/mp4,.mp4" hidden onchange={onMediaPicked} />
+  {/if}
   <div class="toolbar">
     <button class="tb" title="Bold" onclick={() => surround('**')}><b>B</b></button>
     <button class="tb" title="Italic" onclick={() => surround('*')}><i>I</i></button>
@@ -392,6 +496,16 @@
         <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
       </svg>
     </button>
+    {#if onUploadMedia}
+      <button class="tb" title="Upload media" aria-label="Upload media" onmousedown={(e) => { e.preventDefault(); saveCaret(); }} onclick={() => { saveCaret(); mediaInput?.click(); }}>
+        <svg class="tb-media-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="14" rx="1" />
+          <circle cx="8.5" cy="10" r="1.5" />
+          <path d="M21 16l-5-5-4 4-2-2-5 5" />
+          <path d="M13 9.5v5l4-2.5z" fill="currentColor" stroke="none" />
+        </svg>
+      </button>
+    {/if}
     <div class="refwrap">
       <button class="tb-ref" onclick={() => { refOpen = !refOpen; refSearch = ''; }}>@ Mention</button>
       {#if refOpen}
@@ -413,7 +527,7 @@
     <button class="tb tb-expand" title={full ? 'Collapse' : 'Expand to full screen'} onclick={() => (full = !full)}>{full ? '⤡' : '⤢'}</button>
   </div>
   <div bind:this={editorEl} class="ce-edit" contenteditable="true" role="textbox" tabindex="0" aria-multiline="true"
-    data-ph={'## Heading\n\nWrite the guide here. Type “@” to mention a person, item or location — or use “+ Reference”.'}
+    data-ph={placeholder ?? GUIDE_PH}
     oninput={onEditorInput} onkeydown={onEditorKey} oncopy={onCopy} oncut={onCut} onpaste={onPaste}></div>
 </div>
 
@@ -438,9 +552,20 @@
   /* Keep the formatting actions reachable while scrolling a long guide. In
      full mode the editor body scrolls internally, so the bar already stays put;
      this makes it stick to the top of the viewport in normal mode too. */
-  .toolbar { position: sticky; top: 0; z-index: 10; background: var(--paper); display: flex; align-items: center; gap: 6px; padding: 8px 22px; border-top: 1px solid var(--rule-soft); border-bottom: 1px solid var(--rule-soft); flex-wrap: wrap; flex: none; }
+  /* Sticks to the top while scrolling a long guide. The offset clears the page's
+     sticky top bar in the guide editor (set via --ce-toolbar-top); in the
+     in-drawer Notes editor it stays 0 and pins to the drawer's own top. */
+  .toolbar { position: sticky; top: var(--ce-toolbar-top, 0px); z-index: 10; background: var(--paper); display: flex; align-items: center; gap: 6px; padding: 8px 22px; border-top: 1px solid var(--rule-soft); border-bottom: 1px solid var(--rule-soft); flex-wrap: wrap; flex: none; }
   .ce.full .toolbar { position: static; }
-  .tb { width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--rule); color: var(--ink-soft); background: var(--paper); }
+  .tb {
+    width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--rule);
+    color: var(--ink-soft); background: var(--paper);
+    display: inline-grid; place-items: center;
+    padding: 0; line-height: 1;
+  }
+  .tb svg { display: block; width: 15px; height: 15px; }
+  .tb b, .tb i { display: block; line-height: 1; }
+  .tb .tb-media-ico { width: 18px; height: 18px; }
   .tb:hover { border-color: var(--accent-deep); color: var(--accent-deep); }
   .tb-expand { margin-left: auto; }
   .refwrap { position: relative; }
@@ -466,6 +591,10 @@
   .refnone { padding: 10px; }
   .ce-edit { flex: 1; min-height: 200px; padding: 18px 22px; font: inherit; font-size: 15px; line-height: 1.7; color: var(--ink); white-space: pre-wrap; word-break: break-word; overflow-y: auto; }
   .ce.full .ce-edit { min-height: 0; }
+  /* Compact: a bordered, input-sized editor (e.g. an object's Notes field). */
+  .ce.compact { border: 1px solid var(--rule); border-radius: 0; overflow: hidden; }
+  .ce.compact .toolbar { padding: 6px 10px; border-top: none; }
+  .ce.compact .ce-edit { min-height: 104px; padding: 12px 14px; font-size: 14px; line-height: 1.6; }
   .ce-edit:focus { outline: none; }
   .ce-edit:empty::before { content: attr(data-ph); color: var(--ink-mute); white-space: pre-wrap; pointer-events: none; }
   .ce-edit :global(.refchip) {
@@ -474,10 +603,13 @@
     border-radius: 6px; padding: 0 6px; margin: 0 1px; font-size: 0.92em; white-space: nowrap;
     user-select: none;
   }
-  .ce-edit :global(.refchip)::before { content: '#'; opacity: 0.6; }
+  /* Leading type icon (person/item/location/…) so chips are scannable while editing. */
+  .ce-edit :global(.refchip .chip-ico) { width: 13px; height: 13px; flex: none; opacity: 0.75; }
   /* File-tag chips look like reference chips but are clearly a tag. */
   .ce-edit :global(.refchip.tagchip-inline) { background: var(--paper); border-style: dashed; }
-  /* A view reference (Map) — a solid accent pill marked with a locator, not "#". */
+  /* A view reference (Map) — a solid accent pill. */
   .ce-edit :global(.refchip.viewchip-inline) { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .ce-edit :global(.refchip.viewchip-inline)::before { content: '⌖'; opacity: 0.85; }
+  /* Inline image reference — rendered as an actual image in read mode. */
+  .ce-edit :global(.refchip.imgchip-inline) { background: var(--accent-wash); border-color: var(--accent-deep); }
+  .ce-edit :global(.refchip.videochip-inline) { background: var(--accent-wash); border-color: var(--accent-deep); }
 </style>

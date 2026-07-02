@@ -27,7 +27,7 @@ try {
   await page.goto(FILE, { waitUntil: 'load' });
   await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Create new plan'), { timeout: 8000 });
   await click('Create new plan'); await pause();
-  const inp = await page.$('input[type=file]:not([webkitdirectory])');
+  const inp = await page.$('input[type=file][multiple]:not([webkitdirectory])');
   await inp.uploadFile(resolve(dir, 'a.txt'), resolve(dir, 'b.txt')); await pause(700);
 
   await goFiles(); await pause();

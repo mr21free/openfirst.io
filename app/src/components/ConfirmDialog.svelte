@@ -53,12 +53,18 @@
     box-shadow: 0 30px 80px oklch(0.2 0.03 255 / 0.26);
     padding: 20px;
   }
-  .modal-head h2 { margin-top: 6px; font-size: 22px; }
+  .modal-head h2 {
+    margin-top: 6px;
+    font-size: 22px;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
   .modal-message {
     margin-top: 14px;
     color: var(--ink-soft);
     font-size: 14px;
     white-space: pre-line;
+    overflow-wrap: anywhere;
   }
   .modal-actions {
     display: flex;

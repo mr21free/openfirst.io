@@ -13,15 +13,19 @@ function slugDate() {
 
 /**
  * Heir-facing view of the plan: drop every guide flagged `draft`, and any guide
- * group left with no published guides (so an all-draft group like "To print"
- * disappears too). The owner's working copy is untouched — this only shapes what
- * gets exported.
+ * group left with no published guides. The owner's working copy is untouched;
+ * this only shapes what gets exported.
  */
 function publishedOnly(data) {
   const guides = (data.guides || []).filter((g) => !g.draft);
   const usedGroups = new Set(guides.map((g) => g.group).filter(Boolean));
   const guide_groups = (data.guide_groups || []).filter((g) => usedGroups.has(g.id));
-  return { ...data, guides, guide_groups };
+  const {
+    readiness_checks: _checks,
+    readiness_runs: _runs,
+    ...rest
+  } = data || {};
+  return { ...rest, guides, guide_groups };
 }
 
 /** How many guides would be withheld from an heir export (for owner messaging). */
@@ -117,16 +121,61 @@ function b64FromBytes(bytes) {
   return btoa(s);
 }
 
-async function blobToB64(blob) {
+function mimeForAttachment(att) {
+  const explicit = String(att?.mime || '').trim();
+  if (explicit.includes('/')) return explicit;
+  const name = `${att?.original_filename || ''} ${att?.path || ''} ${att?.filename || ''}`.toLowerCase();
+  if (/\.mp4\b/.test(name)) return 'video/mp4';
+  if (/\.png\b/.test(name)) return 'image/png';
+  if (/\.jpe?g\b/.test(name)) return 'image/jpeg';
+  if (/\.webp\b/.test(name)) return 'image/webp';
+  if (/\.gif\b/.test(name)) return 'image/gif';
+  if (/\.pdf\b/.test(name)) return 'application/pdf';
+  return explicit;
+}
+
+async function blobToB64(blob, att = null) {
   const bytes = new Uint8Array(await blob.arrayBuffer());
-  return { mime: blob.type || '', b64: b64FromBytes(bytes) };
+  return { mime: blob.type || mimeForAttachment(att) || '', b64: b64FromBytes(bytes) };
+}
+
+// reading_font choice → bundled @font-face family name. Mono is also the app's
+// UI face, so it is always kept.
+const READING_FONT_FAMILY = {
+  mono: 'IBM Plex Mono', sans: 'IBM Plex Sans', inter: 'Inter',
+  atkinson: 'Atkinson Hyperlegible', serif: 'Source Serif 4', literata: 'Literata', lora: 'Lora'
+};
+
+/** Which font families the heir reader actually needs: the UI mono face, plus
+ *  the plan's chosen guide font. Everything else can be dropped from the export. */
+function fontsToKeep(data) {
+  const keep = new Set(['IBM Plex Mono']); // app/UI font — always present
+  const fam = READING_FONT_FAMILY[data?.package?.reading_font];
+  if (fam) keep.add(fam);
+  return keep;
+}
+
+/** Drop @font-face blocks (and their inlined base64) for families the heir
+ *  doesn't use — the read-only export carries only the fonts it renders. */
+function stripUnusedFonts(docEl, keep) {
+  for (const style of docEl.querySelectorAll('style')) {
+    const css = style.textContent;
+    if (!css || !css.includes('@font-face')) continue;
+    // Base64 src data has no '}', so each @font-face block is brace-balanced.
+    const next = css.replace(/@font-face\s*\{[^}]*\}/g, (block) => {
+      const m = /font-family\s*:\s*["']?([^"';}]+)["']?/.exec(block);
+      return keep.has((m ? m[1] : '').trim()) ? block : '';
+    });
+    if (next !== css) style.textContent = next;
+  }
 }
 
 /** Clone the currently-running reader HTML and inject the package payload so the
  *  file boots straight into a read-only reader. Everything is already inlined. */
-function buildReaderHtml(payload) {
+function buildReaderHtml(payload, keepFonts = null) {
   const docEl = document.documentElement.cloneNode(true);
   docEl.removeAttribute('data-theme'); // let the embedded plan's theme decide
+  if (keepFonts) stripUnusedFonts(docEl, keepFonts);
   // A self-contained reader needs everything inlined. In the dev server the app
   // is loaded over the network (/@vite/client, /src/main.js) and would open to a
   // blank page — only the production build inlines the bundle.
@@ -164,11 +213,13 @@ export async function exportSelfContainedReader(data, blobs, { password = '', hi
     const attachments = {};
     for (const att of out.attachments || []) {
       const blob = blobs.get(att.id);
-      if (blob) attachments[att.id] = await blobToB64(blob);
+      if (blob) attachments[att.id] = await blobToB64(blob, att);
     }
     payload = { reader: true, v: 1, data: out, attachments };
   }
-  const html = buildReaderHtml(payload);
+  // Bundle only the fonts the heir reader renders (UI mono + the chosen guide
+  // font) — computed from the original data even when the payload is encrypted.
+  const html = buildReaderHtml(payload, fontsToKeep(data));
   triggerDownload(new Blob([html], { type: 'text/html' }), 'start-here.html');
 }
 

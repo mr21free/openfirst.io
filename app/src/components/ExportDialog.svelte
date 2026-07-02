@@ -237,7 +237,7 @@
   .pw-block { display: flex; flex-direction: column; gap: 10px; }
   .inp {
     flex: 1; font: inherit; font-size: 14px; color: var(--ink);
-    border: 1px solid var(--rule); border-radius: 9px; padding: 10px 12px; background: var(--paper);
+    border: 1px solid var(--rule); border-radius: 0; padding: 10px 12px; background: var(--paper);
   }
   .inp:focus { outline: none; border-color: var(--accent-deep); }
   .error { color: var(--warn); }
@@ -270,10 +270,10 @@
   .rem-row { display: flex; flex-wrap: wrap; gap: 8px; }
   .rem-field { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-soft); }
   .rem-lbl { color: var(--ink-mute); }
-  .rem-field select { font: inherit; font-size: 13px; color: var(--ink); border: 1px solid var(--rule); border-radius: 8px; padding: 6px 8px; background: var(--paper); }
+  .rem-field select { font: inherit; font-size: 13px; color: var(--ink); border: 1px solid var(--rule); border-radius: 0; padding: 6px 8px; background: var(--paper); }
   .rem-field select:focus { outline: none; border-color: var(--accent-deep); }
   .rem-providers { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .cal-btn { display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: 13px; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 9px; padding: 7px 11px; cursor: pointer; transition: border-color .15s; }
+  .cal-btn { display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: 13px; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 0; padding: 7px 11px; cursor: pointer; transition: border-color .15s; }
   .cal-btn:hover { border-color: var(--accent-deep); }
   .cal-btn svg { flex: none; }
   .cal-link { font: inherit; font-size: 12.5px; color: var(--ink-mute); padding: 6px 4px; background: none; cursor: pointer; }

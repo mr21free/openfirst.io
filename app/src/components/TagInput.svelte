@@ -36,8 +36,8 @@
 
 <style>
   .tag-add { display: flex; gap: 6px; align-items: center; }
-  .tag-add .inp { flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--ink); border: 1px solid var(--rule); border-radius: 8px; padding: 7px 10px; background: var(--paper); }
+  .tag-add .inp { flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--ink); border: 1px solid var(--rule); border-radius: 0; padding: 7px 10px; background: var(--paper); }
   .tag-add .inp:focus { outline: none; border-color: var(--accent-deep); }
-  .mini { flex: none; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--rule); color: var(--ink-soft); background: var(--paper); font-size: 18px; line-height: 1; }
+  .mini { flex: none; width: 32px; height: 32px; border-radius: 0; border: 1px solid var(--rule); color: var(--ink-soft); background: var(--paper); font-size: 18px; line-height: 1; }
   .mini:hover { border-color: var(--accent-deep); color: var(--accent-deep); }
 </style>

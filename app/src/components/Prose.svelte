@@ -4,7 +4,42 @@
   let { pkg, markdown = '', onOpen, onTag = null, onView = null } = $props();
 
   let el = $state(null);
-  const html = $derived(renderMarkdown(markdown, (id) => (pkg.entity(id) ? pkg.name(id) : null)));
+  const IMG_EXT = /\.(png|jpe?g|gif|webp|avif|bmp|svg|heic|tiff?)$/i;
+  const VIDEO_EXT = /\.mp4$/i;
+  function imageInfo(id) {
+    const ent = pkg.entity(id);
+    const att = ent?.kind === 'attachment' ? ent.obj : null;
+    const src = pkg.attachmentUrls?.[id];
+    if (!att || !src) return null;
+    const isImage = (att.mime || '').startsWith('image/') || IMG_EXT.test(att.path || att.filename || '');
+    if (!isImage) return null;
+    return {
+      src,
+      name: pkg.name(id),
+      alt: att.description || att.filename || pkg.name(id),
+      caption: att.description || ''
+    };
+  }
+  function videoInfo(id) {
+    const ent = pkg.entity(id);
+    const att = ent?.kind === 'attachment' ? ent.obj : null;
+    const src = pkg.attachmentUrls?.[id];
+    if (!att || !src) return null;
+    const isVideo = (att.mime || '').toLowerCase() === 'video/mp4' || VIDEO_EXT.test([att.original_filename, att.path, att.filename].filter(Boolean).join(' '));
+    if (!isVideo) return null;
+    return {
+      src,
+      name: pkg.name(id),
+      title: att.description || att.filename || pkg.name(id),
+      caption: att.description || ''
+    };
+  }
+  const html = $derived(renderMarkdown(
+    markdown,
+    (id) => (pkg.entity(id) ? pkg.name(id) : null),
+    imageInfo,
+    videoInfo
+  ));
 
   // Cross-links come ONLY from explicit [[id]] references the author inserted
   // (the markdown pass renders those as <a class="xref">). We deliberately do
@@ -40,10 +75,21 @@
       }
     }
   }
+  function prepareVideos() {
+    if (!el) return;
+    for (const video of el.querySelectorAll('video.guide-video')) {
+      if (video.dataset.videoReady) continue;
+      video.dataset.videoReady = '1';
+      try { video.load(); } catch (_) {}
+    }
+  }
 
   $effect(() => {
     html; // re-run whenever the rendered markdown changes
-    queueMicrotask(decorateRefMeta);
+    queueMicrotask(() => {
+      decorateRefMeta();
+      prepareVideos();
+    });
   });
 
   // Delegated handlers for the cross-link anchors we inject. Attached
@@ -56,8 +102,8 @@
       else if (a?.dataset.view) { e.preventDefault(); onView?.(a.dataset.view); }
       else if (a?.dataset.id) { e.preventDefault(); open(a.dataset.id); }
     };
-    const click = (e) => act(e, e.target.closest?.('a.xref'));
-    const key = (e) => { if (e.key === 'Enter') act(e, e.target.closest?.('a.xref')); };
+    const click = (e) => act(e, e.target.closest?.('a.xref, button.guide-img'));
+    const key = (e) => { if (e.key === 'Enter') act(e, e.target.closest?.('a.xref, button.guide-img')); };
     el.addEventListener('click', click);
     el.addEventListener('keydown', key);
     return () => { el.removeEventListener('click', click); el.removeEventListener('keydown', key); };

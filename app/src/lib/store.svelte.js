@@ -12,7 +12,9 @@ import { collectRoleIds, humanizeKey, normalizedRoles, slugifyTag } from './pack
 import { saveDraft, clearDraft } from './persist.js';
 
 const KINDS = ['people', 'locations', 'items', 'guides', 'folders', 'attachments'];
+const PLAN_ARRAYS = [...KINDS, 'readiness_checks', 'readiness_runs'];
 const today = () => new Date().toISOString().slice(0, 10);
+const nowIso = () => new Date().toISOString();
 
 // Content fingerprint that ignores the auto-managed package "updated" date.
 function stableKey(snap) {
@@ -71,7 +73,7 @@ export class Store {
 
   ensureArrays() {
     if (!this.data) return;
-    for (const k of KINDS) if (!Array.isArray(this.data[k])) this.data[k] = [];
+    for (const k of PLAN_ARRAYS) if (!Array.isArray(this.data[k])) this.data[k] = [];
     if (!this.data.package) this.data.package = {};
     if (!Array.isArray(this.data.package.languages) || !this.data.package.languages.length) this.data.package.languages = ['en'];
     if (!this.data.package.default_language) this.data.package.default_language = this.data.package.languages[0];
@@ -132,6 +134,8 @@ export class Store {
   rawById(id) {
     if (!this.data) return null;
     for (const k of KINDS) { const o = this.data[k]?.find((x) => x.id === id); if (o) return o; }
+    const check = this.data.readiness_checks?.find((x) => x.id === id);
+    if (check) return check;
     const role = this.data.roles?.find((x) => x.id === id);
     if (role) return role;
     return null;
@@ -140,6 +144,8 @@ export class Store {
   genId(prefix) {
     const exists = (id) =>
       KINDS.some((k) => this.data[k]?.some((o) => o.id === id)) ||
+      this.data.readiness_checks?.some((o) => o.id === id) ||
+      this.data.readiness_runs?.some((o) => o.id === id) ||
       this.data.guide_groups?.some((o) => o.id === id) ||
       this.data.roles?.some((o) => o.id === id);
     let id;
@@ -419,7 +425,7 @@ export class Store {
     const path = `attachments/${id.replace(/^att_/, '')}_${safe}`;
     this.attachmentBlobs.set(id, file);
     this.attachmentUrls = { ...this.attachmentUrls, [id]: URL.createObjectURL(file) };
-    this.data.attachments.push({ id, filename: display || safe, path, mime: file.type || '' });
+    this.data.attachments.push({ id, filename: display || safe, original_filename: original, path, mime: file.type || '' });
     return id;
   }
 
@@ -477,6 +483,122 @@ export class Store {
     if (i >= 0) this.data.roles.splice(i, 1);
     for (const p of this.data.people || []) this.#rm(p.roles, id);
     for (const g of this.data.guides || []) this.#rm(g.audience_roles, id);
+    for (const c of this.data.readiness_checks || []) this.#rm(c.role_ids, id);
+  }
+
+  // ---- Readiness checks + dry runs ----
+  addReadinessCheck(scope = 'external') {
+    this.ensureArrays();
+    const id = this.genId('check');
+    const check = {
+      id,
+      title: '',
+      importance: 'medium',
+      scope: scope === 'internal' ? 'internal' : 'external',
+      question: '',
+      expected: '',
+      person_ids: [],
+      role_ids: [],
+      related_person_ids: [],
+      related_item_ids: [],
+      related_location_ids: [],
+      related_guide_ids: [],
+      related_attachment_ids: [],
+      created: today()
+    };
+    this.data.readiness_checks.push(check);
+    return id;
+  }
+
+  deleteReadinessCheck(id) {
+    this.ensureArrays();
+    const i = this.data.readiness_checks.findIndex((c) => c.id === id);
+    if (i >= 0) this.data.readiness_checks.splice(i, 1);
+    for (const run of this.data.readiness_runs || []) {
+      if (!Array.isArray(run.results)) continue;
+      for (let j = run.results.length - 1; j >= 0; j--) if (run.results[j].check_id === id) run.results.splice(j, 1);
+    }
+  }
+
+  startReadinessRun(personId = null) {
+    this.ensureArrays();
+    if (this.#baseline === null) this.#baseline = stableKey($state.snapshot(this.data));
+    this.editable = true;
+    const id = this.genId('run');
+    const started = nowIso();
+    this.data.readiness_runs.push({ id, person_id: personId || null, date: today(), started_at: started, results: [] });
+    return id;
+  }
+
+  submitReadinessRun(runId) {
+    this.ensureArrays();
+    const run = this.data.readiness_runs.find((r) => r.id === runId);
+    if (!run) return;
+    const submitted = nowIso();
+    run.submitted_at = submitted;
+    if (run.started_at) {
+      const start = Date.parse(run.started_at);
+      const end = Date.parse(submitted);
+      if (Number.isFinite(start) && Number.isFinite(end) && end >= start) run.duration_ms = end - start;
+    }
+  }
+
+  setReadinessResult(runId, checkId, patch) {
+    this.ensureArrays();
+    const run = this.data.readiness_runs.find((r) => r.id === runId);
+    if (!run) return;
+    if (!Array.isArray(run.results)) run.results = [];
+    let result = run.results.find((r) => r.check_id === checkId);
+    if (!result) {
+      result = { check_id: checkId, status: 'not_sure', notes: '' };
+      run.results.push(result);
+    }
+    Object.assign(result, patch);
+  }
+
+  clearReadinessRunNotes(runId) {
+    this.ensureArrays();
+    const run = this.data.readiness_runs.find((r) => r.id === runId);
+    if (!run?.results) return;
+    for (const result of run.results) delete result.notes;
+  }
+
+  deleteReadinessResult(runId, checkId) {
+    this.ensureArrays();
+    const run = this.data.readiness_runs.find((r) => r.id === runId);
+    if (!run?.results) return;
+    const i = run.results.findIndex((r) => r.check_id === checkId);
+    if (i >= 0) run.results.splice(i, 1);
+  }
+
+  deleteReadinessRun(runId) {
+    this.ensureArrays();
+    const i = this.data.readiness_runs.findIndex((r) => r.id === runId);
+    if (i >= 0) this.data.readiness_runs.splice(i, 1);
+  }
+
+  discardReadinessRun(runId, { keepStatuses = true } = {}) {
+    this.ensureArrays();
+    const run = this.data.readiness_runs.find((r) => r.id === runId);
+    if (!run) return;
+    if (keepStatuses) {
+      for (const result of run.results || []) delete result.notes;
+      return;
+    }
+    const i = this.data.readiness_runs.findIndex((r) => r.id === runId);
+    if (i >= 0) this.data.readiness_runs.splice(i, 1);
+  }
+
+  addTagToReadinessChecks(ids, tag) {
+    this.ensureArrays();
+    const t = slugifyTag(tag);
+    if (!t) return;
+    for (const id of ids) {
+      const c = this.data.readiness_checks.find((x) => x.id === id);
+      if (!c) continue;
+      if (!Array.isArray(c.tags)) c.tags = [];
+      if (!c.tags.includes(t)) c.tags.push(t);
+    }
   }
 
   #rm(arr, id) {
@@ -488,23 +610,88 @@ export class Store {
   #findEntity(id) {
     const map = { people: 'person', locations: 'location', items: 'item', guides: 'guide', folders: 'folder', attachments: 'attachment' };
     for (const k of KINDS) { const o = this.data[k]?.find((x) => x.id === id); if (o) return { obj: o, kind: map[k] }; }
+    const c = this.data.readiness_checks?.find((x) => x.id === id);
+    if (c) return { obj: c, kind: 'readiness' };
     const r = this.data.roles?.find((x) => x.id === id);
     return r ? { obj: r, kind: 'role' } : null;
   }
   #nameOf(obj, kind) {
     if (kind === 'person') return obj.nickname || obj.name || obj.id;
-    if (kind === 'attachment') return obj.filename || obj.id;
+    if (kind === 'attachment') return this.#attachmentNameWithExt(obj);
     if (kind === 'role') return obj.name || obj.id;
+    if (kind === 'readiness') return obj.title || obj.id;
     return obj.name || obj.title || obj.id;
+  }
+  #attachmentNameWithExt(obj, defaultExt = '') {
+    const name = obj.filename || obj.id;
+    if (/\.[a-z0-9]+$/i.test(name)) return name;
+    const blob = this.attachmentBlobs.get(obj.id);
+    const ext =
+      this.#extFromName(obj.original_filename) ||
+      this.#extFromName(blob?.name) ||
+      this.#extFromName(obj.path) ||
+      this.#extFromMime(obj.mime || blob?.type) ||
+      defaultExt;
+    return ext ? name + ext : name;
+  }
+  #extFromName(name) {
+    return String(name || '').match(/\.([a-z0-9]+)$/i)?.[0] || '';
+  }
+  #extFromMime(mime) {
+    const m = String(mime || '').toLowerCase().trim().replace(/^\./, '');
+    const map = {
+      'jpg': '.jpg',
+      'jpeg': '.jpg',
+      'png': '.png',
+      'gif': '.gif',
+      'webp': '.webp',
+      'avif': '.avif',
+      'bmp': '.bmp',
+      'svg': '.svg',
+      'heic': '.heic',
+      'tiff': '.tiff',
+      'pdf': '.pdf',
+      'image/jpeg': '.jpg',
+      'image/jpg': '.jpg',
+      'image/png': '.png',
+      'image/x-png': '.png',
+      'image/gif': '.gif',
+      'image/webp': '.webp',
+      'image/avif': '.avif',
+      'image/bmp': '.bmp',
+      'image/svg+xml': '.svg',
+      'image/heic': '.heic',
+      'image/tiff': '.tiff',
+      'application/pdf': '.pdf'
+    };
+    if (m.startsWith('image/')) {
+      const subtype = m.slice(6).split(/[;+]/)[0];
+      if (subtype === 'jpeg') return '.jpg';
+      if (subtype === 'svg+xml') return '.svg';
+      if (/^[a-z0-9]+$/i.test(subtype)) return '.' + subtype;
+    }
+    return map[m] || '';
   }
   // Replace every [[id]] token in guide content with plain text, so a deleted
   // entity leaves a readable name behind instead of a dangling [[item_x]].
-  #replaceRefTokens(id, name) {
-    const re = new RegExp('\\[\\[' + id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\]\\]', 'g');
+  #replaceRefTokens(id, name, kind = null) {
+    const esc = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const found = kind === 'attachment' ? this.#findEntity(id) : null;
+    const imgName = found?.kind === 'attachment' ? this.#attachmentNameWithExt(found.obj, '.png') : name;
+    const videoName = found?.kind === 'attachment' ? this.#attachmentNameWithExt(found.obj, '.mp4') : name;
+    const patterns = [
+      { re: new RegExp('\\[\\[' + esc + '\\]\\]', 'g'), value: name },
+      ...(kind === 'attachment' ? [
+        { re: new RegExp('\\[\\[img:' + esc + '\\]\\]', 'g'), value: imgName },
+        { re: new RegExp('\\[\\[video:' + esc + '\\]\\]', 'g'), value: videoName }
+      ] : [])
+    ];
     for (const g of this.data.guides || []) {
       if (!g.content) continue;
       for (const lang of Object.keys(g.content)) {
-        if (typeof g.content[lang] === 'string') g.content[lang] = g.content[lang].replace(re, name);
+        if (typeof g.content[lang] === 'string') {
+          for (const { re, value } of patterns) g.content[lang] = g.content[lang].replace(re, value);
+        }
       }
     }
   }
@@ -512,9 +699,13 @@ export class Store {
   deleteEntity(id) {
     if (!this.data) return;
     const found = this.#findEntity(id);
-    if (found) this.#replaceRefTokens(id, this.#nameOf(found.obj, found.kind));
+    if (found) this.#replaceRefTokens(id, this.#nameOf(found.obj, found.kind), found.kind);
     if (found?.kind === 'role') {
       this.deleteRole(id);
+      return;
+    }
+    if (found?.kind === 'readiness') {
+      this.deleteReadinessCheck(id);
       return;
     }
     for (const k of KINDS) {
@@ -542,7 +733,17 @@ export class Store {
       rm(a.item_ids);
       rm(a.guide_ids);
     }
+    for (const c of this.data.readiness_checks || []) {
+      rm(c.person_ids);
+      rm(c.role_ids);
+      rm(c.related_person_ids);
+      rm(c.related_item_ids);
+      rm(c.related_location_ids);
+      rm(c.related_guide_ids);
+      rm(c.related_attachment_ids);
+    }
     if (this.data.package?.owner_id === id) delete this.data.package.owner_id;
     rm(this.data.package?.primary_person_ids);
+    rm(this.data.package?.map_audience_person_ids);
   }
 }

@@ -1,120 +1,184 @@
-# Inheritance Package Format — v1
+# Inheritance Package Format - v1
 
 `schema: "inheritance-package/v1"`
 
-This document describes the open, durable format an inheritance plan is stored
-in. The goals: **human-readable**, **machine-readable**, and **still openable in
-10+ years** with no server, account, or proprietary runtime. The authoritative
+This document describes the open, durable format used by lifepackage.io. The
+goals are simple: **human-readable**, **machine-readable**, and **still openable
+in 10+ years** with no server, account, or proprietary runtime. The authoritative
 contract is [schema/inheritance.schema.json](./schema/inheritance.schema.json);
-this is the friendly explanation.
+this file is the friendly explanation.
 
-## A package is a folder
+## Package Shapes
 
-```
+The source of truth is always `inheritance.json`. A package may be:
+
+- a single `inheritance.json` file,
+- a folder containing `inheritance.json`, `manifest.json`, `START_HERE.txt`, and
+  optional `attachments/`,
+- a `.zip` of that folder,
+- or an encrypted JSON envelope whose plaintext is the package `.zip`.
+
+Typical folder layout:
+
+```text
 InheritancePackage_YYYY-MM-DD/
-  START_HERE.txt        Plain-text entry point for a person with no app.
-  manifest.json         id, schema version, dates, language index, file map.
-  inheritance.json      The single machine-readable source of truth (the graph).
-  guides/               Human-readable renderings of the guides (Markdown), per language.
-  print/                Print-ready artifacts: guide, envelope, labels.
-  attachments/          Original files (images, PDFs) referenced by relative path.
+  START_HERE.txt
+  manifest.json
+  inheritance.json
+  attachments/
 ```
 
-- `inheritance.json` is what the Reader/Builder app round-trips.
-- `guides/` and `print/` are **renderings** of the same content, so the plan is
-  fully usable even with no app. They are derived; `inheritance.json` wins.
-- The package may also be shipped as a single `.zip`, or you can hand the app
-  just `inheritance.json` (without attachments).
+Attachments are real files referenced by relative path. They are not base64
+encoded into the JSON.
 
-## The data model is a property graph
+## Data Model
 
-Six entity types, connected by **id references**. Default posture is a **map of
-where things are**, not a vault of secrets (see "Secrets" below).
+The package is a property graph: people, roles, locations, items, guides, guide
+groups, attachments, and owner-only readiness checks are connected by stable id
+references. The default posture is a **map of where things are**, not a vault of
+raw secrets.
 
-### `package` (metadata)
+### `package`
+
+Metadata for the plan:
+
 `id`, `title`, `owner_id`, `created`, `updated`, `languages[]`,
-`default_language`. `updated` is shown to readers as “Last updated”.
+`default_language`, `primary_person_ids[]`, `map_audience_roles[]`,
+`map_audience_person_ids[]`, and optional `notes`.
+
+`owner_id` points to the single person who owns/prepared the plan. Map audience
+fields control who can see the Map in read mode. Empty or missing map audience
+fields mean the map is visible to everyone.
+
+### `roles[]`
+
+Editable user-facing roles:
+
+`id`, `name`.
+
+People and guide audiences reference roles by id. Older built-in role ids such
+as `owner`, `primary_heir`, `beneficiary`, `professional`, and `friend` are just
+normal role ids in the current model.
 
 ### `people[]`
-`id`, `name` (legal), `nickname` (familiar name shown in lists/guides when set),
-`display_as`, `roles[]`, `languages[]`, `country`, `location_id`, `contacts[]`,
-`verification{question, answer_hint}`, `boundaries`, `importance`, `order`.
 
-Roles: `owner`, `primary_heir`, `helper`, `beneficiary`, `expert`, `contact`,
-`professional`, `guardian`. `verification` is an anti-scam control question
-(e.g. confirming a Bitcoin helper’s identity). `boundaries` records role limits
-(“helper only — never acts alone unless the primary heir is unavailable”).
+Simple person records:
+
+`id`, `name`, `nickname`, `display_as`, `roles[]`, `readiness_score`,
+`contacts[]`, `verification{question, answer_hint}`, `importance`, and `notes`.
+
+People do not carry language, country, based-at location, role boundaries, or
+manual order in the current product.
 
 ### `locations[]`
-`id`, `name`, `type` (`home_safe`, `bank_box`, `office`, `residence`, `cloud`,
-`with_person`, `other`), `country`, `parent_id` (nesting),
-`access_person_ids[]`, `keys_required_item_ids[]`.
 
-### `items[]` — assets, credentials, devices, documents, infrastructure
-Fixed fields: `id`, `name`, `type`, `importance`, `description`,
-`location_ids[]` (multiple = redundant copies), `access_person_ids[]`,
-`depends_on_ids[]`, `guide_ids[]`, `attachment_ids[]`, `sensitive`, `secret`.
-Plus a free-form, type-specific `properties{}` bag.
+Places or containers in a visual hierarchy:
 
-Types: `password_record`, `btc_seed`, `btc_passphrase`, `btc_wallet`,
-`hw_device`, `twofa`, `secret_split_part`, `account_investment`,
-`bank_account`, `digital_service`, `recovery_artifact`, `legal_document`,
-`sim_card`, `other`.
+`id`, `name`, `parent_id`, `access_person_ids[]`, `depends_on_ids[]`, `order`,
+and `notes`.
 
-`depends_on_ids` is the key edge: it lets a reader (and a future audit) trace
-single points of failure and circular dependencies — e.g. an account that needs
-the SIM for 2FA, or a multisig wallet that needs its seeds.
+Locations do not have a fixed type. A country, city, home, cabinet, safe, or
+cloud account can all be represented as locations; the human-readable name tells
+the reader what it is. Nesting is done with `parent_id`, and manual ordering is
+done with `order`.
 
-### `guides[]` — human-readable instructions
-`id`, `title`, `type` (`start_here`, `topic`, `print_guide`, `envelope`,
-`labels`), `folder_id`, `audience_roles[]` / `audience_person_ids[]`, `updated`,
-`languages[]`, `content` (Markdown **keyed by language code**), and
-`references{person_ids, item_ids, location_ids, guide_ids}` so cross-links can
-be rendered and dangling links detected.
+### `items[]`
 
-### `folders[]`
-`id`, `name`, `parent_id`, `is_print` (the special PRINT group), `description`.
+Assets, accounts, devices, documents, services, credentials, or anything else
+that matters:
+
+`id`, `name`, `importance`, `description`, `notes`, `price`, `location_ids[]`,
+`container_ids[]`, `access_person_ids[]`, `depends_on_ids[]`, `guide_ids[]`,
+`attachment_ids[]`, `sensitive`, and optional `secret`.
+
+`depends_on_ids[]` is intentionally general: it can represent keys, codes,
+devices, accounts, documents, or other prerequisites needed to access/use an
+item or location.
+
+### `guides[]`
+
+Human-readable instructions:
+
+`id`, `title`, `group`, `order`, `importance`, `draft`, `audience_roles[]`,
+`audience_person_ids[]`, `content`, and
+`references{person_ids,item_ids,location_ids,guide_ids}`.
+
+All guides are the same type. There are no print-only, envelope, or label guide
+types. `content` is Markdown keyed by language code, for example:
+
+```json
+{ "en": "## Start here\n\nRead this first.", "sk": "## Zacnite tu\n\n..." }
+```
+
+The guide content supports entity references such as `[[item_trezor]]`, file
+mentions such as `@file-name`, inline images such as `@img:file-name`, and MP4
+video embeds such as `@video:file-name`.
+
+### `guide_groups[]`
+
+Manual guide menu groups:
+
+`id`, `name`, `order`.
+
+Guides join a group by storing the group id in `guide.group`.
 
 ### `attachments[]`
-`id`, `filename`, `path` (relative, e.g. `attachments/bitcoin/descriptor.png`),
-`mime`, `description`, optional `item_id` / `guide_id` link.
 
-## Secrets: pointer-first, flagged exception
+Files shipped with the package:
 
-By default the package is a **map**: it says *where* a secret lives and *how* to
-combine it (“Part 1 in Home Trezor, Part 2 in Bank X”), never the secret itself.
-This keeps the security benefit of splitting secrets across places even if one
-copy of the package leaks.
+`id`, `filename`, `original_filename`, `path`, `mime`, `description`,
+`item_id`, and `guide_id`.
 
-A raw secret is stored only when an item is explicitly marked `sensitive: true`
-and carries a `secret { kind, value, note }` object. The schema enforces that a
-`secret` requires `sensitive: true`, and apps must visibly flag such items.
+The displayed `filename` may omit the extension for readability. The exported
+file on disk keeps the extension in `path`.
 
-## Multi-language
+### `readiness_checks[]`
 
-`package.languages` lists every language used. Any guide’s `content` is an
-object keyed by language code (`{ "en": "...", "sk": "..." }`). A reader shows
-the chosen language and falls back to the default. The same guide therefore holds
-all its translations — switching language shows the translated version of the
-same guide.
+Owner-side checks that prove the plan can actually be used:
 
-## Ordering
+`id`, `title`, `importance`, `scope`, `question`, `expected`, `owner_notes`,
+`tags[]`, `person_ids[]`, `role_ids[]`, and related entity ids.
 
-People, locations, items and guides may carry an optional numeric `order` (lower
-= earlier) so the plan author controls the sequence they appear in. Entries
-without `order` sort after those with one (then by importance, then name).
+`scope: "external"` checks are visible during a dry run with the intended
+person. `scope: "internal"` checks are private owner todos/gaps and are hidden
+during the dry run.
 
-## Nesting locations
+### `readiness_runs[]`
 
-Locations nest to any depth via `parent_id` (e.g. Country › City › Home › Safe).
-The author builds whatever hierarchy fits; `type` is only a loose label for the
-marker, not a fixed level.
+Recorded dry-run outcomes:
 
-## Optional password encryption
+`id`, `person_id`, `date`, `started_at`, `submitted_at`, `duration_ms`, and
+`results[]`, where each result stores `check_id`, `status`, and `notes`.
 
-For people who won’t keep the package on encrypted hardware, the whole package
-can be locked with a password. The package `.zip` is encrypted into a small,
-self-describing JSON envelope (`inheritance-encrypted/v1`):
+Readiness checks and dry-run notes are owner data. They are kept in the working
+package/exported source, but removed from the final read-only `start-here.html`
+heir reader.
+
+## Secrets
+
+By default the package points to where secrets live and how they relate. A raw
+secret is stored only when an item is explicitly marked `sensitive: true` and
+carries:
+
+```json
+{ "secret": { "kind": "password", "value": "...", "note": "optional" } }
+```
+
+Apps must treat `sensitive` items visibly and carefully.
+
+## Languages
+
+`package.languages` lists supported languages and `package.default_language`
+defines fallback. Guide `content` is keyed by language code. When a translation
+is missing, the reader falls back to the default language and shows a fallback
+notice.
+
+Removing a language removes all guide translations for that language.
+
+## Optional Password Encryption
+
+For people who will not keep the package on encrypted hardware, the package
+`.zip` can be locked with a password in a self-describing JSON envelope:
 
 ```json
 {
@@ -130,36 +194,14 @@ self-describing JSON envelope (`inheritance-encrypted/v1`):
 }
 ```
 
-- Scheme: **AES-256-GCM** with a **PBKDF2-SHA256** derived key (same primitives as
-  freedomclock.io; iterations raised to OWASP’s 600k and stored in the file).
-- The plaintext is the package `.zip`. When the app meets such a file it prompts
-  for the password and decrypts **on the device** — the password is never sent
-  anywhere.
-- **Minimum password length: 12** (a 5-word passphrase is ideal).
-- Because every parameter is in the envelope, it is **decryptable without this
-  app**. Standalone recipe (Node 18+, Web Crypto):
+The app decrypts on the device. The password is never sent anywhere. Because
+every parameter is stored in the envelope, the package can be decrypted without
+this app using standard Web Crypto or Node.js primitives.
 
-```js
-import { readFileSync, writeFileSync } from 'node:fs';
-const PASSWORD = '...';
-const env = JSON.parse(readFileSync('package.encrypted.json', 'utf8'));
-const b64 = (s) => Uint8Array.from(Buffer.from(s, 'base64'));
-const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(PASSWORD), 'PBKDF2', false, ['deriveKey']);
-const key = await crypto.subtle.deriveKey(
-  { name: 'PBKDF2', salt: b64(env.salt), iterations: env.iterations, hash: 'SHA-256' },
-  km, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
-const zip = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(env.iv) }, key, b64(env.ciphertext));
-writeFileSync('package.zip', Buffer.from(zip)); // → ordinary package .zip
-```
+## Durability Rules
 
-Encryption is optional: an unencrypted package is just the folder/zip described
-above. Keep the password and the package separate.
-
-## Durability rules
-
-1. Plain text only — JSON + Markdown + folders. No binary container, no DB.
-2. The human renderings (`guides/`, `print/`, `START_HERE.txt`) mean the plan is
-   readable even with no app.
-3. `schema` is versioned so future readers can recognise and migrate it.
-4. Attachments are real files referenced by path — never base64-bloated into the
-   JSON.
+1. Keep the source open: JSON plus ordinary files.
+2. Keep ids stable once created.
+3. Keep attachments as files referenced by path.
+4. Prefer pointers over raw secrets.
+5. Version the `schema` field so future readers can migrate safely.

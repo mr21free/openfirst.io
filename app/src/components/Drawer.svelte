@@ -6,15 +6,31 @@
   import GuideForm from './GuideForm.svelte';
   import AttachmentForm from './AttachmentForm.svelte';
   import RoleForm from './RoleForm.svelte';
+  import ReadinessForm from './ReadinessForm.svelte';
   import MetaForm from './MetaForm.svelte';
+  import MapForm from './MapForm.svelte';
+  import Prose from './Prose.svelte';
+  import StatusIcon from './StatusIcon.svelte';
+  import TrashIcon from './TrashIcon.svelte';
 
-  let { pkg, id, onOpen, onClose, onBack = null, canBack = false, store = null, editing = false, onDelete = null, requestConfirm = null, requestNotice = null } = $props();
+  let { pkg, id, onOpen, onClose, onBack = null, canBack = false, store = null, editing = false, showReadiness = false, onDelete = null, onTag = null, onView = null, requestConfirm = null, requestNotice = null } = $props();
 
   let full = $state(false); // expand the side panel to near full-screen (e.g. to read a PDF)
+  let openSections = $state({});
 
   const e = $derived(pkg.entity(id));
   const obj = $derived(e?.obj);
+  const runId = $derived(String(id || '').startsWith('__run:') ? String(id).slice(6) : null);
+  const testRun = $derived(runId ? (store?.data?.readiness_runs || []).find((r) => r.id === runId) : null);
   const impLabel = (l) => ({ high: 'High', medium: 'Medium', low: 'Low' }[l] || l);
+  const sectionOpen = (key, count) => count <= 3 || !!openSections[key];
+  function toggleSection(key) {
+    openSections = { ...openSections, [key]: !openSections[key] };
+  }
+  const runOpen = (runId) => !!openSections[`run:${runId}`];
+  function toggleRun(runId) {
+    toggleSection(`run:${runId}`);
+  }
 
   const dependents = $derived(e?.kind === 'item' ? (pkg.dependentsOf.get(id) || []) : []);
   const itemsHere = $derived(e?.kind === 'location' ? (pkg.itemsAtLocation.get(id) || []) : []);
@@ -56,6 +72,65 @@
   const roleGuideIds = $derived(
     e?.kind === 'role' ? (pkg.guides || []).filter((g) => (g.audience_roles || []).includes(id)).map((g) => g.id) : []
   );
+  const readinessRelatedIds = $derived.by(() => {
+    if (e?.kind !== 'readiness') return [];
+    return [
+      ...(obj.related_person_ids || []),
+      ...(obj.related_item_ids || []),
+      ...(obj.related_location_ids || []),
+      ...(obj.related_guide_ids || []),
+      ...(obj.related_attachment_ids || [])
+    ];
+  });
+  const readinessRunResults = $derived.by(() => {
+    if (e?.kind !== 'readiness') return [];
+    return (store?.data?.readiness_runs || [])
+      .map((run) => ({ run, result: (run.results || []).find((r) => r.check_id === id) }))
+      .filter((r) => r.result)
+      .sort((a, b) => {
+        const at = Date.parse(a.run.submitted_at || a.run.started_at || a.run.date || '');
+        const bt = Date.parse(b.run.submitted_at || b.run.started_at || b.run.date || '');
+        if (Number.isFinite(at) && Number.isFinite(bt)) return bt - at;
+        return String(b.run.date || '').localeCompare(String(a.run.date || ''));
+      });
+  });
+  const testerName = (run) => run.person_id ? pkg.name(run.person_id) : 'Admin';
+  const durationLabel = (ms) => {
+    if (!ms) return 'Not recorded';
+    const sec = Math.max(1, Math.round(ms / 1000));
+    if (sec < 60) return `${sec} sec`;
+    const min = Math.floor(sec / 60);
+    const rem = sec % 60;
+    return rem ? `${min} min ${rem} sec` : `${min} min`;
+  };
+  function testName(run) {
+    const iso = run?.submitted_at || run?.started_at;
+    if (!iso) return run?.date || 'Missing test';
+    try {
+      return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: 'numeric', minute: '2-digit' }).format(new Date(iso));
+    } catch (_) {
+      return `${run?.date || 'No date'} ${String(iso).slice(11, 16)}`;
+    }
+  }
+  function checkAppliesToPerson(check, personId, personObj) {
+    if ((check.scope || 'external') !== 'external') return false;
+    if ((check.person_ids || []).includes(personId)) return true;
+    if ((check.role_ids || []).some((r) => (personObj?.roles || []).includes(r))) return true;
+    return !(check.person_ids || []).length && !(check.role_ids || []).length;
+  }
+  const personReadiness = $derived.by(() => {
+    if (e?.kind !== 'person' || !showReadiness) return { checks: [], runs: [] };
+    const runs = (store?.data?.readiness_runs || [])
+      .filter((run) => run.person_id === id)
+      .sort((a, b) => {
+        const at = Date.parse(a.submitted_at || a.started_at || a.date || '');
+        const bt = Date.parse(b.submitted_at || b.started_at || b.date || '');
+        if (Number.isFinite(at) && Number.isFinite(bt)) return bt - at;
+        return String(b.date || '').localeCompare(String(a.date || ''));
+      });
+    const checks = pkg.readinessOrdered().filter((c) => checkAppliesToPerson(c, id, obj));
+    return { checks, runs };
+  });
 
   function escapeHtml(value) {
     return String(value || '').replace(/[&<>"']/g, (ch) => ({
@@ -95,6 +170,14 @@
       </html>`);
     printWindow.document.close();
   }
+  async function deleteResult(runId, checkId) {
+    const ok = requestConfirm ? await requestConfirm({
+      title: 'Delete dry-run answer?',
+      message: 'This removes this one answer and its notes from the test run.',
+      confirmLabel: 'Delete'
+    }) : true;
+    if (ok) store?.deleteReadinessResult?.(runId, checkId);
+  }
 </script>
 
 <svelte:window onkeydown={(e) => e.key === 'Escape' && onClose()} />
@@ -106,12 +189,72 @@
       <button class="btn btn-ghost close" onclick={onClose} aria-label="Close">✕</button>
     </div>
   {/snippet}
+  {#snippet fieldHead(key, label, count = 0)}
+    <div class="field-head">
+      {#if count > 3}
+        <button class="collapse-toggle" onclick={() => toggleSection(key)} aria-label={sectionOpen(key, count) ? `Collapse ${label}` : `Expand ${label}`} title={sectionOpen(key, count) ? 'Collapse' : 'Expand'}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            {#if sectionOpen(key, count)}<polyline points="6 9 12 15 18 9" />{:else}<polyline points="9 18 15 12 9 6" />{/if}
+          </svg>
+        </button>
+      {/if}
+      <span class="muted small">{label}</span>
+      {#if count > 0}<span class="field-count">{count}</span>{/if}
+    </div>
+  {/snippet}
   {#if id === '__meta'}
     <div class="dhead">
       <div><span class="eyebrow">Settings</span><h2>Settings</h2></div>
       {@render headActions()}
     </div>
     <MetaForm {pkg} {store} raw={store?.data?.package} {requestConfirm} {requestNotice} />
+  {:else if id === '__map'}
+    <div class="dhead">
+      <div><span class="eyebrow">Map</span><h2>Map settings</h2></div>
+      {@render headActions()}
+    </div>
+    <MapForm {pkg} raw={store?.data?.package} />
+  {:else if runId}
+    <div class="dhead">
+      <div class="dhead-main">
+        {#if canBack}
+          <button class="back" onclick={() => onBack?.()} title="Back" aria-label="Back">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+        {/if}
+        <div><span class="eyebrow">Test</span><h2>{testRun ? testName(testRun) : 'Missing test'}</h2></div>
+      </div>
+      {@render headActions()}
+    </div>
+    {#if testRun}
+      <div class="dbody stack">
+        <div class="field"><span class="muted small">Person</span><p class="soft small">{testerName(testRun)}</p></div>
+        <div class="field"><span class="muted small">Duration</span><p class="soft small">{durationLabel(testRun.duration_ms)}</p></div>
+        <div class="field">
+          {@render fieldHead(`test-results:${runId}`, 'Answers', (testRun.results || []).length)}
+          {#if (testRun.results || []).length}
+            {#if sectionOpen(`test-results:${runId}`, (testRun.results || []).length)}
+              <div class="result-list">
+                {#each testRun.results || [] as result}
+                  <div class="result-row">
+                    <StatusIcon status={result.status} wrapped />
+                    <span class="result-main">
+                      <strong>{pkg.name(result.check_id)}</strong>
+                      {#if result.notes}<p class="soft small">{result.notes}</p>{/if}
+                    </span>
+                    <button class="mini-danger" title="Delete answer" aria-label="Delete answer" onclick={() => deleteResult(testRun.id, result.check_id)}><TrashIcon size={12} /></button>
+                  </div>
+                {/each}
+              </div>
+            {/if}
+          {:else}
+            <p class="soft small">No answers recorded in this test.</p>
+          {/if}
+        </div>
+      </div>
+    {:else}
+      <p class="soft">This test no longer exists.</p>
+    {/if}
   {:else if !e}
     <div class="dhead">
       <span class="eyebrow">Missing reference</span>
@@ -133,6 +276,8 @@
           {:else if e.kind === 'item'}Item
           {:else if e.kind === 'attachment'}Attachment
           {:else if e.kind === 'role'}Role
+          {:else if e.kind === 'readiness'}Readiness
+          {:else if e.kind === 'guide'}Guide settings
           {:else}{e.kind}{/if}
         </span>
         <h2>{pkg.name(id)}</h2>
@@ -154,11 +299,12 @@
         <AttachmentForm {pkg} raw={store?.rawById(id)} onDelete={() => onDelete?.(id)} />
       {:else if e.kind === 'role'}
         <RoleForm {pkg} {store} raw={store?.rawById(id)} onDelete={() => onDelete?.(id)} />
+      {:else if e.kind === 'readiness'}
+        <ReadinessForm {pkg} {store} raw={store?.rawById(id)} onDelete={() => onDelete?.(id)} />
       {:else}
         {@const fraw = store?.rawById(id)}
         <div class="frm">
           <label class="f"><span class="lbl">Name</span><input bind:value={fraw.name} /></label>
-          <label class="toggle"><input type="checkbox" bind:checked={fraw.is_print} /> <span>Print folder</span></label>
           <div class="form-foot"><button class="btn btn-ghost form-danger" onclick={() => onDelete?.(id)}>Delete</button></div>
         </div>
       {/if}
@@ -166,20 +312,69 @@
     <div class="dbody stack">
       <!-- Human summary first: name (header) → description → attachments → notes. -->
       {#if obj.display_as}<p class="soft"><span class="muted">Known as</span> {obj.display_as}</p>{/if}
-      {#if obj.description}<p class="soft">{obj.description}</p>{/if}
+      {#if obj.description}<p class="soft small">{obj.description}</p>{/if}
       {#if e.kind === 'item' && attachmentsForItem.length}
-        <div class="field"><span class="muted small">Attachments</span>
-          {#each itemImages as aid (aid)}
-            {@const a = pkg.entity(aid)?.obj}
-            <button class="att-figure" onclick={() => onOpen?.(aid)} title={a?.description || a?.filename || 'Open file'}>
-              <img class="att-img" src={pkg.attachmentUrls[aid]} alt={a?.description || a?.filename || ''} loading="lazy" />
-              {#if a?.description}<span class="att-cap tiny muted">{a.description}</span>{/if}
-            </button>
-          {/each}
-          {#if itemOtherFiles.length}<EntityList {pkg} ids={itemOtherFiles} {onOpen} />{/if}
+        <div class="field">
+          {@render fieldHead(`att:${id}`, 'Attachments', attachmentsForItem.length)}
+          {#if sectionOpen(`att:${id}`, attachmentsForItem.length)}
+            {#each itemImages as aid (aid)}
+              {@const a = pkg.entity(aid)?.obj}
+              <button class="att-figure" onclick={() => onOpen?.(aid)} title={a?.description || a?.filename || 'Open file'}>
+                <img class="att-img" src={pkg.attachmentUrls[aid]} alt={a?.description || a?.filename || ''} loading="lazy" />
+                {#if a?.description}<span class="att-cap tiny muted">{a.description}</span>{/if}
+              </button>
+            {/each}
+            {#if itemOtherFiles.length}<EntityList {pkg} ids={itemOtherFiles} {onOpen} />{/if}
+          {/if}
         </div>
       {/if}
-      {#if obj.notes}<div class="field"><span class="muted small">Notes</span><p class="soft small">{obj.notes}</p></div>{/if}
+      {#if obj.notes}<div class="field"><span class="muted small">Notes</span><div class="notes-prose"><Prose {pkg} markdown={obj.notes} {onOpen} {onTag} {onView} /></div></div>{/if}
+
+      <!-- READINESS -->
+      {#if e.kind === 'readiness'}
+        <div class="field"><span class="muted small">{obj.scope === 'internal' ? 'Task / gap' : 'Question / task'}</span>
+          <div class="notes-prose"><Prose {pkg} markdown={obj.scope === 'internal' ? (obj.owner_notes || '') : (obj.question || '')} {onOpen} {onTag} {onView} /></div>
+        </div>
+        {#if obj.scope !== 'internal' && obj.expected}
+          <div class="field"><span class="muted small">What a good answer proves</span><p class="soft small">{obj.expected}</p></div>
+        {/if}
+        {#if obj.person_ids?.length}
+          <div class="field">
+            {@render fieldHead(`ready-people:${id}`, 'Assigned people', obj.person_ids.length)}
+            {#if sectionOpen(`ready-people:${id}`, obj.person_ids.length)}<EntityList {pkg} ids={obj.person_ids} {onOpen} />{/if}
+          </div>
+        {/if}
+        {#if obj.tags?.length}
+          <div class="field"><span class="muted small">Tags</span>
+            <div class="row wrap">{#each obj.tags as tag}<span class="chip"># {tag}</span>{/each}</div>
+          </div>
+        {/if}
+        {#if readinessRelatedIds.length}
+          <div class="field">
+            {@render fieldHead(`ready-related:${id}`, 'Related', readinessRelatedIds.length)}
+            {#if sectionOpen(`ready-related:${id}`, readinessRelatedIds.length)}<EntityList {pkg} ids={readinessRelatedIds} {onOpen} />{/if}
+          </div>
+        {/if}
+        <div class="field">
+          {@render fieldHead(`ready-results:${id}`, 'Dry-run results', readinessRunResults.length)}
+          {#if readinessRunResults.length}
+            {#if sectionOpen(`ready-results:${id}`, readinessRunResults.length)}<div class="result-list">
+              {#each readinessRunResults as rr (rr.run.id)}
+                <div class="result-row">
+                  <StatusIcon status={rr.result.status} wrapped />
+                  <span class="result-main">
+                    <span class="muted small">{testerName(rr.run)} · {testName(rr.run)}</span>
+                    {#if rr.result.notes}<p class="soft small">{rr.result.notes}</p>{/if}
+                  </span>
+                  <button class="mini-danger" title="Delete answer" aria-label="Delete answer" onclick={() => deleteResult(rr.run.id, rr.result.check_id)}><TrashIcon size={12} /></button>
+                </div>
+              {/each}
+            </div>{/if}
+          {:else}
+            <p class="soft small">No dry-run results yet.</p>
+          {/if}
+        </div>
+      {/if}
 
       <!-- Importance gets a titled section like every other field; sensitive stays a chip. -->
       {#if obj.importance && e.kind !== 'person'}
@@ -194,15 +389,17 @@
       <!-- ROLE -->
       {#if e.kind === 'role'}
         {#if rolePeopleIds.length}
-          <div class="field"><span class="muted small">Assigned people</span>
-            <EntityList {pkg} ids={rolePeopleIds} {onOpen} />
+          <div class="field">
+            {@render fieldHead(`role-people:${id}`, 'Assigned people', rolePeopleIds.length)}
+            {#if sectionOpen(`role-people:${id}`, rolePeopleIds.length)}<EntityList {pkg} ids={rolePeopleIds} {onOpen} />{/if}
           </div>
         {:else}
           <p class="soft small">No people are assigned to this role.</p>
         {/if}
         {#if roleGuideIds.length}
-          <div class="field"><span class="muted small">Used by guides</span>
-            <EntityList {pkg} ids={roleGuideIds} {onOpen} />
+          <div class="field">
+            {@render fieldHead(`role-guides:${id}`, 'Used by guides', roleGuideIds.length)}
+            {#if sectionOpen(`role-guides:${id}`, roleGuideIds.length)}<EntityList {pkg} ids={roleGuideIds} {onOpen} />{/if}
           </div>
         {:else}
           <p class="soft small">No guides use this role.</p>
@@ -216,6 +413,9 @@
           <div class="field"><span class="muted small">Role</span>
             <div class="row wrap">{#each obj.roles as r}<span class="chip">{pkg.roleLabel(r)}</span>{/each}</div>
           </div>
+        {/if}
+        {#if showReadiness && obj.readiness_score}
+          <div class="field"><span class="muted small">Readiness score</span><p class="soft small">{obj.readiness_score}</p></div>
         {/if}
         {#if obj.contacts?.length}
           <div class="field"><span class="muted small">Contact</span>
@@ -238,8 +438,45 @@
           </div>
         {/if}
         {#if itemsAccess.length}
-          <div class="field"><span class="muted small">Can access</span>
-            <EntityList {pkg} ids={itemsAccess} {onOpen} />
+          <div class="field">
+            {@render fieldHead(`person-access:${id}`, 'Can access', itemsAccess.length)}
+            {#if sectionOpen(`person-access:${id}`, itemsAccess.length)}<EntityList {pkg} ids={itemsAccess} {onOpen} />{/if}
+          </div>
+        {/if}
+        {#if showReadiness}
+          <div class="field">
+            {@render fieldHead(`person-readiness:${id}`, 'Readiness answers', personReadiness.runs.length)}
+            {#if personReadiness.runs.length}
+              {#if sectionOpen(`person-readiness:${id}`, personReadiness.runs.length)}<div class="runs">
+                {#each personReadiness.runs as run (run.id)}
+                  <div class="run-block">
+                    <button class="run-head" onclick={() => toggleRun(run.id)} aria-expanded={runOpen(run.id)}>
+                      <span class="run-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          {#if runOpen(run.id)}<polyline points="6 9 12 15 18 9" />{:else}<polyline points="9 18 15 12 9 6" />{/if}
+                        </svg>
+                        <strong>{testName(run)}</strong>
+                      </span>
+                      <span class="muted small">{(run.results || []).length} result{(run.results || []).length === 1 ? '' : 's'}</span>
+                    </button>
+                    {#if runOpen(run.id)}
+                      {#each run.results || [] as result}
+                        <div class="result-row">
+                          <StatusIcon status={result.status} wrapped />
+                          <span class="result-main">
+                            <strong>{pkg.name(result.check_id)}</strong>
+                            {#if result.notes}<p class="soft small">{result.notes}</p>{/if}
+                          </span>
+                          <button class="mini-danger" title="Delete answer" aria-label="Delete answer" onclick={() => deleteResult(run.id, result.check_id)}><TrashIcon size={12} /></button>
+                        </div>
+                      {/each}
+                    {/if}
+                  </div>
+                {/each}
+              </div>{/if}
+            {:else}
+              <p class="soft small">No dry-run answers recorded for this person yet.</p>
+            {/if}
           </div>
         {/if}
       {/if}
@@ -256,18 +493,21 @@
           </div>
         {/if}
         {#if obj.access_person_ids?.length}
-          <div class="field"><span class="muted small">Who can access it</span>
-            <EntityList {pkg} ids={obj.access_person_ids} {onOpen} />
+          <div class="field">
+            {@render fieldHead(`loc-access:${id}`, 'Who can access it', obj.access_person_ids.length)}
+            {#if sectionOpen(`loc-access:${id}`, obj.access_person_ids.length)}<EntityList {pkg} ids={obj.access_person_ids} {onOpen} />{/if}
           </div>
         {/if}
         {#if locationDependsOnIds.length}
-          <div class="field"><span class="muted small">Depends on</span>
-            <EntityList {pkg} ids={locationDependsOnIds} {onOpen} />
+          <div class="field">
+            {@render fieldHead(`loc-depends:${id}`, 'Depends on', locationDependsOnIds.length)}
+            {#if sectionOpen(`loc-depends:${id}`, locationDependsOnIds.length)}<EntityList {pkg} ids={locationDependsOnIds} {onOpen} />{/if}
           </div>
         {/if}
         {#if itemsHere.length}
-          <div class="field"><span class="muted small">What is stored here</span>
-            <EntityList {pkg} ids={itemsHere} {onOpen} />
+          <div class="field">
+            {@render fieldHead(`loc-items:${id}`, 'What is stored here', itemsHere.length)}
+            {#if sectionOpen(`loc-items:${id}`, itemsHere.length)}<EntityList {pkg} ids={itemsHere} {onOpen} />{/if}
           </div>
         {/if}
       {/if}
@@ -282,41 +522,48 @@
           </div>
         {/if}
         {#if obj.location_ids?.length}
-          <div class="field"><span class="muted small">Where it is</span>
-            <EntityList {pkg} ids={obj.location_ids} {onOpen} />
+          <div class="field">
+            {@render fieldHead(`item-locations:${id}`, 'Where it is', obj.location_ids.length)}
+            {#if sectionOpen(`item-locations:${id}`, obj.location_ids.length)}<EntityList {pkg} ids={obj.location_ids} {onOpen} />{/if}
           </div>
         {/if}
         {#if itemContainers.length}
-          <div class="field"><span class="muted small">Stored inside</span>
-            <EntityList {pkg} ids={itemContainers} {onOpen} />
+          <div class="field">
+            {@render fieldHead(`item-containers:${id}`, 'Stored inside', itemContainers.length)}
+            {#if sectionOpen(`item-containers:${id}`, itemContainers.length)}<EntityList {pkg} ids={itemContainers} {onOpen} />{/if}
           </div>
         {/if}
         {#if itemsInside.length}
-          <div class="field"><span class="muted small">What's inside</span>
-            <EntityList {pkg} ids={itemsInside} {onOpen} />
+          <div class="field">
+            {@render fieldHead(`item-inside:${id}`, "What's inside", itemsInside.length)}
+            {#if sectionOpen(`item-inside:${id}`, itemsInside.length)}<EntityList {pkg} ids={itemsInside} {onOpen} />{/if}
           </div>
         {/if}
         {#if obj.access_person_ids?.length}
-          <div class="field"><span class="muted small">Who can access</span>
-            <EntityList {pkg} ids={obj.access_person_ids} {onOpen} />
+          <div class="field">
+            {@render fieldHead(`item-access:${id}`, 'Who can access', obj.access_person_ids.length)}
+            {#if sectionOpen(`item-access:${id}`, obj.access_person_ids.length)}<EntityList {pkg} ids={obj.access_person_ids} {onOpen} />{/if}
           </div>
         {/if}
         {#if obj.depends_on_ids?.length}
-          <div class="field"><span class="muted small">Depends on</span>
-            <EntityList {pkg} ids={obj.depends_on_ids} {onOpen} />
+          <div class="field">
+            {@render fieldHead(`item-depends:${id}`, 'Depends on', obj.depends_on_ids.length)}
+            {#if sectionOpen(`item-depends:${id}`, obj.depends_on_ids.length)}<EntityList {pkg} ids={obj.depends_on_ids} {onOpen} />{/if}
           </div>
         {/if}
         {#if dependents.length}
-          <div class="field"><span class="muted small">Needed by</span>
-            <EntityList {pkg} ids={dependents} {onOpen} />
+          <div class="field">
+            {@render fieldHead(`item-needed:${id}`, 'Needed by', dependents.length)}
+            {#if sectionOpen(`item-needed:${id}`, dependents.length)}<EntityList {pkg} ids={dependents} {onOpen} />{/if}
           </div>
         {/if}
         {#if obj.price}
           <div class="field"><span class="muted small">Price</span><p class="soft small">{obj.price}</p></div>
         {/if}
         {#if obj.guide_ids?.length}
-          <div class="field"><span class="muted small">Explained in</span>
-            <EntityList {pkg} ids={obj.guide_ids} {onOpen} />
+          <div class="field">
+            {@render fieldHead(`item-guides:${id}`, 'Explained in', obj.guide_ids.length)}
+            {#if sectionOpen(`item-guides:${id}`, obj.guide_ids.length)}<EntityList {pkg} ids={obj.guide_ids} {onOpen} />{/if}
           </div>
         {/if}
       {/if}
@@ -336,8 +583,9 @@
             (open the whole folder/zip to include it).</p>
         {/if}
         {#if attachmentParentIds.length}
-          <div class="field"><span class="muted small">Attached to</span>
-            <EntityList {pkg} ids={attachmentParentIds} {onOpen} />
+          <div class="field">
+            {@render fieldHead(`att-parents:${id}`, 'Attached to', attachmentParentIds.length)}
+            {#if sectionOpen(`att-parents:${id}`, attachmentParentIds.length)}<EntityList {pkg} ids={attachmentParentIds} {onOpen} />{/if}
           </div>
         {/if}
         {#if attUrl}
@@ -372,7 +620,7 @@
     transition: width .2s ease;
   }
   .drawer.full { width: 94vw; }
-  .dhead-actions { display: flex; align-items: center; gap: 4px; flex: none; }
+  .dhead-actions { display: flex; align-items: center; gap: 6px; flex: none; }
   @keyframes slide { from { transform: translateX(20px); opacity: .6; } to { transform: none; opacity: 1; } }
   .dhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .dhead-main { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
@@ -389,11 +637,77 @@
     border: 1px solid var(--rule); color: var(--ink-soft);
   }
   .iconbtn-print:hover { color: var(--ink); border-color: var(--accent-deep); }
-  .close { min-height: 34px; padding: 4px 10px; }
-  .dbody { margin-top: 18px; }
-  .field { display: flex; flex-direction: column; gap: 7px; }
+  /* Productboard-style: a touch larger and clearly tappable. */
+  .close { min-height: 36px; min-width: 36px; padding: 4px 8px; font-size: 20px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+  /* One consistent text size across the whole panel body (values, list rows,
+     breadcrumbs…). The header title and the small uppercase field labels keep
+     their own sizes. */
+  .dbody { margin-top: 18px; font-size: 13px; }
+  .dbody :global(.ulist-name) { font-size: 13px; }
+  /* Productboard-style divided field rows for scannability. */
+  .field { display: flex; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid var(--rule-soft); }
+  .field:first-child { padding-top: 0; border-top: none; }
+  .field > .muted { font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-mute); }
+  .field-head { display: flex; align-items: center; gap: 8px; min-height: 22px; }
+  .field-head .muted { font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-mute); }
+  .collapse-toggle {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    color: var(--ink-soft);
+    border: 1px solid transparent;
+    background: transparent;
+  }
+  .collapse-toggle:hover { color: var(--ink); border-color: var(--rule); background: var(--paper); }
+  .field-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    color: var(--ink-mute);
+    font-size: 11px;
+    line-height: 1;
+    background: var(--paper);
+  }
+  /* Notes render as rich prose (formatting + mentions), sized to match the
+     other panel text (description, importance…). */
+  .notes-prose :global(.prose) { font-size: 13px; line-height: 1.6; }
+  .notes-prose :global(.prose) :global(p:first-child) { margin-top: 0; }
+  .result-list { display: flex; flex-direction: column; gap: 8px; }
+  .result-row {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr) 24px;
+    column-gap: 14px;
+    align-items: center;
+    padding: 6px 0;
+  }
+  .result-main { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+  .result-main strong { line-height: 1.35; }
+  .result-row p { margin: 0; white-space: pre-wrap; }
+  .runs { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+  .run-block { padding-top: 10px; border-top: 1px solid var(--rule-soft); }
+  .run-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; padding: 4px 0; text-align: left; color: var(--ink); }
+  .run-title { display: inline-flex; align-items: center; gap: 8px; }
+  .mini-danger {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    color: var(--ink-mute);
+    border: 1px solid transparent;
+  }
+  .mini-danger:hover { color: var(--warn); border-color: var(--rule); background: var(--paper); }
   .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 2px; }
-  .crumb { font-size: 14px; color: var(--accent-deep); padding: 1px 2px; border-radius: 4px; }
+  .crumb { font-size: 13px; color: var(--accent-deep); padding: 1px 2px; border-radius: 4px; }
   .crumb:hover { text-decoration: underline; text-underline-offset: 3px; }
   .crumb-sep { color: var(--ink-mute); margin: 0 4px; }
   .plain { list-style: none; padding: 0; }
@@ -404,6 +718,7 @@
   .att-pdf { width: 100%; min-height: 78vh; border-radius: 10px; border: 1px solid var(--rule-soft); margin-top: 16px; margin-bottom: 12px; background: var(--paper); }
   /* Inline image attachment in an item's read view — clickable to open full. */
   .att-figure { display: block; width: 100%; padding: 0; border: none; background: none; text-align: left; cursor: pointer; }
+  .att-figure .att-img { border-radius: 0; }
   .att-figure:hover .att-img { border-color: var(--accent); }
   .att-cap { display: block; margin: -6px 0 12px; }
 </style>

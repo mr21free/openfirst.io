@@ -1,5 +1,7 @@
 <script>
   import Importance from './Importance.svelte';
+  import Icon from './Icon.svelte';
+  import { entityIconKind } from '../lib/icons.js';
 
   let { pkg, ids = [], onOpen } = $props();
 
@@ -25,6 +27,8 @@
   {#each orderedIds as id}
     {@const e = pkg.entity(id)}
     <button class="ulist-row" onclick={() => onOpen?.(id)}>
+      <!-- Leading type icon so a file/location/person reads at a glance. -->
+      <span class="ulist-ico" aria-hidden="true"><Icon kind={entityIconKind(pkg, id)} /></span>
       <span class="ulist-main">
         <span class="ulist-name">
           {#if e?.obj?.sensitive}<span class="lock-dot" title="sensitive">●</span> {/if}{pkg.name(id)}
@@ -37,3 +41,14 @@
     </button>
   {/each}
 </div>
+
+<style>
+  /* In the side panel these rows read as a clean list — no border, just a
+     hover wash (the main center lists keep their card border). */
+  .ulist-row { border: none; }
+  .ulist-ico {
+    flex: none; width: 30px; height: 30px; border-radius: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--ink-soft); background: var(--accent-wash);
+  }
+</style>

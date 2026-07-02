@@ -1,5 +1,6 @@
 <script>
   import EntityPicker from './EntityPicker.svelte';
+  import GuideContentEditor from './GuideContentEditor.svelte';
 
   let { pkg, raw, onDelete } = $props();
 
@@ -10,7 +11,9 @@
 {#if raw}
   <div class="frm">
     <label class="f"><span class="lbl">Name</span><input bind:this={firstInput} bind:value={raw.name} placeholder="e.g. Germany, Berlin, Home Trezor" /></label>
-    <label class="f"><span class="lbl">Notes</span><textarea rows="2" bind:value={raw.notes}></textarea></label>
+    <div class="f"><span class="lbl">Notes</span>
+      <GuideContentEditor {pkg} {raw} compact value={raw.notes || ''} onValue={(v) => (raw.notes = v)} placeholder={'Notes — format text, or type “@” to mention a person, item or location.'} />
+    </div>
 
     <div class="f"><span class="lbl">Who can access it</span>
       <EntityPicker {pkg} target={raw} key="access_person_ids" kinds={['person']} placeholder="Add a person…" />

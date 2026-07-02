@@ -57,23 +57,6 @@ export function normalizedRoles(data) {
   return [...byId.values()];
 }
 
-export const ITEM_TYPE_LABELS = {
-  password_record: 'Password record',
-  btc_seed: 'Bitcoin seed',
-  btc_passphrase: 'Bitcoin passphrase',
-  btc_wallet: 'Bitcoin wallet',
-  hw_device: 'Hardware device',
-  twofa: 'Two-factor (2FA)',
-  secret_split_part: 'Split secret (part)',
-  account_investment: 'Investment account',
-  bank_account: 'Bank account',
-  digital_service: 'Digital service / device',
-  recovery_artifact: 'Recovery artifact',
-  legal_document: 'Legal document',
-  sim_card: 'SIM card',
-  other: 'Other'
-};
-
 const IMP_ORDER = { high: 0, medium: 1, low: 2, undefined: 3 };
 
 export class InheritancePackage {
@@ -92,6 +75,8 @@ export class InheritancePackage {
     this.guides = data.guides || [];
     this.folders = data.folders || [];
     this.attachments = data.attachments || [];
+    this.readinessChecks = data.readiness_checks || [];
+    this.readinessRuns = data.readiness_runs || [];
     this.roles = normalizedRoles(data);
 
     // Indices
@@ -103,6 +88,7 @@ export class InheritancePackage {
     index(this.guides, 'guide');
     index(this.folders, 'folder');
     index(this.attachments, 'attachment');
+    index(this.readinessChecks, 'readiness');
     index(this.roles, 'role');
 
     // Reverse dependency edges: who depends on this item.
@@ -164,6 +150,10 @@ export class InheritancePackage {
       return this.#nthEmpty(this.people, (p) => p.nickname || p.name, o, 'New Person');
     }
     if (e.kind === 'attachment') return o.filename || 'New File';
+    if (e.kind === 'readiness') {
+      if (o.title) return o.title;
+      return this.#nthEmpty(this.readinessChecks, (c) => c.title, o, 'New Check');
+    }
     if (e.kind === 'role') {
       if (o.name) return o.name;
       return this.#nthEmpty(this.roles, (r) => r.name, o, 'New Role');
@@ -195,7 +185,7 @@ export class InheritancePackage {
     const e = this.byId.get(id);
     if (!e) return [];
     const o = e.obj;
-    return [o.name, o.nickname, o.title, o.filename, o.id].filter(Boolean);
+    return [o.name, o.nickname, o.title, o.filename, o.question, o.id].filter(Boolean);
   }
 
   /** A short, human file type for an attachment — "PDF", "JPG image", "File". */
@@ -212,6 +202,48 @@ export class InheritancePackage {
     }
     if (ext && ext.length <= 5) return ext.toUpperCase();
     return 'File';
+  }
+
+  /** Global search across the plan. Ranking: a name match beats a body match;
+   *  then guides + things referenced by guides ("in the guides") are boosted,
+   *  then high-importance. Returns [{ id, kind, name, importance, inGuide, score }]. */
+  search(query, limit = 50) {
+    const q = (query || '').trim().toLowerCase();
+    if (!q) return [];
+
+    // ids that appear in any guide (references or audience) — "in the guides".
+    const inGuides = new Set();
+    for (const g of this.guides || []) {
+      const r = g.references || {};
+      for (const k of Object.keys(r)) for (const id of r[k] || []) inGuides.add(id);
+      for (const id of g.audience_person_ids || []) inGuides.add(id);
+    }
+
+    const out = [];
+    const add = (id, kind, name, secondary) => {
+      const nl = (name || '').toLowerCase();
+      let m = nl === q ? 100 : nl.startsWith(q) ? 70 : nl.includes(q) ? 45 : 0;
+      if (!m) { for (const s of secondary) if (s && String(s).toLowerCase().includes(q)) { m = 18; break; } }
+      if (!m) return;
+      const importance = this.byId.get(id)?.obj?.importance;
+      const inGuide = kind === 'guide' || inGuides.has(id);
+      const score = m + (inGuide ? 30 : 0) + (importance === 'high' ? 22 : importance === 'medium' ? 9 : 0);
+      out.push({ id, kind, name, importance, inGuide, score });
+    };
+
+    for (const g of this.guides || []) {
+      const content = Object.values(g.content || {}).join(' ').replace(/\[\[[^\]]+\]\]/g, ' ');
+      add(g.id, 'guide', this.name(g.id), [g.title, ...Object.values(g.title_i18n || {}), content]);
+    }
+    for (const p of this.people || []) add(p.id, 'person', this.name(p.id), [p.name, p.nickname, p.display_as]);
+    for (const it of this.items || []) add(it.id, 'item', this.name(it.id), [it.description, it.notes, it.price]);
+    for (const l of this.locations || []) add(l.id, 'location', this.name(l.id), [l.notes]);
+    for (const a of this.attachments || []) add(a.id, 'attachment', this.name(a.id), [a.description, ...(a.tags || [])]);
+    for (const c of this.readinessChecks || []) add(c.id, 'readiness', this.name(c.id), [c.question, c.expected, c.owner_notes, ...(c.tags || [])]);
+    for (const r of this.roles || []) add(r.id, 'role', this.name(r.id), []);
+
+    out.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+    return out.slice(0, limit);
   }
 
   text(localized) {
@@ -287,6 +319,7 @@ export class InheritancePackage {
   roleOptions() { return this.roles.map((r) => ({ value: r.id, label: r.name || roleLabel(r.id, this.roles) })); }
 
   attachmentsOrdered() { return this.ordered(this.attachments); }
+  readinessOrdered() { return this.ordered(this.readinessChecks); }
 
   /** Every distinct file tag, sorted — for filters and autocomplete. */
   allTags() {
@@ -299,20 +332,16 @@ export class InheritancePackage {
     return (this.attachments || []).filter((a) => (a.tags || []).includes(tag));
   }
 
-  // --- Location nesting (arbitrary depth via parent_id) ---
-  locationBranchRank(id, seen = new Set()) {
-    if (seen.has(id)) return 3;
-    seen.add(id);
-    const loc = this.byId.get(id)?.obj;
-    if (!loc) return 3;
-
-    let rank = IMP_ORDER[loc.importance] ?? 3;
-    for (const child of this.locations.filter((l) => l.parent_id === id)) {
-      rank = Math.min(rank, this.locationBranchRank(child.id, new Set(seen)));
-    }
-    return rank;
+  allReadinessTags() {
+    const set = new Set();
+    for (const c of this.readinessChecks || []) for (const t of c.tags || []) set.add(t);
+    return [...set].sort();
+  }
+  readinessWithTag(tag) {
+    return (this.readinessChecks || []).filter((c) => (c.tags || []).includes(tag));
   }
 
+  // --- Location nesting (arbitrary depth via parent_id) ---
   /** Locations use manual order (drag-and-drop), then name — never importance. */
   orderedLocationBranches(locations) {
     return [...locations].sort((a, b) =>

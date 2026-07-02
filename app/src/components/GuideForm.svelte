@@ -21,7 +21,7 @@
 
 {#if raw}
   <div class="frm">
-    <div class="f"><span class="lbl">Who is it for (roles)</span>
+    <div class="f"><span class="lbl">Visible to roles</span>
       <TagSelect options={roleOptions} target={raw} key="audience_roles" placeholder="Add a role…" />
     </div>
     <div class="f"><span class="lbl">…or specific people</span>

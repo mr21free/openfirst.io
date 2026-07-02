@@ -12,11 +12,27 @@ import { isEncryptedEnvelope, decryptEnvelope } from './crypto.js';
 import { validatePackage } from './validate.js';
 
 import sampleData from '../sample/inheritance.json';
-import taxUrl from '../sample/attachments/tax_returns/PersonA_tax_return_2009.png';
-import descUrl from '../sample/attachments/bitcoin/bitcoin_multi-sig_descriptor.png';
-import sharesUrl from '../sample/attachments/investments/companyX_shares.png';
 
 const norm = (p) => (p || '').replace(/^\.?\//, '');
+
+function mimeForAttachment(att) {
+  const explicit = String(att?.mime || '').trim();
+  if (explicit.includes('/')) return explicit;
+  const name = `${att?.original_filename || ''} ${att?.path || ''} ${att?.filename || ''}`.toLowerCase();
+  if (/\.mp4\b/.test(name)) return 'video/mp4';
+  if (/\.png\b/.test(name)) return 'image/png';
+  if (/\.jpe?g\b/.test(name)) return 'image/jpeg';
+  if (/\.webp\b/.test(name)) return 'image/webp';
+  if (/\.gif\b/.test(name)) return 'image/gif';
+  if (/\.pdf\b/.test(name)) return 'application/pdf';
+  return explicit;
+}
+
+function typedBlob(blob, att) {
+  const mime = mimeForAttachment(att);
+  if (!blob || blob.type || !mime) return blob;
+  return blob.slice(0, blob.size, mime);
+}
 
 // Normalize item<->attachment links to ONE canonical direction: attachment.item_ids.
 // Some plans stored links the other way (item.attachment_ids); fold those in so the
@@ -59,7 +75,7 @@ function buildLoaded(data, fileMap, base) {
       }
     }
     if (getter) {
-      const blob = getter();
+      const blob = typedBlob(getter(), att);
       blobs.set(att.id, blob);
       attachmentUrls[att.id] = URL.createObjectURL(blob);
     }
@@ -171,43 +187,14 @@ export function loadFromReaderHtml(htmlText) {
   const blobs = new Map();
   for (const [id, a] of Object.entries(payload.attachments || {})) {
     if (!a?.b64) continue;
-    const blob = b64ToBlob(a.b64, a.mime);
+    const blob = b64ToBlob(a.b64, a.mime || mimeForAttachment(data.attachments?.find((att) => att.id === id)));
     blobs.set(id, blob);
     attachmentUrls[id] = URL.createObjectURL(blob);
   }
   return { data, attachmentUrls, blobs, fromReader: true };
 }
 
-async function urlToBlob(url) {
-  if (url.startsWith('data:')) {
-    const comma = url.indexOf(',');
-    const meta = url.slice(5, comma); // e.g. "image/png;base64"
-    const mime = meta.split(';')[0];
-    const payload = url.slice(comma + 1);
-    if (/;base64/i.test(meta)) {
-      const bin = atob(payload);
-      const arr = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-      return new Blob([arr], { type: mime });
-    }
-    return new Blob([decodeURIComponent(payload)], { type: mime });
-  }
-  return (await fetch(url)).blob(); // dev server path (no CSP in dev)
-}
-
 export async function loadSample() {
-  const map = { att_taxreturn_2009: taxUrl, att_multisig_descriptor: descUrl, att_companyx_shares: sharesUrl };
   const data = normalizeAttachmentLinks(JSON.parse(JSON.stringify(sampleData)));
-  const attachmentUrls = {};
-  const blobs = new Map();
-  for (const [id, url] of Object.entries(map)) {
-    try {
-      const blob = await urlToBlob(url);
-      blobs.set(id, blob);
-      attachmentUrls[id] = URL.createObjectURL(blob);
-    } catch {
-      attachmentUrls[id] = url;
-    }
-  }
-  return { data, attachmentUrls, blobs };
+  return { data, attachmentUrls: {}, blobs: new Map() };
 }

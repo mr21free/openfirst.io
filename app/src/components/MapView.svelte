@@ -38,7 +38,7 @@
 {/snippet}
 
 <div class="map">
-  <p class="map-hint tiny muted">A map of what is where. Open a place to see its details, or an item to see its files and who can access it.</p>
+  <p class="map-hint tiny muted no-print">A map of what is where. Open a place to see its details, or an item to see its files and who can access it.</p>
   {#each roots as r}{@render locNode(r, 0)}{/each}
 
   {#if unplaced.length}
@@ -57,7 +57,7 @@
   .map { display: flex; flex-direction: column; gap: 14px; }
   .map-hint { margin: 0 2px 2px; }
   .loc-box {
-    border: 1px solid var(--rule); border-radius: 12px;
+    border: 1px solid var(--rule); border-radius: 0;
     padding: 12px 14px; background: var(--paper);
   }
   .loc-box.root { border-left: 3px solid var(--accent); }

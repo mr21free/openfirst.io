@@ -1,28 +1,26 @@
-# lifepackage.io — Reader
+# lifepackage.io
 
-A calm, **local-first, offline** way to read an inheritance plan. No server, no
-account, no tracking. The whole app is a single self-contained `index.html` that
-runs from disk in any modern browser — so it keeps working even if this project
-disappears.
+A calm, **local-first, offline** way to create, edit, and read an inheritance
+plan. No server, no account, no tracking. The whole app is a single
+self-contained `index.html` that runs from disk in any modern browser, so it
+keeps working even if this project disappears.
 
 The **app** is lifepackage.io; the **open file format** it reads/writes keeps a
 neutral, vendor-independent name (`inheritance-package/v1`) so other tools can
 adopt it. See [FORMAT.md](./FORMAT.md).
 
-This is the **Reader** phase of the product (read a package). The Builder
-(create/edit a package) comes next.
-
 ## What it does
 
 - Open an inheritance **package** — a folder, a `.zip`, or a single
   `inheritance.json` — entirely in the browser. Nothing is uploaded.
+- Create and edit the people, roles, locations, items, guides, files, languages,
+  and map permissions that make up a plan.
 - Asks the reader *“who are you?”* and shows the right things first for that role.
 - Lays the plan out gently: a personal letter, a *start here*, topic guides, the
   people who can help, where things are kept, and everything in the plan.
 - Resolves the graph: click any **person / item / location** to see where it
   lives, who can reach it, what it depends on, and what depends on it.
 - Cross-links inside guides are clickable.
-- A **To print** view for the printable artifacts (guide, envelope, labels).
 
 ## Privacy & durability
 
@@ -47,8 +45,8 @@ npm run build    # → dist/index.html  (one self-contained file)
 
 ## Use the built file
 
-Open `dist/index.html` directly (double-click, or `file://…`). Click **Try the
-sample** to explore a demo plan, or drop your own package folder / `.zip` /
+Open `dist/index.html` directly (double-click, or `file://...`). Click **Demo**
+to explore a demo plan, or drop your own package folder / `.zip` /
 `inheritance.json`.
 
 ## Samples (for testing the drop zone)
@@ -57,7 +55,7 @@ Under `public/`:
 
 - `sample-package/` — a full package **folder** (drag it in).
 - `sample-package.zip` — the same package zipped.
-- `sample-package/inheritance.json` — just the source (no attachment images).
+- `sample-package/inheritance.json` — just the source (the demo is JSON-only).
 - `sample-package.encrypted.json` — a **password-protected** package. Password:
   `open-sesame-2026`. Dropping it makes the app prompt for the password.
 
@@ -81,7 +79,7 @@ src/sample/                      the demo bundled into the app ("Try the sample"
 src/lib/package.js               parse + resolve the graph
 src/lib/load.js                  load from folder / zip / json / bundled sample
 src/lib/markdown.js              safe Markdown subset renderer
-src/components/                  Landing, Reader, Drawer, Prose, EntityChip
+src/components/                  Landing, Reader, Drawer, editor forms and views
 ```
 
 ## License

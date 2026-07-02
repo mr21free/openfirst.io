@@ -1,6 +1,6 @@
 // Recover an editable plan from a heir reader (start-here.html): export the
-// reader, then re-open it in a fresh builder and confirm the plan + attachments
-// come back, editable. Also: a non-reader file fails gracefully.
+// reader, then re-open it in a fresh builder and confirm the plan comes back
+// editable. Also: a non-reader file fails gracefully.
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -57,12 +57,8 @@ try {
     }
     return m;
   });
-  ok('recovered people + items', counts.People === 8 && counts.Items === 31);
-  ok('recovered attachments (Files restored)', counts.Files === 3);
-  // Open a file to confirm the blob URL resolves (attachment actually rebuilt).
-  await p2.evaluate(() => [...document.querySelectorAll('nav .navlink-section')].find((b) => /Files/.test(b.textContent))?.click());
-  await pause();
-  ok('recovered file rows render', await p2.evaluate(() => document.querySelectorAll('main .ulist .ulist-row').length === 3));
+  ok('recovered people + items', counts.People === 9 && counts.Items === 43);
+  ok('recovered JSON-only demo has no Files section', !('Files' in counts));
   ok('no runtime errors during recovery', errs.length === 0);
 
   // --- Password-protected reader: recover by unlocking ---
@@ -90,7 +86,7 @@ try {
   await p4.waitForFunction(() => /who are you/i.test(document.body.innerText) || !!document.querySelector('nav .navcount'), { timeout: 8000 });
   await p4.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything/i.test(b.textContent))?.click());
   await p4.waitForFunction(() => !!document.querySelector('nav .navcount'), { timeout: 8000 });
-  ok('encrypted reader recovers after unlock', await p4.evaluate(() => Number([...document.querySelectorAll('nav .navlink-section')].find((b) => /People/.test(b.textContent))?.querySelector('.navcount')?.textContent) === 8));
+  ok('encrypted reader recovers after unlock', await p4.evaluate(() => Number([...document.querySelectorAll('nav .navlink-section')].find((b) => /People/.test(b.textContent))?.querySelector('.navcount')?.textContent) === 9));
   rmSync(dir2, { recursive: true, force: true });
 
   // A non-reader .html fails with a friendly message.

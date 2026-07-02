@@ -24,7 +24,8 @@
   --screen-px: oklch(0.86 0.03 245);
 
   --maxw: 1480px;
-  --radius: 12px;
+  /* Square corners throughout — the calm "paper document" look. */
+  --radius: 0px;
 }
 
 /* Dark mode — same heaven-blue hue, cooled down for night reading. */
@@ -203,6 +204,31 @@ strong { font-weight: 600; }
   border-radius: 6px; padding: 0 6px; font-size: 0.92em; white-space: nowrap;
 }
 .prose a.taglink:hover { background: var(--accent); color: var(--paper); }
+.prose .guide-img-wrap { display: block; margin: 1.7em 0; }
+.prose .guide-video-wrap { display: block; margin: 1.7em 0; }
+.prose .guide-img {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.prose .guide-img img { display: block; width: 100%; height: auto; }
+.prose .guide-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #000;
+}
+.prose .guide-img-cap {
+  display: block;
+  padding: 8px 0 0;
+  color: var(--ink-mute);
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.4;
+}
 
 /* Unified list — spaced name + description cards that open a detail view */
 .ulist { display: flex; flex-direction: column; gap: 8px; }
@@ -210,7 +236,7 @@ strong { font-weight: 600; }
   display: flex; align-items: center; gap: 14px;
   padding: 12px 16px; text-align: left;
   background: var(--paper);
-  border: 1px solid var(--rule-soft); border-radius: 10px;
+  border: 1px solid var(--rule-soft); border-radius: 0;
   transition: background .12s, border-color .12s;
 }
 .ulist-row:hover { background: var(--accent-wash); border-color: var(--accent-deep); }
@@ -224,6 +250,9 @@ strong { font-weight: 600; }
 .ulist-indent { flex: none; color: var(--rule); }
 .lock-dot { color: var(--warn); font-size: 9px; }
 .clip-ico { color: var(--ink-mute); display: inline-flex; align-items: center; }
+/* Shared type icons injected via {@html} (Icon.svelte) — scoped styles can't
+   reach them, so size/baseline are set here once. */
+.kico { display: block; flex: none; }
 
 /* Editor forms (shared across all entity forms) */
 .frm { display: flex; flex-direction: column; gap: 16px; margin-top: 4px; }
@@ -232,15 +261,24 @@ strong { font-weight: 600; }
 .frm .lbl { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-mute); }
 .frm input, .frm textarea, .frm select {
   font: inherit; font-size: 14px; color: var(--ink);
-  border: 1px solid var(--rule); border-radius: 9px; padding: 9px 11px;
+  border: 1px solid var(--rule); border-radius: 0; padding: 9px 11px;
   background: var(--paper); width: 100%;
 }
 .frm input:focus, .frm textarea:focus, .frm select:focus { outline: none; border-color: var(--accent-deep); }
+/* Custom dropdown chevron, inset like the language selector (not jammed to the
+   far edge as the native arrow is). */
+.frm select {
+  appearance: none; -webkit-appearance: none;
+  padding-right: 30px;
+  background: var(--paper) no-repeat right 11px center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23667788' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-size: 11px;
+}
 .frm textarea { resize: vertical; }
 .frm input[type='checkbox'] { width: auto; }
 .frm .toggle { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; cursor: pointer; }
 .frm .row-add { display: grid; grid-template-columns: 130px 1fr auto; gap: 8px; align-items: center; }
-.frm .mini { width: 34px; height: 36px; border-radius: 8px; color: var(--ink-mute); border: 1px solid var(--rule); background: var(--paper); flex: none; display: inline-flex; align-items: center; justify-content: center; }
+.frm .mini { width: 34px; height: 36px; border-radius: 0; color: var(--ink-mute); border: 1px solid var(--rule); background: var(--paper); flex: none; display: inline-flex; align-items: center; justify-content: center; }
 .frm .mini:hover { color: var(--warn); }
 .frm .addbtn { align-self: flex-start; min-height: 34px; padding: 7px 12px; font-size: 13px; background: transparent; border: 1px solid var(--rule); border-radius: 999px; }
 .frm .addbtn:hover { border-color: var(--accent-deep); color: var(--accent-deep); }

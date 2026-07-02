@@ -1,6 +1,7 @@
 <script>
   import EntityPicker from './EntityPicker.svelte';
   import TrashIcon from './TrashIcon.svelte';
+  import GuideContentEditor from './GuideContentEditor.svelte';
   let { pkg, raw, onDelete } = $props();
 
   const CONTACT_METHODS = ['email', 'phone', 'signal', 'whatsapp', 'telegram', 'linkedin', 'address', 'url', 'other'];
@@ -28,7 +29,9 @@
       <label class="f"><span class="lbl">Nickname</span><input bind:value={raw.nickname} placeholder="e.g. Johny" /></label>
     </div>
     <label class="f"><span class="lbl">Known as</span><input bind:value={raw.display_as} placeholder="e.g. my partner" /></label>
-    <label class="f"><span class="lbl">Notes</span><textarea rows="2" bind:value={raw.notes}></textarea></label>
+    <div class="f"><span class="lbl">Notes</span>
+      <GuideContentEditor {pkg} {raw} compact value={raw.notes || ''} onValue={(v) => (raw.notes = v)} placeholder={'Notes — format text, or type “@” to mention a person, item or location.'} />
+    </div>
 
     <div class="f">
       <span class="lbl">Role</span>
@@ -41,6 +44,7 @@
         {/each}
       </div>
     </div>
+    <label class="f"><span class="lbl">Readiness score</span><input bind:value={raw.readiness_score} placeholder="e.g. Ready, 80%, needs another dry run" /></label>
 
     <div class="f"><span class="lbl">Can access (items)</span>
       <EntityPicker {pkg} target={raw} reverse reverseKey="access_person_ids" kinds={['item']} placeholder="Add an item they can access…" />

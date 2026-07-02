@@ -28,7 +28,7 @@
   });
 </script>
 
-<div class="filterbar">
+<div class="filterbar no-print">
   <input class="search" type="search" {placeholder} bind:value={search} />
 
   {#if usable.length}
@@ -65,7 +65,7 @@
 </div>
 
 {#if activeCount}
-  <div class="filterpills">
+  <div class="filterpills no-print">
     {#each activeFacets as f}
       <span class="fpill"><span class="fpill-k">{f.label}:</span> {filters[f.key].map((v) => labelFor(f, v)).join(', ')}<button class="fpill-x" title="Remove" aria-label={`Clear ${f.label}`} onclick={() => clearFacet(f.key)}>✕</button></span>
     {/each}
@@ -75,14 +75,15 @@
 
 <style>
   .filterbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .filterbar .search { flex: 1; min-width: 160px; font: inherit; font-size: 14px; border: 1px solid var(--rule); border-radius: 9px; padding: 9px 12px; background: var(--paper); color: var(--ink); }
+  /* Search, filter and sort share one height so they line up as equal controls. */
+  .filterbar .search { flex: 1; min-width: 160px; height: 40px; font: inherit; font-size: 14px; border: 1px solid var(--rule); border-radius: 0; padding: 0 12px; background: var(--paper); color: var(--ink); }
   .filterbar .search:focus { outline: none; border-color: var(--accent-deep); }
   .filterwrap { position: relative; flex: none; }
-  .filterbtn { position: relative; display: inline-grid; place-items: center; width: 38px; height: 38px; color: var(--ink-soft); border: 1px solid var(--rule); border-radius: 9px; background: var(--paper); }
+  .filterbtn { position: relative; display: inline-grid; place-items: center; width: 40px; height: 40px; color: var(--ink-soft); border: 1px solid var(--rule); border-radius: 0; background: var(--paper); }
   .filterbtn:hover { border-color: var(--accent-deep); color: var(--accent-deep); }
   .filterbtn.on { color: var(--accent-deep); border-color: var(--accent-deep); background: var(--accent-wash); }
   .fcount { position: absolute; top: -6px; right: -6px; background: var(--accent-deep); color: var(--paper); border-radius: 999px; min-width: 17px; height: 17px; padding: 0 4px; display: inline-grid; place-items: center; font-size: 10px; line-height: 1; }
-  .filterpop { position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; width: 280px; max-width: 86vw; max-height: 60vh; overflow-y: auto; background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18); padding: 8px; }
+  .filterpop { position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; width: 280px; max-width: 86vw; max-height: 60vh; overflow-y: auto; background: var(--paper); border: 1px solid var(--rule); border-radius: 0; box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18); padding: 8px; }
   .facet { padding: 6px 4px; border-bottom: 1px solid var(--rule-soft); }
   .facet:last-of-type { border-bottom: none; }
   .facet-label { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-mute); padding: 2px 6px 6px; }
@@ -94,7 +95,8 @@
   .clear-all { width: 100%; margin-top: 6px; font-size: 13px; color: var(--accent-deep); padding: 8px; border-radius: 8px; }
   .clear-all:hover { background: var(--accent-wash); }
   .sortwrap { display: inline-flex; align-items: center; gap: 7px; flex: none; }
-  .sortsel { font: inherit; font-size: 13px; color: var(--ink-soft); border: 1px solid var(--rule); border-radius: 8px; padding: 7px 9px; background: var(--paper); }
+  /* Same height as the search box, square, with an inset chevron. */
+  .sortsel { appearance: none; -webkit-appearance: none; height: 40px; font: inherit; font-size: 14px; color: var(--ink-soft); border: 1px solid var(--rule); border-radius: 0; padding: 0 30px 0 12px; background: var(--paper) no-repeat right 11px center; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23667788' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-size: 11px; }
   .filterpills { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 10px; }
   .fpill { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-soft); background: var(--accent-wash); border-radius: 999px; padding: 4px 6px 4px 11px; }
   .fpill-k { color: var(--ink-mute); }

@@ -4,11 +4,14 @@
   import MapView from './MapView.svelte';
   import FilterBar from './FilterBar.svelte';
   import Drawer from './Drawer.svelte';
+  import DryRunPanel from './DryRunPanel.svelte';
   import ConfirmDialog from './ConfirmDialog.svelte';
   import Importance from './Importance.svelte';
+  import Icon from './Icon.svelte';
   import TrashIcon from './TrashIcon.svelte';
   import logo from '../assets/logo.svg';
   import ExportDialog from './ExportDialog.svelte';
+  import ReadinessView from './ReadinessView.svelte';
   import { langValue } from '../lib/package.js';
 
   let { store, onClose, readOnly = false } = $props();
@@ -45,6 +48,7 @@
   function addRole() { setDrawer(store.addRole()); }
   function addLocation(parentId = null) { setDrawer(store.addLocation(parentId)); }
   function addItem() { setDrawer(store.addItem()); }
+  function addReadiness() { view = 'readiness'; setDrawer(store.addReadinessCheck()); }
   function addGuide() {
     const id = store.addGuide();
     closeDrawer();
@@ -54,6 +58,7 @@
     window.scrollTo({ top: 0 });
   }
   function openSettings() { store.startSettings(); setDrawer('__meta'); }
+  function openMapSettings() { setDrawer('__map'); }
   function editEntity(id) { setDrawer(id); }
   function rowClick(id) { if (editing) setDrawer(id); else openEntity(id); }
 
@@ -136,10 +141,32 @@
     for (const id of ids) { if (drawerId === id) closeDrawer(); store.deleteEntity(id); }
     selectedIds = [];
   }
+  async function deleteReadinessRun(id) {
+    const ok = await requestConfirm({
+      title: 'Delete test run?',
+      message: 'This removes the test run and all answers recorded in it. This cannot be undone here.',
+      confirmLabel: 'Delete'
+    });
+    if (ok) store.deleteReadinessRun(id);
+  }
+  async function deleteReadinessRuns(ids) {
+    if (!ids?.length) return;
+    const ok = await requestConfirm({
+      title: `Delete ${ids.length} ${ids.length === 1 ? 'test' : 'tests'}?`,
+      message: 'This removes the selected tests and all answers recorded in them. This cannot be undone here.',
+      confirmLabel: 'Delete'
+    });
+    if (!ok) return;
+    for (const id of ids) store.deleteReadinessRun(id);
+    selectedIds = selectedIds.filter((id) => !ids.includes(id));
+  }
+  function openReadinessRun(id) {
+    setDrawer(`__run:${id}`);
+  }
 
   async function removeEntity(id) {
     const entity = pkg.entity(id);
-    const kind = entity?.kind === 'attachment' ? 'file' : (entity?.kind || 'item');
+    const kind = entity?.kind === 'attachment' ? 'file' : entity?.kind === 'readiness' ? 'readiness check' : (entity?.kind || 'item');
     const name = pkg.name(id);
     const ok = await requestConfirm({
       title: `Delete '${name}' ${kind}?`,
@@ -170,10 +197,25 @@
     e.target.value = '';
   }
 
+  async function uploadGuideMedia(guideId, file) {
+    const kind = isImageFile(file) ? 'img' : isMp4File(file) ? 'video' : null;
+    if (!kind) return null;
+    const id = await store.addAttachmentFile(file);
+    const att = store.data?.attachments?.find((a) => a.id === id);
+    if (att) {
+      if (!Array.isArray(att.guide_ids)) att.guide_ids = [];
+      if (!att.guide_ids.includes(guideId)) att.guide_ids.push(guideId);
+    }
+    store.addGuideRef(guideId, 'attachment_ids', id);
+    return { id, kind };
+  }
+
   let audience = $state(null);
   let chosen = $state(false);
   let view = $state('start');
   let drawerId = $state(null);
+  let dryRun = $state(false);
+  let dryRunId = $state(null);
   let query = $state('');
   let filters = $state({});  // faceted filters per list: { facetKey: [values] }
   let sortBy = $state('name');
@@ -206,7 +248,10 @@
     if (by === 'importance') return [...arr].sort((a, b) => (IMP_RANK[a.importance] ?? 9) - (IMP_RANK[b.importance] ?? 9));
     return arr;
   }
-  const fileType = (a) => (a.mime || '').startsWith('image/') ? 'image' : ((a.mime || '') === 'application/pdf' || /\.pdf$/i.test(a.path || a.filename || '')) ? 'pdf' : 'other';
+  const IMAGE_FILE_EXT = /\.(png|jpe?g|gif|webp|avif|bmp|svg|heic|tiff?)$/i;
+  const isImageFile = (file) => !!file && (file.type?.startsWith('image/') || IMAGE_FILE_EXT.test(file.name || ''));
+  const isMp4File = (file) => !!file && ((file.type || '').toLowerCase() === 'video/mp4' || /\.mp4$/i.test(file.name || ''));
+  const fileType = (a) => (a.mime || '').startsWith('image/') ? 'image' : ((a.mime || '') === 'video/mp4' || /\.mp4$/i.test(a.path || a.filename || '')) ? 'video' : ((a.mime || '') === 'application/pdf' || /\.pdf$/i.test(a.path || a.filename || '')) ? 'pdf' : 'other';
   const impFacet = (list) => ({ key: 'importance', label: 'Importance', test: (o, v) => o.importance === v, options: [['high', 'High'], ['medium', 'Medium'], ['low', 'Low']].map(([value, label]) => ({ value, label, count: list.filter((o) => o.importance === value).length })).filter((o) => o.count) });
   // Lists that carry importance lead with it; the rest sort by name only.
   const SORTS_IMP = [{ value: 'importance', label: 'Importance' }, { value: 'name', label: 'Name (A→Z)' }, { value: 'name_desc', label: 'Name (Z→A)' }];
@@ -217,7 +262,8 @@
   const itemFacets = $derived([
     impFacet(pkg.items),
     { key: 'location', label: 'Location', test: (it, v) => (it.location_ids || []).includes(v), options: pkg.locations.map((l) => ({ value: l.id, label: pkg.name(l.id), count: pkg.items.filter((it) => (it.location_ids || []).includes(l.id)).length })).filter((o) => o.count) },
-    { key: 'access', label: 'Who can access', test: (it, v) => (it.access_person_ids || []).includes(v), options: pkg.people.map((p) => ({ value: p.id, label: pkg.name(p.id), count: pkg.items.filter((it) => (it.access_person_ids || []).includes(p.id)).length })).filter((o) => o.count) }
+    { key: 'access', label: 'Who can access', test: (it, v) => v === '__none' ? !(it.access_person_ids || []).length : (it.access_person_ids || []).includes(v), options: [{ value: '__none', label: 'None', count: pkg.items.filter((it) => !(it.access_person_ids || []).length).length }, ...pkg.people.map((p) => ({ value: p.id, label: pkg.name(p.id), count: pkg.items.filter((it) => (it.access_person_ids || []).includes(p.id)).length }))].filter((o) => o.count) },
+    { key: 'price', label: 'Price', test: (it, v) => (v === 'has') === !!String(it.price || '').trim(), options: [{ value: 'has', label: 'Has price', count: pkg.items.filter((it) => String(it.price || '').trim()).length }].filter((o) => o.count) }
   ]);
   const locHasItems = (loc) => (pkg.itemsAtLocation.get(loc.id) || []).length > 0;
   const locationFacets = $derived([
@@ -226,7 +272,9 @@
   ]);
   const fileFacets = $derived([
     { key: 'tag', label: 'Tag', test: (a, v) => (a.tags || []).includes(v), options: pkg.allTags().map((t) => ({ value: t, label: '# ' + t, count: pkg.attachmentsWithTag(t).length })) },
-    { key: 'type', label: 'Type', test: (a, v) => fileType(a) === v, options: [['image', 'Images'], ['pdf', 'PDFs'], ['other', 'Other']].map(([value, label]) => ({ value, label, count: (pkg.attachments || []).filter((a) => fileType(a) === value).length })).filter((o) => o.count) }
+    { key: 'type', label: 'Type', test: (a, v) => fileType(a) === v, options: [['image', 'Images'], ['video', 'Videos'], ['pdf', 'PDFs'], ['other', 'Other']].map(([value, label]) => ({ value, label, count: (pkg.attachments || []).filter((a) => fileType(a) === value).length })).filter((o) => o.count) },
+    { key: 'item_link', label: 'Attached to items', test: (a, v) => (v === 'has') === !![...(a.item_ids || []), a.item_id].filter(Boolean).length, options: [['has', 'Assigned'], ['none', 'None']].map(([value, label]) => ({ value, label, count: (pkg.attachments || []).filter((a) => (value === 'has') === !![...(a.item_ids || []), a.item_id].filter(Boolean).length).length })).filter((o) => o.count) },
+    { key: 'guide_link', label: 'Attached to guides', test: (a, v) => (v === 'has') === !![...(a.guide_ids || []), a.guide_id].filter(Boolean).length, options: [['has', 'Assigned'], ['none', 'None']].map(([value, label]) => ({ value, label, count: (pkg.attachments || []).filter((a) => (value === 'has') === !![...(a.guide_ids || []), a.guide_id].filter(Boolean).length).length })).filter((o) => o.count) }
   ]);
   let lang = $state(untrack(() => pkg.lang)); // seed once; user can change after
 
@@ -243,9 +291,26 @@
   const gateRest = $derived(audiences.filter((p) => !primaryIds.includes(p.id)));
   // The "who are you?" gate is a reader (heir) step — not shown while editing.
   const showGate = $derived(!chosen && audiences.length && !editing);
-  const guides = $derived(pkg.guidesFor(audience));
+  const guides = $derived(editing ? pkg.guides : pkg.guidesFor(audience));
   const navGuides = $derived(guides);
   const groupDefs = $derived(pkg.guideGroups());
+  const hasMapContent = $derived((pkg.locations?.length || 0) > 0 || (pkg.items?.length || 0) > 0);
+
+  function mapVisibleFor(personId = audience) {
+    if (!hasMapContent) return false;
+    if (editing) return true;
+    const roles = pkg.meta?.map_audience_roles || [];
+    const people = pkg.meta?.map_audience_person_ids || [];
+    if (!roles.length && !people.length) return true;
+    if (!personId) return true;
+    const person = pkg.entity(personId)?.obj;
+    return people.includes(personId) || (person?.roles || []).some((r) => roles.includes(r));
+  }
+  const canSeeMap = $derived(mapVisibleFor(audience));
+  const noGuidesForAudience = $derived(!editing && !!audience && guides.length === 0);
+  function defaultViewFor(personId) {
+    return pkg.guidesFor(personId).length ? 'start' : (mapVisibleFor(personId) ? 'map' : 'start');
+  }
 
   const navBlocks = $derived.by(() => {
     const groups = new Map(groupDefs.map((d) => [d.id, { kind: 'group', id: d.id, title: langValue(d.name, d.raw?.name_i18n, lang), raw: d.raw, guides: [], order: d.order ?? Infinity }]));
@@ -265,7 +330,7 @@
     }
     for (const block of groups.values()) {
       block.guides.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity));
-      blocks.push(block);
+      if (editing || block.guides.length) blocks.push(block);
     }
     return blocks.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity) || `${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`));
   });
@@ -428,6 +493,16 @@
 
   const homeGuide = $derived(guides[0] || null);
   const owner = $derived(pkg.owner);
+  const readinessChecks = $derived(pkg.readinessOrdered());
+  const readinessCount = $derived(readinessChecks.length);
+  const readinessRuns = $derived([...(store.data?.readiness_runs || [])].sort((a, b) => {
+    const at = Date.parse(a.submitted_at || a.started_at || a.date || '');
+    const bt = Date.parse(b.submitted_at || b.started_at || b.date || '');
+    if (Number.isFinite(at) && Number.isFinite(bt)) return bt - at;
+    return String(b.date || '').localeCompare(String(a.date || ''));
+  }));
+  const canSeeReadiness = $derived(!readOnly && !dryRun && (editing || audience === null));
+  const canShowReadinessData = $derived(!readOnly && !dryRun && (editing || audience === null));
 
   const attachments = $derived(pkg.attachmentsOrdered());
   const currentGuide = $derived(view === 'start' ? homeGuide : pkg.guides.find((g) => g.id === view) || null);
@@ -459,6 +534,7 @@
   const itemIds = $derived(itemResults.map((it) => it.id));
   const fileIds = $derived(fileResults.map((a) => a.id));
   const planOwnerName = $derived(owner?.name || 'the owner');
+  const adminLabel = $derived(`Admin${owner?.nickname ? ` (${owner.nickname})` : ''}`);
   // The plan's own title (set in Settings) leads; fall back to the owner's name.
   const planTitle = $derived(pkg.meta.title?.trim() || `Inheritance plan of ${planOwnerName}`);
   function openEntity(id) {
@@ -471,13 +547,114 @@
       pushDrawer(id);
     }
   }
-  function go(v) { view = v; closeDrawer(); query = ''; selectedIds = []; anchorIndex = null; filters = {}; sortBy = defaultSort(v); bulkTag = ''; window.scrollTo({ top: 0 }); }
-  function chooseAudience(id) { audience = id; chosen = true; view = 'start'; }
-  function switchAudience(v) { audience = v === '__all' ? null : v; view = 'start'; drawerId = null; window.scrollTo({ top: 0 }); }
+  function go(v) {
+    if (v === 'map' && !canSeeMap) return;
+    if (v === 'readiness' && !canSeeReadiness) return;
+    view = v;
+    closeDrawer();
+    query = '';
+    selectedIds = [];
+    anchorIndex = null;
+    filters = {};
+    sortBy = defaultSort(v);
+    bulkTag = '';
+    window.scrollTo({ top: 0 });
+  }
+  function chooseAudience(id) { audience = id; chosen = true; view = defaultViewFor(id); }
+  function switchAudience(v) {
+    audience = v === '__all' ? null : v;
+    view = defaultViewFor(audience);
+    drawerId = null;
+    window.scrollTo({ top: 0 });
+  }
+  function startDryRun(personId = null) {
+    if (readOnly) return;
+    const id = personId || audience || primaryIds[0] || audiences[0]?.id || null;
+    store.startSettings();
+    store.stopEditing();
+    chosen = true;
+    audience = id;
+    view = defaultViewFor(id);
+    dryRunId = store.startReadinessRun(id);
+    dryRun = true;
+    closeDrawer();
+    window.scrollTo({ top: 0 });
+  }
+  function applicableReadinessChecks(personId = audience) {
+    return readinessChecks.filter((check) => {
+      if ((check.scope || 'external') !== 'external') return false;
+      if (!personId) return true;
+      const person = pkg.entity(personId)?.obj;
+      if ((check.person_ids || []).includes(personId)) return true;
+      if ((check.role_ids || []).some((role) => (person?.roles || []).includes(role))) return true;
+      return !(check.person_ids || []).length && !(check.role_ids || []).length;
+    });
+  }
+  function cancelDryRun() {
+    if (dryRunId) store.deleteReadinessRun(dryRunId);
+    dryRun = false;
+    dryRunId = null;
+  }
+  async function submitDryRun() {
+    if (dryRunId) {
+      store.submitReadinessRun(dryRunId);
+      const run = store.data?.readiness_runs?.find((r) => r.id === dryRunId);
+      const results = run?.results || [];
+      const answered = results.filter((r) => ['pass', 'not_sure', 'fail', 'blocked'].includes(r.status)).length;
+      const checks = applicableReadinessChecks(audience);
+      const name = audience ? pkg.name(audience) : adminLabel;
+      await askModal({
+        eyebrow: 'Dry run',
+        title: `Thank you ${name}.`,
+        message: `${answered}/${checks.length} answered.`,
+        confirmLabel: 'Close',
+        cancelLabel: null,
+        tone: 'info'
+      });
+    }
+    dryRun = false;
+    dryRunId = null;
+  }
+
+  // ---- Global search: topbar box + top-10 dropdown + a results view ----
+  let gquery = $state('');
+  let gopen = $state(false);
+  let gindex = $state(-1);
+  let gpopEl = $state(null);
+  const KIND_LABEL = { guide: 'Guide', person: 'Person', item: 'Item', location: 'Location', attachment: 'File', role: 'Role', readiness: 'Readiness' };
+  const visibleSearch = (results) => canShowReadinessData ? results : results.filter((r) => r.kind !== 'readiness');
+  const gtop = $derived(gquery.trim() ? visibleSearch(pkg.search(gquery, 10)) : []);
+  const searchResults = $derived(view === 'search' ? visibleSearch(pkg.search(gquery, 50)) : []);
+  function pickResult(r) { gopen = false; gindex = -1; openEntity(r.id); }       // guide → navigate; entity → drawer
+  function goSearch() { gopen = false; gindex = -1; if (gquery.trim()) { view = 'search'; closeDrawer(); window.scrollTo({ top: 0 }); } }
+  function onSearchKey(e) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); gopen = true; gindex = Math.min(gindex + 1, gtop.length - 1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); gindex = Math.max(gindex - 1, -1); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (gindex >= 0 && gtop[gindex]) pickResult(gtop[gindex]); else goSearch(); }
+    else if (e.key === 'Escape') { e.preventDefault(); gopen = false; gindex = -1; }
+  }
+  // Keep the highlighted dropdown row in view; close on click-away.
+  $effect(() => { if (!gopen) return; gindex; gpopEl?.querySelector('.gs-row.on')?.scrollIntoView({ block: 'nearest' }); });
+  $effect(() => {
+    if (!gopen) return;
+    const onDown = (e) => { const t = e.target; if (!(t instanceof Element) || !t.closest('.gsearch')) gopen = false; };
+    window.addEventListener('pointerdown', onDown, true);
+    return () => window.removeEventListener('pointerdown', onDown, true);
+  });
 
   $effect(() => {
     if (!pkg.languages.includes(lang)) lang = pkg.lang;
     pkg.lang = lang;
+  });
+
+  $effect(() => {
+    if (showGate || editing) return;
+    if (view === 'map' && !canSeeMap) view = 'start';
+    if (view === 'start' && !homeGuide && canSeeMap) view = 'map';
+  });
+  $effect(() => {
+    if (view === 'readiness' && !canSeeReadiness) view = defaultViewFor(audience);
+    if (!canShowReadinessData && drawerId && pkg.entity(drawerId)?.kind === 'readiness') closeDrawer();
   });
 
   // Apply appearance. The plan's saved theme is the default; the top-bar toggle
@@ -499,6 +676,19 @@
     return () => root.removeAttribute('data-theme');
   });
   function toggleTheme() { themeOverride = appliedDark ? 'light' : 'dark'; }
+
+  // Reading font for guide text — the owner's choice (Settings) travels with the
+  // plan, so the heir reader renders the guides in the same face. Default: mono.
+  const READING_FONTS = {
+    mono: '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
+    sans: '"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+    inter: '"Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+    atkinson: '"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+    serif: '"Source Serif 4", Georgia, "Times New Roman", serif',
+    literata: '"Literata", Georgia, "Times New Roman", serif',
+    lora: '"Lora", Georgia, "Times New Roman", serif'
+  };
+  const readingFont = $derived(READING_FONTS[pkg.meta?.reading_font] || READING_FONTS.mono);
 
   function guideTarget(guide) {
     return guide?.id === homeGuide?.id ? 'start' : guide.id;
@@ -534,91 +724,125 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<div class="shell">
+<div class="shell" style="--reading-font: {readingFont};">
   <header class="topbar no-print">
     <div class="bar">
-      {#if readOnly}
-        <div class="brand row"><img class="logo" src={logo} alt="" aria-hidden="true" /><span class="plan-title" title={planTitle}>{planTitle}</span></div>
-      {:else}
-        <button class="brand-home" onclick={onClose} title="Back to start" aria-label="Back to start"><img class="logo" src={logo} alt="" aria-hidden="true" /></button>
-        {#if editing && store.data?.package}
-          <input class="plan-title-input" bind:value={store.data.package.title} placeholder="My inheritance plan" aria-label="Plan title" />
+      <div class="bar-plan">
+        {#if readOnly}
+          <div class="brand row"><img class="logo" src={logo} alt="" aria-hidden="true" /><span class="plan-title" title={planTitle}>{planTitle}</span></div>
         {:else}
-          <span class="plan-title" title={planTitle}>{planTitle}</span>
-        {/if}
-        {#if editing && !showGate}<span class="tiny muted edit-note">auto-saved to this device{store.savedAt ? ' ✓' : '…'}</span>{/if}
-      {/if}
-      <span class="spacer"></span>
-      {#if chosen}
-        <label class="sel-wrap" title="Read this plan as a particular person">
-          <span class="tiny muted">Reading as</span>
-          <select class="sel" value={audience ?? '__all'} onchange={(e) => switchAudience(e.target.value)}>
-            <option value="__all">Everyone</option>
-            {#each audiences as p}<option value={p.id}>{pkg.name(p.id)}</option>{/each}
-          </select>
-        </label>
-      {/if}
-      {#if readOnly}
-        <button class="iconbtn" title={appliedDark ? 'Light mode' : 'Dark mode'} aria-label="Toggle dark mode" onclick={toggleTheme}>
-          {#if appliedDark}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="5" />
-              <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
-              <line x1="4.2" y1="4.2" x2="5.6" y2="5.6" /><line x1="18.4" y1="18.4" x2="19.8" y2="19.8" />
-              <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
-              <line x1="4.2" y1="19.8" x2="5.6" y2="18.4" /><line x1="18.4" y1="5.6" x2="19.8" y2="4.2" />
-            </svg>
+          <button class="brand-home" onclick={onClose} title="Back to start" aria-label="Back to start"><img class="logo" src={logo} alt="" aria-hidden="true" /></button>
+          {#if editing && store.data?.package}
+            <input class="plan-title-input" bind:value={store.data.package.title} placeholder="My inheritance plan" aria-label="Plan title" />
           {:else}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
+            <span class="plan-title" title={planTitle}>{planTitle}</span>
           {/if}
-        </button>
-      {/if}
+        {/if}
+      </div>
       {#if !showGate}
-        {#if !readOnly}
-          <button class="iconbtn" class:editing-on={editing} class:plan-done={editing} class:plan-edit={!editing} title={editing ? 'Done editing — view the plan' : 'Edit this plan'} aria-label={editing ? 'Done editing' : 'Edit'} onclick={toggleEdit}>
-            {#if editing}
+        <div class="gsearch">
+          <svg class="gs-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+          <input class="gs-input" type="text" bind:value={gquery} placeholder="Search the plan…" aria-label="Search the plan" autocomplete="off"
+            onfocus={() => { if (gquery.trim()) gopen = true; }}
+            oninput={() => { gopen = true; gindex = -1; }}
+            onkeydown={onSearchKey} />
+          {#if gopen && gtop.length}
+            <div class="gs-pop" bind:this={gpopEl}>
+              {#each gtop as r, i (r.id)}
+                <button class="gs-row" class:on={i === gindex} onmousedown={(e) => { e.preventDefault(); pickResult(r); }}>
+                  <span class="gs-name">{r.name}</span>
+                  <span class="gs-meta">{KIND_LABEL[r.kind]}{r.inGuide ? ' · in a guide' : r.importance === 'high' ? ' · high priority' : ''}</span>
+                </button>
+              {/each}
+              <button class="gs-row gs-all" onmousedown={(e) => { e.preventDefault(); goSearch(); }}>See all results for “{gquery.trim()}”</button>
+            </div>
+          {/if}
+        </div>
+      {/if}
+      <div class="bar-actions">
+        {#if editing && !showGate}<span class="sr-only" aria-live="polite">{store.savedAt ? 'Auto-saved to this device' : 'Saving…'}</span>{/if}
+        {#if chosen && !editing}
+          <div class="reader-tools" title="Read this plan as a particular person">
+            <label class="sel-wrap">
+              <span class="tiny muted">Reading as</span>
+              <select class="sel" value={audience ?? '__all'} onchange={(e) => switchAudience(e.target.value)}>
+                <option value="__all">{adminLabel}</option>
+                {#each audiences as p}<option value={p.id}>{pkg.name(p.id)}</option>{/each}
+              </select>
+            </label>
+            {#if !readOnly}
+            <button class="iconbtn" class:editing-on={dryRun} title={dryRun ? 'Dry run in progress' : 'Start dry run'} aria-label={dryRun ? 'Dry run in progress' : 'Start dry run'} onclick={() => dryRun ? null : startDryRun()}>
+                {#if dryRun}
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+                {:else}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+                {/if}
+              </button>
+            {/if}
+          </div>
+        {/if}
+        {#if readOnly}
+          <button class="iconbtn" title={appliedDark ? 'Light mode' : 'Dark mode'} aria-label="Toggle dark mode" onclick={toggleTheme}>
+            {#if appliedDark}
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" /><circle cx="12" cy="12" r="3" />
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.2" y1="4.2" x2="5.6" y2="5.6" /><line x1="18.4" y1="18.4" x2="19.8" y2="19.8" />
+                <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.2" y1="19.8" x2="5.6" y2="18.4" /><line x1="18.4" y1="5.6" x2="19.8" y2="4.2" />
               </svg>
             {:else}
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
               </svg>
             {/if}
           </button>
         {/if}
-        {#if pkg.languages.length > 1}
-          <select class="sel lang" bind:value={lang} aria-label="Language" title="Language">
-            {#each pkg.languages as l}<option value={l}>{l.toUpperCase()}</option>{/each}
-          </select>
-        {/if}
-        {#if !readOnly}
-          <button class="iconbtn" title="Export plan to disk" aria-label="Export" onclick={() => (showExport = true)}>
+        {#if !showGate}
+          {#if !readOnly}
+            <button class="iconbtn" class:editing-on={editing} class:plan-done={editing} class:plan-edit={!editing} title={editing ? 'Done editing — view the plan' : 'Edit this plan'} aria-label={editing ? 'Done editing' : 'Edit'} onclick={toggleEdit}>
+              {#if editing}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" /><circle cx="12" cy="12" r="3" />
+                </svg>
+              {:else}
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+              {/if}
+            </button>
+          {/if}
+          {#if pkg.languages.length > 1}
+            <select class="sel lang" bind:value={lang} aria-label="Language" title="Language">
+              {#each pkg.languages as l}<option value={l}>{l.toUpperCase()}</option>{/each}
+            </select>
+          {/if}
+          {#if !readOnly}
+            <button class="iconbtn" title="Export plan to disk" aria-label="Export" onclick={() => (showExport = true)}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </button>
+          {/if}
+          <button class="iconbtn" title="Print" aria-label="Print" onclick={() => window.print()}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
+              <polyline points="6 9 6 2 18 2 18 9" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" />
             </svg>
           </button>
+          {#if !readOnly}
+            <button class="iconbtn" title="Settings" aria-label="Settings" onclick={openSettings}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />
+                <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6l-.08.1a2 2 0 0 1-3.84 0L10 20a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1l-.1-.08a2 2 0 0 1 0-3.84L4 10a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6l.08-.1a2 2 0 0 1 3.84 0L14 4a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.08.36.28.7.6 1l.1.08a2 2 0 0 1 0 3.84L20 14c-.32.3-.52.64-.6 1Z" />
+              </svg>
+            </button>
+          {/if}
         {/if}
-        <button class="iconbtn" title={editing ? 'Finish editing to print' : 'Print'} aria-label="Print" disabled={editing} onclick={() => window.print()}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="6 9 6 2 18 2 18 9" />
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-            <rect x="6" y="14" width="12" height="8" />
-          </svg>
-        </button>
-        {#if !readOnly}
-          <button class="iconbtn" title="Settings" aria-label="Settings" onclick={openSettings}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />
-              <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6l-.08.1a2 2 0 0 1-3.84 0L10 20a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1l-.1-.08a2 2 0 0 1 0-3.84L4 10a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6l.08-.1a2 2 0 0 1 3.84 0L14 4a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.08.36.28.7.6 1l.1.08a2 2 0 0 1 0 3.84L20 14c-.32.3-.52.64-.6 1Z" />
-            </svg>
-          </button>
-        {/if}
-      {/if}
+      </div>
     </div>
   </header>
 
@@ -631,8 +855,11 @@
         <p class="soft">This plan was prepared by <strong>{owner?.name || 'the owner'}</strong>. So it can show you the right things first — who are you?</p>
         {#snippet whoBtn(p)}
           <button class="who" onclick={() => chooseAudience(p.id)}>
-            <span class="who-name">{pkg.name(p.id)}{#if p.nickname} <span class="muted small">· {p.name}</span>{:else if p.display_as} <span class="muted small">· {p.display_as}</span>{/if}</span>
-            <span class="row wrap">{#each p.roles as r}<span class="chip">{pkg.roleLabel(r)}</span>{/each}</span>
+            <span class="who-ico" aria-hidden="true"><Icon kind="person" /></span>
+            <span class="who-main">
+              <span class="who-name">{pkg.name(p.id)}{#if p.nickname} <span class="muted small">· {p.name}</span>{:else if p.display_as} <span class="muted small">· {p.display_as}</span>{/if}</span>
+              <span class="row wrap">{#each p.roles as r}<span class="chip">{pkg.roleLabel(r)}</span>{/each}</span>
+            </span>
           </button>
         {/snippet}
         <div class="gate-people">
@@ -640,7 +867,7 @@
           {#if gatePrimary.length && gateRest.length}<div class="gate-sep" aria-hidden="true"></div>{/if}
           {#each gateRest as p}{@render whoBtn(p)}{/each}
         </div>
-        <button class="btn btn-ghost" onclick={() => { audience = null; chosen = true; }}>Just show me everything</button>
+        <button class="btn btn-ghost" onclick={() => { audience = null; chosen = true; }}>{adminLabel}</button>
       </div>
     </div>
   {:else}
@@ -709,19 +936,20 @@
                     class:drop-after={(dropAnchor?.id === g.id || dropAnchor?.entryKey === `guide:${g.id}`) && dropAnchor.pos === 'after'}
                     ondragover={(e) => guideOver(e, g)}
                     ondrop={guideDrop}
+                    role="presentation"
                   >
                     {#if editing}
-                      <span class="grip navguide-grip" title="Drag to reorder" draggable="true" ondragstart={(e) => dragStart(e, g.id)} ondragend={dragClear}>⠿</span>
-                      <input class="navguide-input navguide-child" class:active={view === target} value={langValue(g.title, g.title_i18n, lang)} oninput={(e) => store.setGuideTitle(g.id, lang, e.target.value)} onclick={() => go(target)} placeholder="Guide name" aria-label="Guide name" />
+                      <span class="grip navguide-grip" title="Drag to reorder" role="button" tabindex="0" aria-label="Drag to reorder guide" draggable="true" ondragstart={(e) => dragStart(e, g.id)} ondragend={dragClear}>⠿</span>
                       {#if g.draft}{@render draftMark()}{/if}
+                      <input class="navguide-input navguide-child" class:active={view === target} value={langValue(g.title, g.title_i18n, lang)} oninput={(e) => store.setGuideTitle(g.id, lang, e.target.value)} onclick={() => go(target)} placeholder="Guide name" aria-label="Guide name" />
                       <button class="rowdel navdel" title="Delete" aria-label="Delete guide" onclick={() => removeEntity(g.id)}><TrashIcon /></button>
                     {:else}
+                      {#if g.draft}{@render draftMark()}{/if}
                       <button
                         class="navlink navlink-child"
                         class:active={view === target}
                         onclick={() => go(target)}
                       >{langValue(g.title, g.title_i18n, lang)}</button>
-                      {#if g.draft}{@render draftMark()}{/if}
                     {/if}
                   </div>
                 {/each}
@@ -738,37 +966,62 @@
               class:drop-after={(dropAnchor?.id === entry.guide.id || dropAnchor?.entryKey === `guide:${entry.guide.id}`) && dropAnchor.pos === 'after'}
               ondragover={(e) => guideOver(e, entry.guide)}
               ondrop={guideDrop}
+              role="presentation"
             >
               {#if editing}
-                <span class="grip navguide-grip" title="Drag to reorder" draggable="true" ondragstart={(e) => dragStart(e, entry.guide.id)} ondragend={dragClear}>⠿</span>
-                <input class="navguide-input" class:active={view === target} value={langValue(entry.guide.title, entry.guide.title_i18n, lang)} oninput={(e) => store.setGuideTitle(entry.guide.id, lang, e.target.value)} onclick={() => go(target)} placeholder="Guide name" aria-label="Guide name" />
+                <span class="grip navguide-grip" title="Drag to reorder" role="button" tabindex="0" aria-label="Drag to reorder guide" draggable="true" ondragstart={(e) => dragStart(e, entry.guide.id)} ondragend={dragClear}>⠿</span>
                 {#if entry.guide.draft}{@render draftMark()}{/if}
+                <input class="navguide-input" class:active={view === target} value={langValue(entry.guide.title, entry.guide.title_i18n, lang)} oninput={(e) => store.setGuideTitle(entry.guide.id, lang, e.target.value)} onclick={() => go(target)} placeholder="Guide name" aria-label="Guide name" />
                 <button class="rowdel navdel" title="Delete" aria-label="Delete guide" onclick={() => removeEntity(entry.guide.id)}><TrashIcon /></button>
               {:else}
-                <button class="navlink" class:active={view === target} onclick={() => go(target)}>{langValue(entry.guide.title, entry.guide.title_i18n, lang)}</button>
                 {#if entry.guide.draft}{@render draftMark()}{/if}
+                <button class="navlink" class:active={view === target} onclick={() => go(target)}>{langValue(entry.guide.title, entry.guide.title_i18n, lang)}</button>
               {/if}
             </div>
           {/if}
         {/each}
+        {#if noGuidesForAudience}
+          <div class="nav-empty-guides">No guides for you yet.</div>
+        {/if}
         {#if editing}
           <!-- End drop target: lets a guide (or group) land after the last
                block — e.g. after a trailing group. Always present so arming it
                can't reparent/cancel the active drag. -->
           <div class="end-zone" class:armed={!!drag} class:active={dropEnd} ondragover={endOver} ondrop={endDrop} role="presentation"></div>
         {/if}
-        <div class="navsep"></div>
-        {#if pkg.locations.length || pkg.items.length}
-          <button class="navlink navlink-section" class:active={view === 'map'} onclick={() => go('map')}>Map</button>
+        <!-- The Map (spatial overview) sits on its own, set apart from the
+             guides above and the object lists below — Productboard-style. -->
+        {#if canSeeMap}
           <div class="navsep"></div>
+          <button class="navlink navlink-section navlink-map" class:active={view === 'map'} onclick={() => go('map')}>
+            <span class="navico" aria-hidden="true"><Icon kind="map" /></span><span class="navlabel">Map</span>
+          </button>
         {/if}
-        <button class="navlink navlink-section" class:active={view === 'people'} onclick={() => go('people')}>People<span class="navcount">{pkg.people.length}</span></button>
-        <button class="navlink navlink-section" class:active={view === 'roles'} onclick={() => go('roles')}>Roles<span class="navcount">{pkg.roles.length}</span></button>
-        <button class="navlink navlink-section" class:active={view === 'locations'} onclick={() => go('locations')}>Locations<span class="navcount">{pkg.locations.length}</span></button>
-        <button class="navlink navlink-section" class:active={view === 'items'} onclick={() => go('items')}>Items<span class="navcount">{pkg.items.length}</span></button>
-        {#if attachments.length || editing}
-          <button class="navlink navlink-section" class:active={view === 'files'} onclick={() => go('files')}>Files<span class="navcount">{attachments.length}</span></button>
-        {/if}
+        <div class="navsep"></div>
+        <div class="navobjects">
+          {#if canSeeReadiness}
+            <button class="navlink navlink-section" class:active={view === 'readiness'} onclick={() => go('readiness')}>
+              <span class="navico" aria-hidden="true"><Icon kind="readiness" /></span><span class="navlabel">Readiness</span><span class="navcount">{readinessCount}</span>
+            </button>
+          {/if}
+          <button class="navlink navlink-section" class:active={view === 'people'} onclick={() => go('people')}>
+            <span class="navico" aria-hidden="true"><Icon kind="people" /></span><span class="navlabel">People</span><span class="navcount">{pkg.people.length}</span>
+          </button>
+          <button class="navlink navlink-section" class:active={view === 'roles'} onclick={() => go('roles')}>
+            <span class="navico" aria-hidden="true"><Icon kind="role" /></span><span class="navlabel">Roles</span><span class="navcount">{pkg.roles.length}</span>
+          </button>
+          <button class="navlink navlink-section" class:active={view === 'locations'} onclick={() => go('locations')}>
+            <span class="navico" aria-hidden="true"><Icon kind="location" /></span><span class="navlabel">Locations</span><span class="navcount">{pkg.locations.length}</span>
+          </button>
+          <button class="navlink navlink-section" class:active={view === 'items'} onclick={() => go('items')}>
+            <span class="navico" aria-hidden="true"><Icon kind="item" /></span><span class="navlabel">Items</span><span class="navcount">{pkg.items.length}</span>
+          </button>
+          {#if attachments.length || editing}
+            <button class="navlink navlink-section" class:active={view === 'files'} onclick={() => go('files')}>
+              <span class="navico" aria-hidden="true"><Icon kind="file" /></span><span class="navlabel">Files</span><span class="navcount">{attachments.length}</span>
+            </button>
+          {/if}
+        </div>
         {#if editing}
           <div class="navsep"></div>
           <button class="navlink navadd" onclick={addGuide}>+ New guide</button>
@@ -785,7 +1038,7 @@
           {/if}
         {/snippet}
         {#if currentGuide}
-          <GuideView {pkg} guide={currentGuide} {lang} onOpen={openEntity} onTag={openTag} onView={(v) => go(v)} {editing} canEdit={!readOnly} onStartEditing={toggleEdit} onEdit={() => editEntity(currentGuide.id)} onDelete={() => removeEntity(currentGuide.id)} onToggleDraft={() => store.toggleGuideDraft(currentGuide.id)} onContent={(l, v) => store.setGuideContent(currentGuide.id, l, v)} onAddRef={(k, id) => store.addGuideRef(currentGuide.id, k, id)} onTitle={(l, v) => store.setGuideTitle(currentGuide.id, l, v)} focusTitle={focusNewGuideTitle} onTitleFocused={() => (focusNewGuideTitle = false)} />
+          <GuideView {pkg} guide={currentGuide} {lang} onOpen={openEntity} onTag={openTag} onView={(v) => go(v)} {editing} canEdit={!readOnly} onStartEditing={toggleEdit} onEdit={() => editEntity(currentGuide.id)} onDelete={() => removeEntity(currentGuide.id)} onToggleDraft={() => store.toggleGuideDraft(currentGuide.id)} onContent={(l, v) => store.setGuideContent(currentGuide.id, l, v)} onAddRef={(k, id) => store.addGuideRef(currentGuide.id, k, id)} onUploadMedia={(file) => uploadGuideMedia(currentGuide.id, file)} onTitle={(l, v) => store.setGuideTitle(currentGuide.id, l, v)} focusTitle={focusNewGuideTitle} onTitleFocused={() => (focusNewGuideTitle = false)} />
         {:else if view === 'start' && editing && pkg.guides.length === 0}
           <div class="card empty-hint">
             <span class="eyebrow">New plan</span>
@@ -808,6 +1061,7 @@
             {#each peopleResults as p, i (p.id)}
               <div class="ulist-row">
                 {#if editing}<input type="checkbox" class="rowcheck" checked={selectedIds.includes(p.id)} onclick={(e) => rowSelect(peopleIds, i, e)} aria-label="Select" />{/if}
+                <span class="list-row-ico" aria-hidden="true"><Icon kind="person" /></span>
                 <button class="ulist-click" onclick={() => openEntity(p.id)}>
                   <span class="ulist-main">
                     <span class="ulist-name">{pkg.name(p.id)}{#if p.nickname}<span class="muted small"> · {p.name}</span>{:else if p.display_as}<span class="muted small"> · {p.display_as}</span>{/if}</span>
@@ -844,6 +1098,7 @@
               {@const usage = roleUsage(role.id)}
               <div class="ulist-row">
                 {#if editing}<input type="checkbox" class="rowcheck" checked={selectedIds.includes(role.id)} onclick={(e) => rowSelect(roleIds, i, e)} aria-label="Select" />{/if}
+                <span class="list-row-ico" aria-hidden="true"><Icon kind="role" /></span>
                 <button class="ulist-click" onclick={() => rowClick(role.id)}>
                   <span class="ulist-main">
                     <span class="ulist-name">{pkg.name(role.id)}</span>
@@ -880,15 +1135,17 @@
                 class:loc-after={locDrop?.id === loc.id && locDrop.pos === 'after'}
                 class:loc-inside={locDrop?.id === loc.id && locDrop.pos === 'inside'}
                 class:dragging={locDrag === loc.id}
-                style="margin-left:{depth * 24}px"
+                style="--loc-depth:{depth}"
                 draggable={editing && locReorderable}
                 ondragstart={(e) => locDragStart(e, loc.id)}
                 ondragend={locDragEnd}
                 ondragover={(e) => locOver(e, loc)}
                 ondrop={(e) => locDropOn(e, loc)}
+                role="presentation"
               >
                 {#if editing}<input type="checkbox" class="rowcheck" checked={selectedIds.includes(loc.id)} onclick={(e) => rowSelect(locIds, i, e)} aria-label="Select" />{/if}
                 {#if editing}<span class="grip loc-grip" aria-hidden="true">⠿</span>{/if}
+                <span class="list-row-ico" aria-hidden="true"><Icon kind="location" /></span>
                 <button class="ulist-click" onclick={() => rowClick(loc.id)}>
                   <span class="ulist-main">
                     <span class="ulist-name">{pkg.name(loc.id)}</span>
@@ -926,6 +1183,7 @@
             {#each itemResults as it, i (it.id)}
               <div class="ulist-row">
                 {#if editing}<input type="checkbox" class="rowcheck" checked={selectedIds.includes(it.id)} onclick={(e) => rowSelect(itemIds, i, e)} aria-label="Select" />{/if}
+                <span class="list-row-ico" aria-hidden="true"><Icon kind="item" /></span>
                 <button class="ulist-click" onclick={() => rowClick(it.id)}>
                   <span class="ulist-main">
                     <span class="ulist-name">{pkg.name(it.id)}{#if it.sensitive}<span class="lock-dot" title="sensitive"> ●</span>{/if}</span>
@@ -945,8 +1203,70 @@
           </div>
 
         {:else if view === 'map'}
-          <div class="section-head"><h2 class="vh">Map</h2></div>
-          <MapView {pkg} onOpen={openEntity} />
+          <div class="map-row">
+            <div class="map-col">
+              <div class="section-head"><h2 class="vh">Map</h2></div>
+              {#if canSeeMap}
+                <MapView {pkg} onOpen={openEntity} />
+              {:else}
+                <p class="empty-results">Map is not available for this reader.</p>
+              {/if}
+            </div>
+            {#if editing}
+              <aside class="map-side no-print">
+                <button class="map-tool" title="Map settings (who can see it)" aria-label="Map settings" onclick={openMapSettings}>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
+                    <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
+                    <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+                  </svg>
+                </button>
+              </aside>
+            {/if}
+          </div>
+
+        {:else if view === 'search'}
+          <div class="section-head"><h2 class="vh">Search</h2></div>
+          {#if gquery.trim() && searchResults.length}
+            <p class="tiny muted gs-count">{searchResults.length} result{searchResults.length === 1 ? '' : 's'} for “{gquery.trim()}”</p>
+            <div class="ulist">
+              {#each searchResults as r (r.id)}
+                <div class="ulist-row">
+                  <span class="search-result-ico" aria-hidden="true">
+                    <Icon kind={r.kind === 'attachment' ? 'file' : r.kind} />
+                  </span>
+                  <button class="ulist-click" onclick={() => pickResult(r)}>
+                    <span class="ulist-main">
+                      <span class="ulist-name">{r.name}</span>
+                      <span class="ulist-desc">{KIND_LABEL[r.kind]}{r.inGuide ? ' · in a guide' : ''}</span>
+                    </span>
+                  </button>
+                  <span class="ulist-aside">{#if r.importance && r.kind !== 'person'}<Importance level={r.importance} compact />{/if}</span>
+                </div>
+              {/each}
+            </div>
+          {:else}
+            <p class="empty-results">No matches{gquery.trim() ? ` for “${gquery.trim()}”` : ''}.</p>
+          {/if}
+
+        {:else if view === 'readiness' && canSeeReadiness}
+          <ReadinessView
+            {pkg}
+            {editing}
+            checks={readinessChecks}
+            {selectedIds}
+            onSelect={rowSelect}
+            onOpen={rowClick}
+            onDelete={removeEntity}
+            onAdd={addReadiness}
+            onBulkTag={(ids, tag) => store.addTagToReadinessChecks(ids, tag)}
+            runs={readinessRuns}
+            onDeleteRun={deleteReadinessRun}
+            onDeleteRuns={deleteReadinessRuns}
+            onOpenRun={openReadinessRun}
+            selectActions={selectActions}
+          />
 
         {:else if view === 'files'}
           <div class="section-head">
@@ -971,6 +1291,7 @@
             {#each fileResults as att, i (att.id)}
               <div class="ulist-row">
                 {#if editing}<input type="checkbox" class="rowcheck" checked={selectedIds.includes(att.id)} onclick={(e) => rowSelect(fileIds, i, e)} aria-label="Select" />{/if}
+                <span class="list-row-ico" aria-hidden="true"><Icon kind={fileType(att) === 'image' ? 'image' : fileType(att) === 'video' ? 'video' : fileType(att) === 'pdf' ? 'pdf' : 'file'} /></span>
                 <button class="ulist-click" onclick={() => rowClick(att.id)}>
                   <span class="ulist-main">
                     <span class="ulist-name">{pkg.name(att.id)}</span>
@@ -994,7 +1315,11 @@
   {#if editing}<input bind:this={fileInput} type="file" multiple hidden onchange={onFile} />{/if}
 
   {#if drawerId}
-    <Drawer {pkg} {store} {editing} id={drawerId} onOpen={openEntity} onClose={closeDrawer} onBack={drawerBack} canBack={drawerStack.length > 0} onDelete={removeEntity} {requestConfirm} {requestNotice} />
+    <Drawer {pkg} {store} {editing} showReadiness={canShowReadinessData} id={drawerId} onOpen={openEntity} onClose={closeDrawer} onBack={drawerBack} canBack={drawerStack.length > 0} onDelete={removeEntity} onTag={openTag} onView={(v) => go(v)} {requestConfirm} {requestNotice} />
+  {/if}
+
+  {#if dryRun && dryRunId}
+    <DryRunPanel {pkg} {store} runId={dryRunId} personId={audience} {adminLabel} onSubmit={submitDryRun} onCancel={cancelDryRun} />
   {/if}
 
   {#if showExport}
@@ -1005,12 +1330,24 @@
 </div>
 
 <style>
-  .shell { min-height: 100vh; --reader-section-gap: 18px; }
+  .shell { min-height: 100vh; --reader-section-gap: 18px; --topbar-h: 58px; }
   .topbar {
-    background: color-mix(in oklch, var(--paper) 88%, transparent);
+    position: sticky; top: 0; z-index: 50;
+    background: color-mix(in oklch, var(--paper) 92%, transparent);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--rule-soft);
   }
-  .bar { max-width: var(--maxw); margin: 0 auto; padding: 10px 28px; display: flex; align-items: center; gap: 14px; }
+  .bar {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 10px 28px;
+    display: grid;
+    grid-template-columns: 290px minmax(240px, 340px) minmax(0, 1fr);
+    gap: 32px;
+    align-items: center;
+  }
+  .bar-plan { min-width: 0; display: flex; align-items: center; gap: 14px; }
+  .bar-actions { min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
   .brand { font-weight: 500; gap: 10px; }
   .brand-home { flex: none; display: inline-flex; padding: 2px; border-radius: 6px; }
   .brand-home:hover { background: var(--accent-wash); }
@@ -1029,10 +1366,24 @@
   .plan-title-input:hover { border-color: var(--rule); }
   .plan-title-input:focus { outline: none; border-color: var(--accent); background: var(--paper); }
   .iconbtn.editing-on { color: var(--accent-deep); background: var(--accent-wash); }
+  .reader-tools { display: inline-flex; align-items: center; gap: 8px; }
   .sel-wrap { display: inline-flex; align-items: center; gap: 8px; }
+
+  /* Global search box + dropdown */
+  .gsearch { position: relative; min-width: 0; width: 100%; display: flex; align-items: center; }
+  .gs-ico { position: absolute; left: 11px; color: var(--ink-mute); pointer-events: none; }
+  .gs-input { width: 100%; font: inherit; font-size: 14px; padding: 7px 12px 7px 33px; border: 1px solid var(--rule); border-radius: 0; background: var(--paper); color: var(--ink); }
+  .gs-input:focus { outline: none; border-color: var(--accent-deep); }
+  .gs-pop { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 40; background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18); padding: 6px; max-height: 60vh; overflow-y: auto; }
+  .gs-row { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; text-align: left; padding: 7px 10px; border-radius: 8px; }
+  .gs-row:hover, .gs-row.on { background: var(--accent-wash); }
+  .gs-name { font-size: 14px; color: var(--ink); }
+  .gs-meta { font-size: 11px; color: var(--ink-mute); }
+  .gs-all { color: var(--accent-deep); font-size: 13px; border-top: 1px solid var(--rule-soft); margin-top: 4px; }
+  .gs-count { margin-bottom: 12px; }
   .sel {
     appearance: none; -webkit-appearance: none;
-    border: 1px solid var(--rule); border-radius: 999px;
+    border: 1px solid var(--rule); border-radius: 0;
     padding: 7px 26px 7px 12px;
     background: var(--paper) no-repeat right 9px center;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23667788' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
@@ -1057,34 +1408,54 @@
   .gate-people { display: grid; gap: 12px; margin: 22px 0; }
   .gate-sep { height: 1px; background: var(--rule-soft); margin: 2px 0; }
   .who {
-    display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
-    border: 1px solid var(--rule); border-radius: 12px; padding: 16px; text-align: left;
+    display: flex; gap: 12px; align-items: flex-start;
+    border: 0; border-radius: 0; padding: 13px 14px; text-align: left;
     transition: border-color .12s, background .12s;
   }
-  .who:hover { border-color: var(--accent-deep); background: var(--accent-wash); }
+  .who:hover { background: var(--accent-wash); }
+  .who-ico {
+    flex: none; width: 30px; height: 30px; border-radius: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--ink-soft); background: var(--accent-wash);
+  }
+  .who-main { min-width: 0; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
   .who-name { font-size: 17px; font-weight: 500; }
 
   /* stretch: the content column grows to match the (usually taller) sticky
      nav, so a short/empty guide fills exactly to the menu's height — no more. */
   .body { display: grid; grid-template-columns: 290px 1fr; gap: 32px; padding: var(--reader-section-gap) 28px 90px; align-items: stretch; }
   .nav {
-    display: flex; flex-direction: column; gap: 2px;
-    background: color-mix(in oklch, var(--accent-wash) 22%, var(--paper));
+    display: flex; flex-direction: column; gap: 1px;
+    background: var(--paper);
     border: 1px solid var(--rule-soft);
-    border-radius: 14px;
-    padding: 12px 10px;
+    border-radius: 0;
+    padding: 8px 0;
     align-self: start;
     position: sticky;
-    top: 16px;
-    max-height: calc(100vh - 32px);
+    /* Sits just below the sticky top bar and holds its place as you scroll. */
+    top: calc(var(--topbar-h) + 16px);
+    max-height: calc(100vh - var(--topbar-h) - 32px);
     overflow-y: auto;
+    /* Reserve a real gutter for the scrollbar so it never overlaps the counts
+       or delete buttons on the right edge. Styling ::-webkit-scrollbar makes it
+       a space-taking (non-overlay) bar in Chromium/WebKit; Firefox uses the
+       scrollbar-* shorthands. */
+    scrollbar-width: thin;
+    scrollbar-color: var(--rule) transparent;
   }
+  .nav::-webkit-scrollbar { width: 12px; }
+  .nav::-webkit-scrollbar-track { background: transparent; }
+  .nav::-webkit-scrollbar-thumb {
+    background: var(--rule); border-radius: 999px;
+    border: 3px solid var(--paper); background-clip: padding-box;
+  }
+  .nav::-webkit-scrollbar-thumb:hover { background: var(--ink-mute); background-clip: padding-box; }
   .navlink {
-    text-align: left; padding: 9px 12px; border-radius: 8px; color: var(--ink-soft); font-size: 14px;
+    text-align: left; padding: 8px 16px; border-radius: 0; color: var(--ink-soft); font-size: 14px;
     transition: background .12s, color .12s;
   }
-  .navlink:hover { background: var(--accent-wash); color: var(--ink); }
-  .navlink.active { background: var(--accent-wash); color: var(--accent-deep); font-weight: 500; }
+  .navlink:hover { background: color-mix(in oklch, var(--ink) 5%, var(--paper)); color: var(--ink); }
+  .navlink.active { background: var(--accent-wash); color: var(--accent-deep); font-weight: 500; box-shadow: inset 2px 0 0 var(--accent-deep); }
   .before-group-zone {
     height: 0; margin: 0; border-radius: 4px;
     border: 1px dashed transparent; pointer-events: none;
@@ -1100,10 +1471,10 @@
   .end-zone.armed { height: 14px; margin: 4px 0 0; border-color: var(--rule); pointer-events: auto; }
   .end-zone.active { background: var(--accent-deep); border-color: transparent; }
   .navgroup { display: flex; flex-direction: column; gap: 2px; margin: 4px 0; }
-  .navgroup-read-title { padding-left: 12px; }
+  .navgroup-read-title { padding-left: 0; }
   .navgroup-title {
     display: flex; align-items: center; gap: 2px;
-    padding: 8px 0 2px 0;
+    padding: 10px 12px 4px 16px;
     color: var(--ink-soft);
     font-size: 11px;
     font-weight: 700;
@@ -1138,7 +1509,7 @@
   .navguide-grip:active { cursor: grabbing; }
   .navguide-input {
     flex: 1; min-width: 0;
-    font: inherit; font-size: 14px;
+    font: inherit; font-size: 14px; line-height: 1.45;
     border: 1px solid transparent; border-radius: 6px;
     padding: 7px 10px; background: transparent; color: var(--ink-soft);
     text-align: left; cursor: pointer;
@@ -1150,7 +1521,7 @@
   .navgroup-items .navrow { padding-left: 16px; }
   .navguide-child { padding-left: 10px; }
   .navlink-child { padding-left: 12px; }
-  .navrow { display: flex; align-items: center; gap: 2px; }
+  .navrow { display: flex; align-items: center; gap: 2px; padding-right: 12px; }
   .navrow .navlink { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .navdel { width: 24px; height: 24px; border-radius: 7px; font-size: 13px; opacity: 0; transition: opacity .12s; }
   .navrow:hover .navdel, .navdel:focus-visible { opacity: 1; }
@@ -1162,16 +1533,24 @@
   }
   .navgroup:hover .navgroup-del, .navgroup-del:focus-visible { opacity: 1; }
   .navgroup-del:hover { color: var(--warn); border-color: var(--rule); background: var(--paper); }
-  .navsep { height: 1px; background: var(--rule-soft); margin: 10px 6px; }
+  .navsep { height: 1px; background: var(--rule-soft); margin: 8px 0; }
+  .map-row { position: relative; flex: 1; display: flex; flex-direction: column; }
+  .map-col { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 22px; }
+  .map-side { position: absolute; top: 0; right: -52px; display: flex; flex-direction: column; gap: 8px; }
+  .map-tool {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 9px;
+    color: var(--ink-soft); border: 1px solid var(--rule); background: var(--paper);
+  }
+  .map-tool:hover { color: var(--accent-deep); border-color: var(--accent-deep); }
 
   /* drag & drop reordering */
-  .navrow[draggable='true'] { cursor: grab; }
   .navrow.dragging { opacity: 0.4; }
   /* Draft guides: dimmed/italic title + a small amber "Draft" tag, in both
      edit and read mode. (They are dropped entirely from heir exports.) */
   .navrow.is-draft .navguide-input,
   .navrow.is-draft .navlink { color: var(--ink-mute); font-style: italic; }
-  .draft-mark { flex: none; display: inline-flex; align-items: center; color: var(--draft); }
+  .draft-mark { flex: none; display: inline-flex; align-items: center; margin-right: 8px; color: var(--draft); }
   .draft-mark svg { display: block; }
   .navgroup.dragging { opacity: 0.5; }
   .navrow.drop-before { box-shadow: inset 0 2px 0 var(--accent-deep); }
@@ -1180,6 +1559,12 @@
   .navgroup.drop-after { box-shadow: inset 0 -2px 0 var(--accent-deep); }
   .navgroup.drop-on { background: var(--accent-wash); border-radius: 8px; outline: 1px dashed var(--accent); }
   .navgroup-empty { padding: 6px 12px 6px 24px; font-style: italic; }
+  .nav-empty-guides {
+    padding: 9px 16px;
+    color: var(--ink-mute);
+    font-size: 13px;
+    font-style: italic;
+  }
   .navend {
     margin: 4px 2px; padding: 9px 12px; border-radius: 8px; font-size: 12px;
     color: var(--ink-mute); border: 1px dashed var(--rule); text-align: center;
@@ -1193,7 +1578,21 @@
   .del-selected { color: var(--warn); border: 1px solid oklch(0.85 0.06 50); background: var(--paper); }
   .del-selected:hover { background: var(--warn-wash); }
   .rowcheck { flex: none; width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent-deep); }
-  .navlink-section { display: flex; align-items: center; }
+  /* Grouping wrapper only — stays out of layout so the row/column nav and the
+     mobile horizontal nav both keep nav's own gap between links. */
+  .navobjects { display: contents; }
+  /* Object lists (and the Map) carry a leading type icon; guides do not. */
+  .navlink-section { display: flex; align-items: center; gap: 11px; }
+  .navico {
+    flex: none; width: 20px; height: 20px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--ink-mute);
+  }
+  .navlink-section:hover .navico { color: var(--ink-soft); }
+  .navlink-section.active .navico { color: var(--accent-deep); }
+  .navlabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* The Map reads as a featured spatial overview, not just another row. */
+  .navlink-map .navico { color: var(--accent-deep); }
   .navcount { margin-left: auto; padding-left: 8px; color: var(--ink-mute); font-size: 13px; font-variant-numeric: tabular-nums; }
   .navlink-section.active .navcount { color: var(--accent-deep); }
   .btn-small { min-height: 34px; padding: 7px 12px; font-size: 13px; }
@@ -1203,8 +1602,20 @@
   .rowdel:hover { color: var(--warn); border-color: var(--rule); background: var(--paper); }
   .rowadd { width: 28px; height: 28px; border-radius: 8px; color: var(--ink-mute); border: 1px solid transparent; flex: none; font-size: 16px; }
   .rowadd:hover { color: var(--accent-deep); border-color: var(--rule); background: var(--paper); }
+  .list-row-ico,
+  .search-result-ico {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-mute);
+    background: var(--accent-wash);
+  }
   .navadd { color: var(--accent-deep); }
-  .edit-note { flex: none; }
+  /* Save state is announced to assistive tech but never shown on screen. */
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .empty-hint { border-left: 2px solid var(--accent); }
   .empty-results { padding: 14px 16px; color: var(--ink-mute); font-size: 14px; }
   .bulk-tag { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0 4px; padding: 10px 12px; background: var(--accent-wash); border-radius: 9px; }
@@ -1214,8 +1625,20 @@
   .row-tag { font-size: 11px; color: var(--accent-deep); background: var(--accent-wash); border-radius: 5px; padding: 1px 6px; }
 
   /* location tree + drag-and-drop */
-  .loc-row { position: relative; }
-  .loc-row.nested { border-left: 2px solid var(--accent-wash); border-top-left-radius: 0; border-bottom-left-radius: 0; }
+  .loc-row {
+    position: relative;
+    margin-left: calc(var(--loc-depth, 0) * 42px);
+    width: calc(100% - (var(--loc-depth, 0) * 42px));
+  }
+  .loc-row.nested { border-left: 3px solid var(--accent-wash); border-top-left-radius: 0; border-bottom-left-radius: 0; }
+  .loc-row.nested::before {
+    content: "";
+    position: absolute;
+    left: -25px;
+    top: 50%;
+    width: 22px;
+    border-top: 1px solid var(--rule);
+  }
   .loc-grip { width: 14px; flex: none; color: var(--ink-mute); opacity: 0.45; cursor: grab; align-self: center; }
   .loc-row:hover .loc-grip { opacity: 1; }
   .loc-row[draggable='true'] { cursor: grab; }
@@ -1225,7 +1648,11 @@
   .loc-row.loc-inside { background: var(--accent-wash); outline: 1px dashed var(--accent); border-radius: 8px; }
   @media (max-width: 820px) {
     .body { grid-template-columns: 1fr; gap: 16px; }
+    .bar { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    .bar-actions { justify-content: flex-start; flex-wrap: wrap; gap: 8px; }
     .nav { position: static; flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 4px; }
+    .map-row { display: flex; flex-direction: column-reverse; }
+    .map-side { position: static; flex-direction: row; justify-content: flex-end; margin-bottom: 6px; }
     .navgroup { flex: none; flex-direction: row; align-items: center; gap: 6px; margin: 0; }
     .navgroup-title { padding: 9px 0 9px 8px; white-space: nowrap; }
     .navgroup-items { flex-direction: row; gap: 6px; }

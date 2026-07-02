@@ -1,11 +1,10 @@
 <script>
   import Prose from './Prose.svelte';
-  import EntityList from './EntityList.svelte';
   import GuideContentEditor from './GuideContentEditor.svelte';
   import TrashIcon from './TrashIcon.svelte';
   import { langValue } from '../lib/package.js';
 
-  let { pkg, guide, lang, onOpen, onTag = null, onView = null, editing = false, canEdit = false, onStartEditing = null, onEdit, onDelete, onToggleDraft, onContent, onAddRef, onTitle, focusTitle = false, onTitleFocused = null } = $props();
+  let { pkg, guide, lang, onOpen, onTag = null, onView = null, editing = false, canEdit = false, onStartEditing = null, onEdit, onDelete, onToggleDraft, onContent, onAddRef, onUploadMedia = null, onTitle, focusTitle = false, onTitleFocused = null } = $props();
 
   const shownTitle = $derived(langValue(guide.title, guide.title_i18n, lang));
 
@@ -21,9 +20,6 @@
   const content = $derived(guide.content || {});
   const shownLang = $derived(content[lang] ? lang : pkg.languages.find((l) => content[l]) || Object.keys(content)[0]);
   const body = $derived(content[shownLang] || '');
-
-  const audienceRoles = $derived(guide.audience_roles || []);
-  const audiencePeople = $derived(guide.audience_person_ids || []);
 
   // Auto-stamp "updated" on a real change (inline edits), never on mere open.
   const today = () => new Date().toISOString().slice(0, 10);
@@ -55,9 +51,12 @@
 
     <article class="card guide" class:is-draft={guide.draft}>
       {#if editing}
-        <input bind:this={titleInput} class="gtitle-input" value={shownTitle} oninput={(e) => onTitle?.(lang, e.target.value)} placeholder="e.g. Start here, Bitcoin instructions…" aria-label="Guide title" />
-        <div class="editor-bleed"><GuideContentEditor {pkg} raw={guide} {lang} {onContent} {onAddRef} /></div>
+        <div class="guide-page guide-write">
+          <input bind:this={titleInput} class="gtitle-input" value={shownTitle} oninput={(e) => onTitle?.(lang, e.target.value)} placeholder="e.g. Start here, Bitcoin instructions…" aria-label="Guide title" />
+          <div class="editor-host"><GuideContentEditor {pkg} raw={guide} {lang} {onContent} {onAddRef} {onUploadMedia} /></div>
+        </div>
       {:else}
+        <div class="guide-page guide-read">
         <header class="ghead">
           <h2>{shownTitle}</h2>
           {#if guide.updated}<span class="tiny muted">Updated {guide.updated}</span>{/if}
@@ -77,20 +76,11 @@
             <p class="kbd-hint">or press <kbd>Ctrl</kbd> <kbd>E</kbd></p>
           </div>
         {:else}
-          <Prose {pkg} markdown={body} references={guide.references} {onOpen} {onTag} {onView} />
+          <Prose {pkg} markdown={body} {onOpen} {onTag} {onView} />
         {/if}
+        </div>
       {/if}
     </article>
-
-    {#if !editing && (audienceRoles.length || audiencePeople.length)}
-      <section class="block whofor no-print">
-        <h3>Who is it for</h3>
-        {#if audienceRoles.length}
-          <div class="row wrap">{#each audienceRoles as r}<span class="chip">{pkg.roleLabel(r)}</span>{/each}</div>
-        {/if}
-        {#if audiencePeople.length}<EntityList {pkg} ids={audiencePeople} {onOpen} />{/if}
-      </section>
-    {/if}
 
   </div>
 
@@ -136,8 +126,9 @@
      tall as the left menu — never taller. */
   .guide-row { position: relative; flex: 1; display: flex; flex-direction: column; }
   .guide-col { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 22px; }
-  .guide { flex: 1; display: flex; flex-direction: column; }
-  .editor-bleed :global(.ce) { flex: 1; }
+  /* A guide reads like a sheet of paper — square corners, not rounded. */
+  .guide { flex: 1; display: flex; flex-direction: column; border-radius: 0; }
+  .editor-host :global(.ce) { flex: 1; }
   .guide-side { position: absolute; top: 0; right: -52px; display: flex; flex-direction: column; gap: 8px; }
   @media (max-width: 1140px) {
     .guide-row { display: flex; flex-direction: column-reverse; }
@@ -156,8 +147,8 @@
   .gtool-pub.is-draft:hover { color: var(--draft); border-color: var(--draft); }
   .draft-banner {
     display: flex; align-items: center; gap: 9px;
-    margin: 0 0 -12px; padding: 9px 13px;
-    border: 1px solid var(--draft); border-left-width: 3px; border-radius: 8px;
+    margin: 0; padding: 9px 13px;
+    border: 0; border-left: 2px solid var(--draft); border-radius: 0;
     background: var(--draft-wash);
     color: var(--ink-soft); font-size: 13px;
   }
@@ -169,20 +160,36 @@
   .ghead h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 300; }
   .gtitle-input {
     display: block; width: 100%;
-    font: inherit; font-size: clamp(28px, 4vw, 40px); font-weight: 300; letter-spacing: -0.01em; line-height: 1.1;
+    font: inherit; font-size: clamp(28px, 4vw, 40px); font-weight: 300; letter-spacing: -0.01em; line-height: 1.3;
     color: var(--ink); background: transparent;
-    border: 1px solid transparent; border-radius: 8px; padding: 4px 8px; margin: -4px -8px 22px;
+    border: 1px solid transparent; border-radius: 8px; padding: 6px 8px; margin: -6px -8px 20px;
   }
   .gtitle-input:focus { outline: none; border-color: var(--accent); background: var(--paper); }
-  /* Let the editor reach the card edges — a clean "paper" surface. */
-  .editor-bleed { margin: 0 -22px -22px; flex: 1; display: flex; flex-direction: column; }
+  /* Both modes share one "page" gutter, so a guide has identical margins whether
+     you're reading or editing it. */
+  .guide-page { padding-inline: clamp(0px, 4vw, 44px); padding-block: clamp(18px, 3.5vw, 44px); }
+  .guide-write { flex: 1; display: flex; flex-direction: column; }
+  @media print { .guide-page { padding: clamp(12px, 3vw, 32px) clamp(0px, 4vw, 36px); } }
+  /* The page supplies the gutter, so the editor sits flush inside it — its
+     toolbar and text line up with the read-mode text column. The toolbar still
+     sticks just below the page's top bar (--ce-toolbar-top). */
+  .editor-host { flex: 1; display: flex; flex-direction: column; --ce-toolbar-top: var(--topbar-h, 58px); }
+  .editor-host :global(.ce:not(.full) .toolbar) { padding-inline: 0; }
+  .editor-host :global(.ce:not(.full) .ce-edit) { padding-inline: 0; }
+  /* The guide document — title + body — uses the plan's reading font (the
+     owner's choice, honoured in the heir reader too). The toolbar/UI keeps the
+     interface font. Default falls back to the app's mono. */
+  .guide-read,
+  .gtitle-input,
+  .editor-host :global(.ce:not(.full) .ce-edit) {
+    font-family: var(--reading-font, "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace);
+  }
   .notice {
     padding: 10px 14px;
-    background: var(--accent-wash); border-radius: 8px;
+    background: var(--accent-wash); border-radius: 0;
     border-left: 2px solid var(--accent);
     color: var(--ink-soft); font-size: 13px;
   }
-  .whofor { display: flex; flex-direction: column; gap: 10px; }
   /* Empty guide (read mode, owner only): a calm "blank page" call-to-action. */
   .guide-empty {
     flex: 1; min-height: 240px;

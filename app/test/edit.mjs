@@ -28,8 +28,8 @@ try {
   await page.keyboard.down('Meta');
   await page.keyboard.press('KeyE');
   await page.keyboard.up('Meta');
-  await page.waitForFunction(() => document.body.innerText.includes('auto-save'), { timeout: 6000 });
-  ok('keyboard shortcut enters edit mode (auto-save banner)', true);
+  await page.waitForFunction(() => !!document.querySelector('nav .navadd'), { timeout: 6000 });
+  ok('keyboard shortcut enters edit mode', true);
 
   await page.evaluate(() => [...document.querySelectorAll('nav .navlink-section')].find((b) => b.textContent.includes('People'))?.click());
   await page.waitForFunction(() => document.querySelector('main .vh')?.textContent.trim() === 'People' && [...document.querySelectorAll('button')].some(b => b.textContent.trim() === '+ New'), { timeout: 6000 });
@@ -46,8 +46,9 @@ try {
   const after = await page.$$eval('main .ulist-row', (r) => r.length);
   ok('new person added + name edits live', after === before + 1);
 
-  // autosave persisted?
-  const saved = await page.waitForFunction(() => /auto-saved to this device ✓/.test(document.body.innerText), { timeout: 4000 }).then(() => true).catch(() => false);
+  // autosave persisted? (the save state is announced via an off-screen aria-live
+  // region, kept for assistive tech even though it isn't shown on screen)
+  const saved = await page.waitForFunction(() => /Auto-saved to this device/.test(document.querySelector('.sr-only')?.textContent || ''), { timeout: 4000 }).then(() => true).catch(() => false);
   ok('change auto-saved to device', saved);
 
   // delete the new person (last row's ✕)

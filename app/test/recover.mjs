@@ -70,6 +70,12 @@ try {
   await page.evaluate(() => { const l = [...document.querySelectorAll('[role="dialog"] label')].find((x) => /Protect with a password/.test(x.textContent)); const cb = l?.querySelector('input[type=checkbox]'); if (cb && !cb.checked) cb.click(); });
   await pause(200);
   await page.type('[role="dialog"] input[type=password]', PW);
+  // Hand-typed passwords must be repeated (typo guard) — fill the confirm field.
+  await pause(200);
+  await page.evaluate((pw) => {
+    const inputs = [...document.querySelectorAll('[role="dialog"] input[type=password]')];
+    if (inputs[1]) { const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; setter.call(inputs[1], pw); inputs[1].dispatchEvent(new Event('input', { bubbles: true })); }
+  }, PW);
   await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].find((b) => /create reader/i.test(b.textContent))?.click());
   const enc = resolve(dir2, 'start-here.html');
   let w2 = 0; while (!existsSync(enc) && w2 < 8000) { await pause(150); w2 += 150; }

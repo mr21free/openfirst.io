@@ -238,7 +238,6 @@
   .tabs button { position: relative; padding: 0 0 10px; color: var(--ink-soft); font-size: 14px; }
   .tabs button.on { color: var(--accent-deep); }
   .tabs button.on::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--accent-deep); }
-  .btn-small { min-height: 34px; padding: 7px 12px; font-size: 13px; }
   :global(.del-selected) { color: var(--warn); border: 1px solid oklch(0.85 0.06 50); background: var(--paper); }
   :global(.del-selected:hover) { background: var(--warn-wash); }
   .rowcheck { flex: none; width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent-deep); }

@@ -66,3 +66,13 @@ Open the built `app/dist/index.html` directly, or host it — it's one file. Use
 - [`lifepackage.schema.json`](docs/lifepackage.schema.json) — the
   formal JSON Schema (for validation / AI).
 - Sample plan: [`app/src/sample/lifepackage.json`](app/src/sample/lifepackage.json).
+
+## Licensing
+
+- **App** (builder + reader): [AGPL-3.0](./LICENSE). Free to use, self-host,
+  and audit. Embedding it in a product or offering it as a service means either
+  open-sourcing your derivative under the AGPL or purchasing a commercial
+  license — contact id.miro@foremsec.com.
+- **Format** (`lifepackage/v1` spec, JSON Schemas, samples):
+  [MIT](docs/LICENSE-FORMAT.md). The file your heirs hold — and any tool that
+  reads or writes it — owes this project nothing, forever.

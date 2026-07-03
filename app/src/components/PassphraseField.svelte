@@ -7,17 +7,26 @@
   */
   import { generatePassphrase, estimateBits, strength } from '../lib/passphrase.js';
 
-  let { value = $bindable(''), placeholder = 'Password or passphrase', onEnter = null, autofocus = false } = $props();
+  let { value = $bindable(''), confirmOk = $bindable(true), placeholder = 'Password or passphrase', onEnter = null, autofocus = false } = $props();
 
   let show = $state(false);
   let copied = $state(false);
   let copyTimer;
 
+  // A hand-typed password gets a "repeat it" field — these passwords are
+  // unrecoverable, and a masked typo would be fatal. A GENERATED passphrase is
+  // shown in the clear and copied, so repeating it adds nothing but friction.
+  let generated = $state(false);
+  let confirm = $state('');
+  const needsConfirm = $derived(!!value && !generated);
+  const mismatch = $derived(needsConfirm && !!confirm && confirm !== value);
+  $effect(() => { confirmOk = !needsConfirm || confirm === value; });
+
   const bits = $derived(estimateBits(value));
   const str = $derived(strength(bits));
   const barW = $derived(({ weak: 28, ok: 55, strong: 80, vstrong: 100 })[str.tone] || 0);
 
-  function suggest() { value = generatePassphrase(6); show = true; }
+  function suggest() { value = generatePassphrase(6); generated = true; confirm = ''; show = true; }
   function copyPassword() {
     if (!value || !navigator.clipboard) return;
     navigator.clipboard.writeText(value).then(() => {
@@ -38,6 +47,7 @@
       {placeholder}
       {autofocus}
       autocomplete="new-password"
+      oninput={() => (generated = false)}
       onkeydown={(e) => e.key === 'Enter' && onEnter?.()}
     />
     <button class="pw-icon pw-eye" type="button" title={show ? 'Hide' : 'Show'} aria-label={show ? 'Hide password' : 'Show password'} onclick={() => (show = !show)}>
@@ -61,8 +71,20 @@
   <div class="pw-bar"><span class="pw-fill {str.tone}" style="width:{value ? barW : 0}%"></span></div>
   <div class="pw-meta-row">
     <span class="pw-strength {str.tone}">{value ? str.label : ''}</span>
-    <button class="pw-gen-link" type="button" onclick={suggest}>Suggest a passphrase</button>
+    <button class="btn-link pw-gen-link" type="button" onclick={suggest}>Suggest a passphrase</button>
   </div>
+
+  {#if needsConfirm}
+    <input
+      class="inp"
+      type={show ? 'text' : 'password'}
+      bind:value={confirm}
+      placeholder="Repeat the password"
+      autocomplete="new-password"
+      onkeydown={(e) => e.key === 'Enter' && onEnter?.()}
+    />
+    {#if mismatch}<p class="pw-mismatch">The two passwords don't match yet.</p>{/if}
+  {/if}
 </div>
 
 <style>
@@ -90,5 +112,6 @@
   .pw-strength { font-size: 11px; color: var(--ink-mute); }
   .pw-strength.weak { color: var(--warn); }
   .pw-strength.vstrong { color: oklch(0.55 0.14 150); }
-  .pw-gen-link { font-size: 11px; color: var(--ink-mute); background: none; border: none; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; padding: 0; }
+  .pw-gen-link { font-size: 11px; }
+  .pw-mismatch { margin: -4px 0 0; font-size: 12px; color: var(--warn); }
 </style>

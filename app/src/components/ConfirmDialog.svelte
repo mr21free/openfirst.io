@@ -75,10 +75,4 @@
     flex-wrap: wrap;
   }
   .modal-card.danger { border-left-color: var(--warn); }
-  .btn-danger {
-    background: var(--warn);
-    border-color: var(--warn);
-    color: oklch(0.99 0 0);
-  }
-  .btn-danger:hover { background: oklch(0.56 0.16 35); border-color: oklch(0.56 0.16 35); }
 </style>

@@ -60,7 +60,7 @@
       drifted is false comfort. Skim it, update what moved, and test it with the person who’d use it.
     </span>
     <span class="stale-actions">
-      {#if onReview}<button class="stale-btn" onclick={() => onReview()}>Open readiness</button>{/if}
+      {#if onReview}<button class="btn btn-small" onclick={() => onReview()}>Open readiness</button>{/if}
       <button class="stale-x" title="Dismiss for now" aria-label="Dismiss" onclick={() => (dismissed = true)}>✕</button>
     </span>
   </div>
@@ -75,8 +75,6 @@
   }
   .stale-txt strong { color: var(--ink); margin-right: 4px; }
   .stale-actions { display: inline-flex; gap: 8px; align-items: center; flex: none; }
-  .stale-btn { font: inherit; font-size: 12.5px; padding: 5px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); color: var(--ink); cursor: pointer; white-space: nowrap; }
-  .stale-btn:hover { border-color: var(--accent-deep); }
   .stale-x { font-size: 13px; color: var(--ink-mute); background: none; border: none; cursor: pointer; padding: 4px; }
   .stale-x:hover { color: var(--ink); }
 </style>

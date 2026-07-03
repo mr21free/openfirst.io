@@ -105,7 +105,7 @@
       {#each drafts as draft (draft.key)}
         <div class="draft card no-print">
           <div class="draft-main">
-            <strong>{draft.title}{#if draft.protected}<span class="draft-lock" title="Passphrase-protected on this device"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>{/if}</strong>
+            <strong>{#if draft.protected}<span class="draft-lock" title="Passphrase-protected on this device"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>{/if}{draft.title}</strong>
             <span class="small muted">{draftWhen(draft.savedAt) ? `saved ${draftWhen(draft.savedAt)} · ` : ''}kept on this device{draft.protected ? ' · encrypted' : ''}</span>
           </div>
           <div class="row" style="gap:8px">
@@ -168,7 +168,7 @@
       <nav class="row wrap footer-nav">
         <a class="tiny" href="/how-to-use/">How to use</a>
         <a class="tiny" href="/security/">Security</a>
-        <span class="tiny">Open format · MIT · works offline</span>
+        <span class="tiny">Open source (AGPL) · MIT format · works offline</span>
       </nav>
     </div>
   </footer>
@@ -295,7 +295,7 @@
   footer .tiny { color: var(--screen-px); }
   .footer-nav { gap: 16px; }
   .footer-nav a:hover { color: var(--accent); text-decoration: none; }
-  .draft-lock { display: inline-flex; margin-left: 7px; color: var(--ink-soft); vertical-align: -1px; }
+  .draft-lock { display: inline-flex; margin-right: 7px; color: var(--ink-soft); vertical-align: -1px; }
 
   .scrim { position: fixed; inset: 0; background: oklch(0.2 0.03 255 / 0.32); z-index: 60; }
   .unlock {

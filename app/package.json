@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "description": "openfirst.io — local-first, offline, no-server life package builder and reader.",
   "scripts": {
     "dev": "vite",

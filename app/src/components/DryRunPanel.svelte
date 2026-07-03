@@ -103,7 +103,6 @@
   .dhead-actions { display: flex; align-items: center; gap: 6px; flex: none; }
   .close { min-height: 36px; min-width: 36px; padding: 4px 8px; font-size: 20px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
   .dry-done { padding-top: 12px; display: flex; justify-content: flex-end; border-top: 1px solid var(--rule-soft); }
-  .btn-small { min-height: 34px; padding: 7px 12px; font-size: 13px; }
   .dry-warning { margin: 0; padding: 8px 10px; border: 1px solid oklch(0.83 0.08 70); background: oklch(0.97 0.03 78); color: oklch(0.38 0.07 65); font-size: 12px; line-height: 1.35; }
   .dry-list { display: grid; gap: 18px; }
   .dry-card { display: grid; gap: 11px; padding: 0 0 16px; border-bottom: 1px solid var(--rule-soft); }

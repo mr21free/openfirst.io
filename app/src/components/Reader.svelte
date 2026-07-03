@@ -1529,7 +1529,6 @@
   .navlink-map .navico { color: var(--accent-deep); }
   .navcount { margin-left: auto; padding-left: 8px; color: var(--ink-mute); font-size: 13px; font-variant-numeric: tabular-nums; }
   .navlink-section.active .navcount { color: var(--accent-deep); }
-  .btn-small { min-height: 34px; padding: 7px 12px; font-size: 13px; }
   .ulist-click { flex: 1; min-width: 0; display: flex; background: none; border: none; padding: 0; text-align: left; cursor: pointer; color: inherit; }
   .person-roles { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
   .rowdel { width: 28px; height: 28px; border-radius: 8px; color: var(--ink-mute); border: 1px solid transparent; flex: none; display: inline-flex; align-items: center; justify-content: center; }

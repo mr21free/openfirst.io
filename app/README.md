@@ -84,4 +84,10 @@ src/components/                  Landing, Reader, Drawer, editor forms and views
 
 ## License
 
-MIT © 2026 Miroslav Remias. See [LICENSE](./LICENSE).
+**App:** [AGPL-3.0](./LICENSE) © 2026 Miroslav Remias — free to use, self-host,
+and audit; embedding or offering it as a service requires either open-sourcing
+your derivative or a commercial license (contact id.miro@foremsec.com).
+
+**Format:** the `lifepackage` specification, JSON Schemas, and samples are
+[MIT](../docs/LICENSE-FORMAT.md) — your heirs' file, and any tool that reads or
+writes it, owes this project nothing, forever.

@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 """
-Life Package logo — described mathematically and rendered to SVG or PNG.
+OpenFirst logo — described mathematically and rendered to SVG or PNG.
 
-The mark is an isometric OPEN BOX made from three wall planes: left face, right
-face, and a top plane with two touching semicircle lobes. The gaps between the
-three planes share one width, so the white "Y" in the middle is just the
-background showing through equal spacing.
+The mark is an ENVELOPE whose top-right corner is "cut open", the way the
+"open in external" icon cuts its box: the top and right edges stop short, a
+detached L-shaped corner piece becomes the arrowhead, and the right line of
+the flap's V continues as a diagonal shaft pointing into it — the digital
+"open" gesture. An envelope you open first.
+
+Stroke thickness matches the freedomclock.io mark (ring width 80/1024 ≈ 7.8%
+of the canvas). Round caps/joins, like the marker sketch it comes from.
 
 Same spirit as freedomclock.io/internal/freedom_clock_icon.py.
 
 Examples:
-  python3 scripts/logo.py --format svg --size 512 --out logo.svg
+  python3 scripts/logo.py --format svg --size 1024 --out logo.svg
   python3 scripts/logo.py --format png --size 1024 --bg transparent --out logo.png
+  python3 scripts/logo.py --format png --size 512 --bg '#FFFFFF' --padding 0.18 --out maskable.png
 """
 
 import argparse
@@ -45,159 +50,158 @@ def rgba_to_hex(rgba):
 
 
 # ---------- geometry ----------
-
-# The mark is built in an arbitrary unit space centred on x = 0 and fitted into
-# the canvas afterwards, so these are just ratios.
 #
-# The box is seen open from the front. Two equal side faces form the vertical
-# stem of the Y; the top plane is parallel-offset from the side faces so the
-# diagonal Y arms have the same gap as the stem. Its left and right corners
-# extend to the outer side-wall x-lines, slightly above the side wall corners.
+# Built in a 100-unit design space, then fitted to the canvas. All numbers are
+# ratios of that space.
+#
+#   L,T ────────────╌╌  gap  ╌╌   ↗ tip
+#    │ ╲          ╱  (shaft through the cut corner)
+#    │   ╲      ╱ V
+#    │     ╲  ╱                 ╎ gap
+#    │      V                   │ R (edge resumes lower)
+#    └──────────────────────────┘
+#
+# The flap's right line and the arrow shaft are ONE stroke: from the V vertex,
+# through where the corner would be, out to the arrowhead.
 
-EDGE = 1.15         # diagonal top arm length
-WALL_HEIGHT = EDGE * 0.80
-ARM_ANGLE_DEGREES = 43.5
-SEMICIRCLE_SAMPLES = 32
-
-
-def arm_unit():
-    a = math.radians(ARM_ANGLE_DEGREES)
-    return math.cos(a), -math.sin(a)
-
-
-def triangle_tip(gap, ux, uy):
-    """Return the triangle point that makes the diagonal Y-arm gap equal."""
-    g = gap / 2.0
-    lift = (gap + g * uy) / ux
-    return (0.0, -lift)
-
-
-def top_side_length(gap, ux):
-    """Return the top-plane side length needed to touch the side-wall x-lines."""
-    return EDGE + (gap / 2.0) / ux
+STROKE = 8.0          # 8% of the design space ≈ freedomclock ring thickness
+L, R, T, B = 14.0, 86.0, 26.0, 78.0   # envelope rectangle
+TOP_END_X = 50.0      # top edge stops here (start of the cut)
+RIGHT_START_Y = 60.0  # right edge resumes here (end of the cut)
+CORNER_ARM = 22.0     # length of the detached corner piece's two arms
+V = (50.0, 52.0)      # flap vertex (mid-width, mid-height)
+SHAFT_STOP = 15.0     # shaft stops this far short of the corner (white notch)
 
 
-def touching_semicircles(left, middle, right, samples):
-    """Return the two upper semicircles from left -> middle -> right."""
-    y = left[1]
-    left_radius = (middle[0] - left[0]) / 2.0
-    right_radius = (right[0] - middle[0]) / 2.0
-    left_cx = (left[0] + middle[0]) / 2.0
-    right_cx = (middle[0] + right[0]) / 2.0
-
-    pts = []
-    for i in range(samples + 1):
-        a = math.pi - (math.pi * i / samples)
-        pts.append((left_cx + left_radius * math.cos(a), y - left_radius * math.sin(a)))
-    for i in range(1, samples + 1):
-        a = math.pi - (math.pi * i / samples)
-        pts.append((right_cx + right_radius * math.cos(a), y - right_radius * math.sin(a)))
-    return pts
+def _unit(dx, dy):
+    n = math.hypot(dx, dy)
+    return dx / n, dy / n
 
 
-def build_shapes(gap):
-    """Return {name: [(x, y), ...]} for the three wall planes."""
-    ux, uy = arm_unit()
+def build_mark():
+    """Return (polylines, polygons): [(name, [(x, y), ...])] each. Polylines are
+    stroked; there are no filled polygons.
 
-    e = EDGE
-    h = WALL_HEIGHT
-    g = gap / 2.0
-    tl = (-g - e * ux, e * uy)           # top-left corner (arm up-left)
-    tr = (g + e * ux, e * uy)            # top-right corner (arm up-right)
-    left_face = [(-g, 0.0), tl, (tl[0], tl[1] + h), (-g, h)]
-    right_face = [(g, 0.0), tr, (tr[0], tr[1] + h), (g, h)]
+    Like the "open in external" icon, the arrowhead IS the envelope's own
+    top-right corner: a detached L-shaped corner piece, with the flap's right
+    line continuing as a diagonal shaft that points into it."""
+    corner = (R, T)
+    # Shaft direction: from the flap vertex toward the corner, stopping short.
+    d = _unit(corner[0] - V[0], corner[1] - V[1])
+    tip = (corner[0] - SHAFT_STOP * d[0], corner[1] - SHAFT_STOP * d[1])
 
-    tip = triangle_tip(gap, ux, uy)
-    top_len = top_side_length(gap, ux)
-    top_left = (tip[0] - top_len * ux, tip[1] + top_len * uy)
-    top_right = (tip[0] + top_len * ux, tip[1] + top_len * uy)
-    lobes = touching_semicircles(top_left, (0.0, top_left[1]), top_right, SEMICIRCLE_SAMPLES)
-    top_shape = lobes + [tip]
+    polylines = [
+        # Body: one open path — top edge (cut short), left, bottom, right (cut short).
+        ("body", [(TOP_END_X, T), (L, T), (L, B), (R, B), (R, RIGHT_START_Y)]),
+        # The detached corner piece — the arrowhead.
+        ("corner", [(R - CORNER_ARM, T), corner, (R, T + CORNER_ARM)]),
+        # Flap left line + flap right line continuing into the arrow shaft.
+        ("flap", [(L, T), V, tip]),
+    ]
+    return polylines, []
 
-    return {"left": left_face, "right": right_face, "top": top_shape}
 
-
-def fit(shapes, size, padding):
-    """Scale + centre all shapes to fill the canvas inside `padding` (ratio)."""
-    pts = [p for s in shapes.values() for p in s]
-    minx = min(x for x, _ in pts)
-    maxx = max(x for x, _ in pts)
-    miny = min(y for _, y in pts)
-    maxy = max(y for _, y in pts)
+def fit(polylines, polygons, size, padding):
+    """Scale + centre into the canvas inside `padding` (ratio). Returns
+    (fitted polylines, fitted polygons, stroke width in canvas units)."""
+    half = STROKE / 2.0
+    pts = [p for _, line in polylines for p in line] + \
+          [p for _, poly in polygons for p in poly]
+    minx = min(x for x, _ in pts) - half
+    maxx = max(x for x, _ in pts) + half
+    miny = min(y for _, y in pts) - half
+    maxy = max(y for _, y in pts) + half
     w, h = maxx - minx, maxy - miny
     content = size * (1.0 - 2.0 * padding)
     scale = content / max(w, h)
     ox = (size - w * scale) / 2.0 - minx * scale
     oy = (size - h * scale) / 2.0 - miny * scale
-    return {name: [(x * scale + ox, y * scale + oy) for x, y in s] for name, s in shapes.items()}
+    place = lambda line: [(x * scale + ox, y * scale + oy) for x, y in line]
+    return ([(name, place(line)) for name, line in polylines],
+            [(name, place(poly)) for name, poly in polygons],
+            STROKE * scale)
 
 
 # ---------- renderers ----------
 
-def save_svg(out, size, blue, bg, gap, padding):
-    blue_rgba = parse_color(blue)
-    if blue_rgba is None:
+def save_svg(out, size, color, bg, padding):
+    color_rgba = parse_color(color)
+    if color_rgba is None:
         raise ValueError("Logo colour cannot be transparent.")
-    shapes = fit(build_shapes(gap), size, padding)
-    blue_hex = rgba_to_hex(blue_rgba)
+    polylines, polygons = build_mark()
+    lines_fitted, polys_fitted, stroke = fit(polylines, polygons, size, padding)
+    color_hex = rgba_to_hex(color_rgba)
     bg_hex = rgba_to_hex(parse_color(bg))
 
-    def poly(pts):
-        s = " ".join(f"{x:.2f},{y:.2f}" for x, y in pts)
-        return f'  <polygon points="{s}" fill="{blue_hex}"/>'
+    def path(pts):
+        d = "M " + " L ".join(f"{x:.2f} {y:.2f}" for x, y in pts)
+        return f'  <path d="{d}"/>'
 
-    lines = [
+    body = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" '
         f'viewBox="0 0 {size} {size}" fill="none">'
     ]
     if bg_hex != "none":
-        lines.append(f'  <rect width="{size}" height="{size}" fill="{bg_hex}"/>')
-    lines.append(poly(shapes["left"]))
-    lines.append(poly(shapes["right"]))
-    lines.append(poly(shapes["top"]))
-    lines.append("</svg>")
+        body.append(f'  <rect width="{size}" height="{size}" fill="{bg_hex}"/>')
+    body.append(f'<g stroke="{color_hex}" stroke-width="{stroke:.2f}" '
+                f'stroke-linecap="round" stroke-linejoin="round" fill="none">')
+    for _, pts in lines_fitted:
+        body.append(path(pts))
+    body.append("</g>")
+    for _, pts in polys_fitted:
+        s = " ".join(f"{x:.2f},{y:.2f}" for x, y in pts)
+        body.append(f'  <polygon points="{s}" fill="{color_hex}"/>')
+    body.append("</svg>")
 
     with open(out, "w", encoding="utf-8") as f:
-        f.write("\n".join(lines) + "\n")
+        f.write("\n".join(body) + "\n")
 
 
-def save_png(out, size, blue, bg, gap, padding):
+def save_png(out, size, color, bg, padding):
     from PIL import Image, ImageDraw
 
-    blue_rgba = parse_color(blue)
-    if blue_rgba is None:
+    color_rgba = parse_color(color)
+    if color_rgba is None:
         raise ValueError("Logo colour cannot be transparent.")
     bg_rgba = parse_color(bg)
 
     # Supersample for clean anti-aliased edges, then downscale.
     ss = 4
     big = size * ss
-    shapes = fit(build_shapes(gap), big, padding)
+    polylines, polygons = build_mark()
+    lines_fitted, polys_fitted, stroke = fit(polylines, polygons, big, padding)
+    w = max(1, round(stroke))
+    r = stroke / 2.0
 
     image = Image.new("RGBA", (big, big), bg_rgba if bg_rgba else (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
-    for name in ("left", "right", "top"):
-        draw.polygon(shapes[name], fill=blue_rgba)
+    for _, pts in lines_fitted:
+        draw.line(pts, fill=color_rgba, width=w, joint="curve")
+        # Round caps (PIL lines are butt-capped) — and joint="curve" misses the
+        # very first/last vertex, so cap every vertex.
+        for (x, y) in pts:
+            draw.ellipse([x - r, y - r, x + r, y + r], fill=color_rgba)
+    for _, pts in polys_fitted:
+        draw.polygon(pts, fill=color_rgba)
 
     image = image.resize((size, size), Image.LANCZOS)
     image.save(out)
 
 
 def main():
-    p = argparse.ArgumentParser(description="Generate the Life Package logo.")
+    p = argparse.ArgumentParser(description="Generate the OpenFirst logo.")
     p.add_argument("--format", choices=["png", "svg"], required=True)
     p.add_argument("--size", type=int, default=1024)
-    p.add_argument("--blue", default="#3C6FB2", help="Logo colour.")
+    p.add_argument("--color", "--blue", dest="color", default="#3C6FB2", help="Logo colour.")
     p.add_argument("--bg", default="transparent", help='Background colour, or "transparent".')
-    p.add_argument("--gap", type=float, default=0.30, help="Width of the white gaps (design units).")
-    p.add_argument("--padding", type=float, default=0.10, help="Margin around the mark (ratio of size).")
+    p.add_argument("--padding", type=float, default=0.06, help="Margin around the mark (ratio of size).")
     p.add_argument("--out", required=True)
     args = p.parse_args()
 
     if args.format == "svg":
-        save_svg(args.out, args.size, args.blue, args.bg, args.gap, args.padding)
+        save_svg(args.out, args.size, args.color, args.bg, args.padding)
     else:
-        save_png(args.out, args.size, args.blue, args.bg, args.gap, args.padding)
+        save_png(args.out, args.size, args.color, args.bg, args.padding)
     print(f"Saved: {args.out}")
 
 

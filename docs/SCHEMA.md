@@ -1,9 +1,13 @@
-# Package schema — `inheritance-package/v1`
+# Package schema — `lifepackage/v1`
 
 A plan is a single JSON object. It's an **open, durable format** (plain JSON +
 Markdown) designed to stay readable for many years without the app. The formal
-contract is [`inheritance-package.schema.json`](./inheritance-package.schema.json);
+contract is [`lifepackage.schema.json`](./lifepackage.schema.json);
 this page is the friendly version.
+
+Legacy packages that use `schema: "inheritance-package/v1"` and the filename
+`inheritance.json` still open in OpenFirst. New exports use `schema:
+"lifepackage/v1"` and `lifepackage.json`.
 
 **Core idea:** the plan is a *map of where things live and who gets them* — not a
 vault for raw secrets. Describe where a secret is and how to find it; don't paste
@@ -13,7 +17,7 @@ the secret.
 
 ```json
 {
-  "schema": "inheritance-package/v1",
+  "schema": "lifepackage/v1",
   "package":      { ... },
   "roles":        [ ... ],
   "people":       [ ... ],
@@ -115,5 +119,5 @@ for grouping/search, e.g. `["tax","2009"]`.
 ---
 
 A complete, realistic example lives in the repo at
-[`app/src/sample/inheritance.json`](../app/src/sample/inheritance.json) (the same
+[`app/src/sample/lifepackage.json`](../app/src/sample/lifepackage.json) (the same
 data behind the in-app **Demo**).

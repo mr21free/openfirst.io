@@ -1,4 +1,4 @@
-# Life Plan — a calm place to put your affairs in order
+# OpenFirst — a calm place to put your affairs in order
 
 A **local-first, offline, no-server** tool to build an inheritance / "in case I
 die" plan and hand your loved ones a single file they can open with no app, no
@@ -16,8 +16,11 @@ double-click. Optionally password-protect it.
 - **Offline forever.** The heir's reader is one HTML file that works with no
   internet.
 - **Durable, open format.** A plan is plain **JSON + Markdown**
-  (`inheritance-package/v1`) — readable for years without this app. See
+  (`lifepackage/v1` in `lifepackage.json`) — readable for years without this app. See
   [`docs/SCHEMA.md`](docs/SCHEMA.md).
+- **Legacy-friendly.** Older packages named `inheritance.json` with
+  `schema: "inheritance-package/v1"` still open. Re-exporting writes the new
+  `lifepackage.json` / `lifepackage/v1` format.
 - **A map, not a vault.** The plan describes *where* secrets live and *how* to
   find them — you decide what (if anything) to store directly. Strong encryption
   is available for export (AES‑256‑GCM, PBKDF2‑600k); a 6‑word passphrase is
@@ -60,6 +63,6 @@ Open the built `app/dist/index.html` directly, or host it — it's one file. Use
 
 - [How to use](docs/how-to-use.md) — step-by-step, including the AI flow.
 - [Schema reference](docs/SCHEMA.md) — human-friendly.
-- [`inheritance-package.schema.json`](docs/inheritance-package.schema.json) — the
+- [`lifepackage.schema.json`](docs/lifepackage.schema.json) — the
   formal JSON Schema (for validation / AI).
-- Sample plan: [`app/src/sample/inheritance.json`](app/src/sample/inheritance.json).
+- Sample plan: [`app/src/sample/lifepackage.json`](app/src/sample/lifepackage.json).

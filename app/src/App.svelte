@@ -3,8 +3,10 @@
   import Reader from './components/Reader.svelte';
   import UnlockGate from './components/UnlockGate.svelte';
   import { Store } from './lib/store.svelte.js';
-  import { loadDraft, loadAllDrafts, clearDraft } from './lib/persist.js';
-  import { decryptAndLoad } from './lib/load.js';
+import { loadDraft, loadAllDrafts, clearDraft } from './lib/persist.js';
+import { decryptAndLoad } from './lib/load.js';
+import { PACKAGE_SCHEMA } from './lib/format.js';
+import { deriveDraftKey, decryptString, decryptToBlob } from './lib/draftcrypto.js';
 
   const store = new Store();
 
@@ -59,8 +61,13 @@
     (async () => {
       const all = await loadAllDrafts();
       drafts = all
-        .filter((d) => d.data)
-        .map((d) => ({ key: d.key, savedAt: d.savedAt, title: d.data?.package?.title || 'Unnamed plan' }))
+        .filter((d) => d.data || d.enc)
+        .map((d) => ({
+          key: d.key,
+          savedAt: d.savedAt,
+          protected: d.enc === 'v1',
+          title: (d.enc ? d.title : d.data?.package?.title) || 'Unnamed plan'
+        }))
         .sort((a, b) => (b.savedAt || '') > (a.savedAt || '') ? 1 : -1);
     })();
   });
@@ -79,13 +86,13 @@
   function newPlan() {
     const id = crypto?.randomUUID?.() || 'plan_' + Math.random().toString(36).slice(2);
     const today = new Date().toISOString().slice(0, 10);
-    // Unique default name, same pattern as guides/groups: "My inheritance plan",
-    // "My inheritance plan (1)"… when earlier plans already use the name.
+    // Unique default name, same pattern as guides/groups: "My life package",
+    // "My life package (1)"… when earlier plans already use the name.
     const taken = new Set(drafts.map((d) => d.title));
-    let title = 'My inheritance plan';
+    let title = 'My life package';
     let n = 1;
-    while (taken.has(title)) title = `My inheritance plan (${n++})`;
-    const startHereContent = `## Welcome to your inheritance plan
+    while (taken.has(title)) title = `My life package (${n++})`;
+    const startHereContent = `## Welcome to your life package
 
 This is your **Start here** guide. Edit it to write instructions for the people who will receive this plan.
 
@@ -100,7 +107,7 @@ Here's what to do next:
 
 When you are done, click **Export** in the top bar to save a plan your heirs can open.`;
     const data = {
-      schema: 'inheritance-package/v1',
+      schema: PACKAGE_SCHEMA,
       package: { id, title, owner_id: 'person_owner', created: today, updated: today, languages: ['en'], default_language: 'en' },
       people: [{ id: 'person_owner', name: 'Me', roles: ['owner'] }],
       roles: [
@@ -122,9 +129,14 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
     window.scrollTo({ top: 0 });
   }
 
+  // A protected draft being resumed: hold it until the passphrase is entered.
+  let draftGate = $state(null); // { key } | null
+
   async function resumeDraft(key) {
     const d = await loadDraft(key);
-    if (!d?.data) return;
+    if (!d) return;
+    if (d.enc === 'v1') { draftGate = { key }; return; } // needs the passphrase
+    if (!d.data) return;
     const attachmentUrls = {};
     const blobs = new Map();
     const mimeFor = (id) => {
@@ -140,8 +152,32 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
         attachmentUrls[a.id] = URL.createObjectURL(blob);
       }
     }
-    store.load({ data: d.data, attachmentUrls, blobs });
+    // Blobs loaded from the new per-blob store are already persisted; legacy
+    // (inline) blobs must be written to it on the first save.
+    store.load({ data: d.data, attachmentUrls, blobs, persistedDraft: !d.legacyBlobs });
     store.startEditing();
+    drafts = [];
+    window.scrollTo({ top: 0 });
+  }
+
+  // Decrypt-and-open a protected draft. Throws on a wrong passphrase (AES-GCM
+  // auth fails), which UnlockGate surfaces as a friendly error.
+  async function unlockDraft(passphrase) {
+    const key = draftGate.key;
+    const d = await loadDraft(key);
+    const cryptoKey = await deriveDraftKey(passphrase, new Uint8Array(d.salt), d.iterations);
+    const json = await decryptString(cryptoKey, key, new Uint8Array(d.iv), new Uint8Array(d.ct));
+    const data = JSON.parse(json);
+    const attachmentUrls = {};
+    const blobs = new Map();
+    for (const a of d.attachments || []) {
+      const blob = await decryptToBlob(cryptoKey, key, a.blob);
+      blobs.set(a.id, blob);
+      attachmentUrls[a.id] = URL.createObjectURL(blob);
+    }
+    store.load({ data, attachmentUrls, blobs, persistedDraft: true, draftKey: cryptoKey, draftSalt: new Uint8Array(d.salt) });
+    store.startEditing();
+    draftGate = null;
     drafts = [];
     window.scrollTo({ top: 0 });
   }
@@ -160,6 +196,8 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
   {/if}
 {:else if store.pkg}
   <Reader {store} onClose={close} />
+{:else if draftGate}
+  <UnlockGate hint="Your draft passphrase (not the export password)." onUnlock={unlockDraft} onCancel={() => (draftGate = null)} />
 {:else}
   <Landing {onLoaded} {newPlan} {drafts} {resumeDraft} {discardDraft} />
 {/if}

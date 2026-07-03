@@ -23,4 +23,4 @@
   </div>
 {/if}
 
-<style>.prev { width: 100%; border-radius: 10px; border: 1px solid var(--rule-soft); margin-top: 16px; margin-bottom: 4px; }</style>
+<style>.prev { width: 100%; border-radius: 0; border: 1px solid var(--rule-soft); margin-top: 16px; margin-bottom: 4px; }</style>

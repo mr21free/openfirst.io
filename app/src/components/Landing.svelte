@@ -80,11 +80,12 @@
     <div class="container row">
       <div class="brand row">
         <img class="logo" src={logo} alt="" aria-hidden="true" />
-        <span>Life Plan</span>
+        <span>OpenFirst</span>
       </div>
       <span class="spacer"></span>
       <nav class="topnav">
         <a href="/how-to-use/">How to use</a>
+        <a href="/security/">Security</a>
         <a href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener">The story</a>
       </nav>
     </div>
@@ -92,18 +93,20 @@
 
   <main class="container">
     <section class="hero">
-      <p class="eyebrow">A calm place to put your affairs in order</p>
-      <h1>Leave everything in order.</h1>
+      <p class="eyebrow">OpenFirst · a private life package, built on your device</p>
+      <h1>Nothing breaks<br />if you're gone tomorrow.</h1>
       <p class="lede soft">
-        Build an inheritance plan that stays on this device. Export a file your
-        heirs can open when the time comes — no accounts, no cloud needed.
+        That's the promise — to each other. Build a calm map of everything that
+        matters, on this device, with no account and no cloud. Hand your family
+        one file they can open with a double-click, whenever the time comes.
       </p>
+      <p class="hero-steps soft">Start with the map. Build the system together. Test it before it matters.</p>
 
       {#each drafts as draft (draft.key)}
         <div class="draft card no-print">
           <div class="draft-main">
-            <strong>{draft.title}</strong>
-            <span class="small muted">{draftWhen(draft.savedAt) ? `saved ${draftWhen(draft.savedAt)} · ` : ''}kept on this device</span>
+            <strong>{draft.title}{#if draft.protected}<span class="draft-lock" title="Passphrase-protected on this device"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>{/if}</strong>
+            <span class="small muted">{draftWhen(draft.savedAt) ? `saved ${draftWhen(draft.savedAt)} · ` : ''}kept on this device{draft.protected ? ' · encrypted' : ''}</span>
           </div>
           <div class="row" style="gap:8px">
             <button class="btn btn-primary" onclick={() => resumeDraft?.(draft.key)}>Resume</button>
@@ -114,7 +117,7 @@
 
       <div class="action-grid no-print">
         <div class="action-card">
-          <p class="soft small">Start building your inheritance plan. Everything stays on this device.</p>
+          <p class="soft small">Start building your life package. Everything stays on this device.</p>
           <button class="btn btn-primary" onclick={() => newPlan?.()}>Create new plan</button>
         </div>
         <div class="action-card">
@@ -160,16 +163,22 @@
 
   <footer class="screen no-print">
     <div class="container row wrap">
-      <span class="footer-tag">lifepackage.io · your plan, in safe hands</span>
+      <span class="footer-tag">openfirst.io · your plan, in safe hands</span>
       <span class="spacer"></span>
-      <span class="tiny">Open format · MIT · works offline</span>
+      <nav class="row wrap footer-nav">
+        <a class="tiny" href="/how-to-use/">How to use</a>
+        <a class="tiny" href="/security/">Security</a>
+        <span class="tiny">Open format · MIT · works offline</span>
+      </nav>
     </div>
   </footer>
 
   {#if pendingEnvelope}
     <div class="scrim" role="presentation" onclick={cancelUnlock}></div>
     <div class="unlock card" role="dialog" aria-modal="true" aria-label="Enter password" tabindex="-1">
-      <span class="lock-ico" aria-hidden="true">🔒</span>
+      <span class="lock-ico" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+      </span>
       <h3>This plan is protected</h3>
       <p class="soft small">Enter the password to open it. The file is decrypted here on your device — the password is never sent anywhere.</p>
       {#if pendingEnvelope.hint}
@@ -218,9 +227,18 @@
   .topnav a { color: var(--ink-soft); font-size: 14px; }
   .topnav a:hover { color: var(--ink); text-decoration: none; }
   main { flex: 1; width: 100%; }
-  .hero { padding: 72px 0 48px; }
-  h1 { margin-top: 14px; font-size: clamp(32px, 5.2vw, 60px); line-height: 1.04; max-width: 18ch; }
-  .lede { margin-top: 22px; max-width: 60ch; font-size: 17px; }
+  .hero { padding: 84px 0 56px; }
+  h1 {
+    margin-top: 16px; font-size: clamp(36px, 5.6vw, 68px);
+    font-weight: 300; letter-spacing: -0.015em; line-height: 1.06; max-width: 22ch;
+  }
+  .lede { margin-top: 24px; max-width: 58ch; font-size: 17.5px; line-height: 1.7; }
+  /* The quiet three-beat method line — small caps, hairline lead-in. */
+  .hero-steps {
+    margin-top: 26px; display: flex; align-items: center; gap: 14px;
+    font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute);
+  }
+  .hero-steps::before { content: ''; display: inline-block; width: 34px; height: 1px; background: var(--accent); flex: none; }
   .error { color: var(--warn); margin-top: 14px; white-space: pre-line; text-align: left; }
 
   /* Draft cards */
@@ -275,16 +293,20 @@
   footer { padding: 30px 0; }
   .footer-tag { color: var(--accent); font-size: 13px; }
   footer .tiny { color: var(--screen-px); }
+  .footer-nav { gap: 16px; }
+  .footer-nav a:hover { color: var(--accent); text-decoration: none; }
+  .draft-lock { display: inline-flex; margin-left: 7px; color: var(--ink-soft); vertical-align: -1px; }
 
   .scrim { position: fixed; inset: 0; background: oklch(0.2 0.03 255 / 0.32); z-index: 60; }
   .unlock {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    z-index: 61; width: min(420px, 92vw);
+    z-index: 61; width: min(440px, 92vw);
     border-left: 2px solid var(--accent);
     display: flex; flex-direction: column; gap: 12px;
     box-shadow: 0 24px 60px oklch(0.2 0.03 255 / 0.18);
+    padding: 30px 32px; /* dialogs get more air than inline cards */
   }
-  .lock-ico { font-size: 22px; }
+  .lock-ico { display: inline-flex; color: var(--ink-soft); }
   .unlock h3 { font-size: 19px; }
   .hint { background: var(--accent-wash); border-radius: 0; padding: 8px 12px; }
   .pw-row { display: flex; gap: 8px; }

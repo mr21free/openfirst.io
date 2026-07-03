@@ -49,7 +49,7 @@ try {
   await (await page.$('input[type=file]:not([webkitdirectory])')).uploadFile(fpath);
 
   await page.waitForFunction(() => /who are you/i.test(document.body.innerText) || !!document.querySelector('nav .navcount'), { timeout: 8000 });
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything/i.test(b.textContent))?.click());
+  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything|admin/i.test(b.textContent))?.click());
   await page.waitForFunction(() => !!document.querySelector('nav .navlink'), { timeout: 8000 });
 
   await page.evaluate(() => [...document.querySelectorAll('nav .navlink')].find((b) => /Other notes/.test(b.textContent))?.click());

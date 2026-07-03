@@ -1,4 +1,4 @@
-# How to use Life Plan
+# How to use OpenFirst
 
 A plan takes about an evening to build by hand — or minutes to scaffold with AI
 and then refine. Everything stays on your device.

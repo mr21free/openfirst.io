@@ -16,8 +16,8 @@ const ok = (n, c) => results.push([c ? 'PASS' : 'FAIL', n]);
 
 // The same minimal example printed in public/ai-builder-prompt.md.
 const example = {
-  schema: 'inheritance-package/v1',
-  package: { id: 'plan-1', title: 'My inheritance plan', owner_id: 'person_me', created: '2026-01-01', updated: '2026-01-01', languages: ['en'], default_language: 'en', map_audience_roles: ['primary_heir'] },
+  schema: 'lifepackage/v1',
+  package: { id: 'plan-1', title: 'My life package', owner_id: 'person_me', created: '2026-01-01', updated: '2026-01-01', languages: ['en'], default_language: 'en', map_audience_roles: ['primary_heir'] },
   roles: [{ id: 'owner', name: 'Owner' }, { id: 'primary_heir', name: 'Primary heir' }],
   people: [{ id: 'person_me', name: 'Me', roles: ['owner'] }, { id: 'person_spouse', name: 'Jane', roles: ['primary_heir'] }],
   locations: [{ id: 'loc_country', name: 'Country X', order: 0 }, { id: 'loc_home', name: 'Home safe', parent_id: 'loc_country', order: 0 }],
@@ -27,10 +27,12 @@ const example = {
   attachments: []
 };
 const broken = { schema: 'inheritance-package/v1', package: { id: 'p', title: 't', owner_id: 'ghost', languages: ['en'], default_language: 'en' }, people: [{ id: 'a', name: 'A' }], items: [{ id: 'i', name: 'X', location_ids: ['loc_nope'] }] };
+const legacy = { ...example, schema: 'inheritance-package/v1', package: { ...example.package, id: 'legacy-plan', title: 'Legacy package' } };
 
 const dir = mkdtempSync(resolve(tmpdir(), 'lp-imp-'));
 writeFileSync(resolve(dir, 'plan.json'), JSON.stringify(example));
 writeFileSync(resolve(dir, 'broken.json'), JSON.stringify(broken));
+writeFileSync(resolve(dir, 'legacy.json'), JSON.stringify(legacy));
 
 const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--no-sandbox', '--allow-file-access-from-files'] });
 const page = await browser.newPage();
@@ -42,6 +44,10 @@ try {
   await fresh();
   await upload('plan.json');
   ok('documented example imports into the reader', await page.evaluate(() => /who are you/i.test(document.body.innerText) || !!document.querySelector('nav')));
+
+  await fresh();
+  await upload('legacy.json');
+  ok('legacy inheritance-package/v1 JSON still imports', await page.evaluate(() => /who are you/i.test(document.body.innerText) || !!document.querySelector('nav')));
 
   await fresh();
   await upload('broken.json');

@@ -1,15 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://inheritance.tools/schema/inheritance-package/v1",
-  "title": "Inheritance Package",
-  "description": "Open, human-readable source format for a local-first inheritance plan. A property graph of people, roles, locations, items, guides, guide groups, and attachments.",
+  "$id": "https://openfirst.io/schema/lifepackage/v1",
+  "title": "Life Package",
+  "description": "Open, human-readable source format for a local-first life package. A property graph of people, roles, locations, items, guides, guide groups, and attachments.",
   "type": "object",
   "required": ["schema", "package", "people", "locations", "items", "guides"],
   "additionalProperties": false,
   "properties": {
     "schema": {
       "description": "Format identifier and version.",
-      "const": "inheritance-package/v1"
+      "const": "lifepackage/v1"
     },
     "package": { "$ref": "#/$defs/package" },
     "roles": { "type": "array", "items": { "$ref": "#/$defs/role" } },
@@ -157,16 +157,6 @@
         "importance": { "$ref": "#/$defs/importance" }
       }
     },
-    "secret": {
-      "type": "object",
-      "required": ["kind", "value"],
-      "additionalProperties": false,
-      "properties": {
-        "kind": { "type": "string", "enum": ["password", "passphrase", "pin", "seed", "key", "code", "other"] },
-        "value": { "type": "string" },
-        "note": { "type": "string" }
-      }
-    },
     "item": {
       "type": "object",
       "required": ["id", "name"],
@@ -184,8 +174,7 @@
         "depends_on_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
         "guide_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
         "attachment_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
-        "sensitive": { "type": "boolean", "default": false },
-        "secret": { "$ref": "#/$defs/secret" },
+        "sensitive": { "type": "boolean", "default": false, "description": "Handle-with-care badge. The item describes where a secret lives; it never holds the secret itself." },
         "properties": {
           "type": "object",
           "additionalProperties": true
@@ -198,13 +187,7 @@
           "$ref": "#/$defs/order",
           "description": "Legacy import compatibility only. Current item ordering is list-driven."
         }
-      },
-      "allOf": [
-        {
-          "if": { "required": ["secret"] },
-          "then": { "properties": { "sensitive": { "const": true } }, "required": ["sensitive"] }
-        }
-      ]
+      }
     },
     "guide": {
       "type": "object",

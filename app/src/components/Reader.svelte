@@ -11,6 +11,10 @@
   import TrashIcon from './TrashIcon.svelte';
   import logo from '../assets/logo.svg';
   import ExportDialog from './ExportDialog.svelte';
+  import ExportSizeBanner from './ExportSizeBanner.svelte';
+  import StalenessBanner from './StalenessBanner.svelte';
+  import AudienceGate from './AudienceGate.svelte';
+  import GlobalSearch from './GlobalSearch.svelte';
   import ReadinessView from './ReadinessView.svelte';
   import { langValue } from '../lib/package.js';
 
@@ -58,6 +62,7 @@
     window.scrollTo({ top: 0 });
   }
   function openSettings() { store.startSettings(); setDrawer('__meta'); }
+  async function lockDraft() { await store.lockDraft(); onClose?.(); }
   function openMapSettings() { setDrawer('__map'); }
   function editEntity(id) { setDrawer(id); }
   function rowClick(id) { if (editing) setDrawer(id); else openEntity(id); }
@@ -616,31 +621,15 @@
     dryRunId = null;
   }
 
-  // ---- Global search: topbar box + top-10 dropdown + a results view ----
+  // ---- Global search — the topbar box + dropdown live in GlobalSearch; the
+  // parent keeps the query (so the full "search" view can read it) and decides
+  // what a pick / "see all" does. ----
   let gquery = $state('');
-  let gopen = $state(false);
-  let gindex = $state(-1);
-  let gpopEl = $state(null);
   const KIND_LABEL = { guide: 'Guide', person: 'Person', item: 'Item', location: 'Location', attachment: 'File', role: 'Role', readiness: 'Readiness' };
   const visibleSearch = (results) => canShowReadinessData ? results : results.filter((r) => r.kind !== 'readiness');
-  const gtop = $derived(gquery.trim() ? visibleSearch(pkg.search(gquery, 10)) : []);
   const searchResults = $derived(view === 'search' ? visibleSearch(pkg.search(gquery, 50)) : []);
-  function pickResult(r) { gopen = false; gindex = -1; openEntity(r.id); }       // guide → navigate; entity → drawer
-  function goSearch() { gopen = false; gindex = -1; if (gquery.trim()) { view = 'search'; closeDrawer(); window.scrollTo({ top: 0 }); } }
-  function onSearchKey(e) {
-    if (e.key === 'ArrowDown') { e.preventDefault(); gopen = true; gindex = Math.min(gindex + 1, gtop.length - 1); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); gindex = Math.max(gindex - 1, -1); }
-    else if (e.key === 'Enter') { e.preventDefault(); if (gindex >= 0 && gtop[gindex]) pickResult(gtop[gindex]); else goSearch(); }
-    else if (e.key === 'Escape') { e.preventDefault(); gopen = false; gindex = -1; }
-  }
-  // Keep the highlighted dropdown row in view; close on click-away.
-  $effect(() => { if (!gopen) return; gindex; gpopEl?.querySelector('.gs-row.on')?.scrollIntoView({ block: 'nearest' }); });
-  $effect(() => {
-    if (!gopen) return;
-    const onDown = (e) => { const t = e.target; if (!(t instanceof Element) || !t.closest('.gsearch')) gopen = false; };
-    window.addEventListener('pointerdown', onDown, true);
-    return () => window.removeEventListener('pointerdown', onDown, true);
-  });
+  function pickResult(id) { openEntity(id); }                                    // guide → navigate; entity → drawer
+  function goSearch() { if (gquery.trim()) { view = 'search'; closeDrawer(); window.scrollTo({ top: 0 }); } }
 
   $effect(() => {
     if (!pkg.languages.includes(lang)) lang = pkg.lang;
@@ -725,6 +714,10 @@
 <svelte:window onkeydown={onKeydown} />
 
 <div class="shell" style="--reading-font: {readingFont};">
+  {#if editing}
+    <StalenessBanner {store} onReview={() => go('readiness')} />
+    <ExportSizeBanner {store} />
+  {/if}
   <header class="topbar no-print">
     <div class="bar">
       <div class="bar-plan">
@@ -733,31 +726,14 @@
         {:else}
           <button class="brand-home" onclick={onClose} title="Back to start" aria-label="Back to start"><img class="logo" src={logo} alt="" aria-hidden="true" /></button>
           {#if editing && store.data?.package}
-            <input class="plan-title-input" bind:value={store.data.package.title} placeholder="My inheritance plan" aria-label="Plan title" />
+            <input class="plan-title-input" bind:value={store.data.package.title} placeholder="My life package" aria-label="Plan title" />
           {:else}
             <span class="plan-title" title={planTitle}>{planTitle}</span>
           {/if}
         {/if}
       </div>
       {#if !showGate}
-        <div class="gsearch">
-          <svg class="gs-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-          <input class="gs-input" type="text" bind:value={gquery} placeholder="Search the plan…" aria-label="Search the plan" autocomplete="off"
-            onfocus={() => { if (gquery.trim()) gopen = true; }}
-            oninput={() => { gopen = true; gindex = -1; }}
-            onkeydown={onSearchKey} />
-          {#if gopen && gtop.length}
-            <div class="gs-pop" bind:this={gpopEl}>
-              {#each gtop as r, i (r.id)}
-                <button class="gs-row" class:on={i === gindex} onmousedown={(e) => { e.preventDefault(); pickResult(r); }}>
-                  <span class="gs-name">{r.name}</span>
-                  <span class="gs-meta">{KIND_LABEL[r.kind]}{r.inGuide ? ' · in a guide' : r.importance === 'high' ? ' · high priority' : ''}</span>
-                </button>
-              {/each}
-              <button class="gs-row gs-all" onmousedown={(e) => { e.preventDefault(); goSearch(); }}>See all results for “{gquery.trim()}”</button>
-            </div>
-          {/if}
-        </div>
+        <GlobalSearch {pkg} bind:query={gquery} filter={visibleSearch} onPick={pickResult} onSeeAll={goSearch} />
       {/if}
       <div class="bar-actions">
         {#if editing && !showGate}<span class="sr-only" aria-live="polite">{store.savedAt ? 'Auto-saved to this device' : 'Saving…'}</span>{/if}
@@ -799,6 +775,13 @@
           </button>
         {/if}
         {#if !showGate}
+          {#if !readOnly && store.draftProtected}
+            <button class="iconbtn" title="Lock the draft and return to start" aria-label="Lock draft" onclick={lockDraft}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </button>
+          {/if}
           {#if !readOnly}
             <button class="iconbtn" class:editing-on={editing} class:plan-done={editing} class:plan-edit={!editing} title={editing ? 'Done editing — view the plan' : 'Edit this plan'} aria-label={editing ? 'Done editing' : 'Edit'} onclick={toggleEdit}>
               {#if editing}
@@ -847,29 +830,8 @@
   </header>
 
   {#if showGate}
-    <!-- Who are you? -->
-    <div class="gate container">
-      <div class="card gate-card">
-        <p class="eyebrow">Before we begin</p>
-        <h1 class="gate-h">Take your time. There is no rush.</h1>
-        <p class="soft">This plan was prepared by <strong>{owner?.name || 'the owner'}</strong>. So it can show you the right things first — who are you?</p>
-        {#snippet whoBtn(p)}
-          <button class="who" onclick={() => chooseAudience(p.id)}>
-            <span class="who-ico" aria-hidden="true"><Icon kind="person" /></span>
-            <span class="who-main">
-              <span class="who-name">{pkg.name(p.id)}{#if p.nickname} <span class="muted small">· {p.name}</span>{:else if p.display_as} <span class="muted small">· {p.display_as}</span>{/if}</span>
-              <span class="row wrap">{#each p.roles as r}<span class="chip">{pkg.roleLabel(r)}</span>{/each}</span>
-            </span>
-          </button>
-        {/snippet}
-        <div class="gate-people">
-          {#each gatePrimary as p}{@render whoBtn(p)}{/each}
-          {#if gatePrimary.length && gateRest.length}<div class="gate-sep" aria-hidden="true"></div>{/if}
-          {#each gateRest as p}{@render whoBtn(p)}{/each}
-        </div>
-        <button class="btn btn-ghost" onclick={() => { audience = null; chosen = true; }}>{adminLabel}</button>
-      </div>
-    </div>
+    <AudienceGate {pkg} {owner} primary={gatePrimary} rest={gateRest} {adminLabel}
+      onChoose={chooseAudience} onAdmin={() => { audience = null; chosen = true; }} />
   {:else}
     <div class="body container">
       <!-- Navigation -->
@@ -1236,7 +1198,7 @@
                   <span class="search-result-ico" aria-hidden="true">
                     <Icon kind={r.kind === 'attachment' ? 'file' : r.kind} />
                   </span>
-                  <button class="ulist-click" onclick={() => pickResult(r)}>
+                  <button class="ulist-click" onclick={() => pickResult(r.id)}>
                     <span class="ulist-main">
                       <span class="ulist-name">{r.name}</span>
                       <span class="ulist-desc">{KIND_LABEL[r.kind]}{r.inGuide ? ' · in a guide' : ''}</span>
@@ -1370,16 +1332,6 @@
   .sel-wrap { display: inline-flex; align-items: center; gap: 8px; }
 
   /* Global search box + dropdown */
-  .gsearch { position: relative; min-width: 0; width: 100%; display: flex; align-items: center; }
-  .gs-ico { position: absolute; left: 11px; color: var(--ink-mute); pointer-events: none; }
-  .gs-input { width: 100%; font: inherit; font-size: 14px; padding: 7px 12px 7px 33px; border: 1px solid var(--rule); border-radius: 0; background: var(--paper); color: var(--ink); }
-  .gs-input:focus { outline: none; border-color: var(--accent-deep); }
-  .gs-pop { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 40; background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18); padding: 6px; max-height: 60vh; overflow-y: auto; }
-  .gs-row { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; text-align: left; padding: 7px 10px; border-radius: 8px; }
-  .gs-row:hover, .gs-row.on { background: var(--accent-wash); }
-  .gs-name { font-size: 14px; color: var(--ink); }
-  .gs-meta { font-size: 11px; color: var(--ink-mute); }
-  .gs-all { color: var(--accent-deep); font-size: 13px; border-top: 1px solid var(--rule-soft); margin-top: 4px; }
   .gs-count { margin-bottom: 12px; }
   .sel {
     appearance: none; -webkit-appearance: none;
@@ -1402,24 +1354,6 @@
   .iconbtn:disabled { opacity: 0.4; cursor: not-allowed; }
   .iconbtn:disabled:hover { color: var(--ink-soft); border-color: transparent; background: transparent; }
 
-  .gate { display: block; padding: var(--reader-section-gap) 28px 64px; }
-  .gate-card { width: 100%; border-left: 2px solid var(--accent); }
-  .gate-h { font-size: clamp(26px, 4vw, 38px); margin: 8px 0 14px; }
-  .gate-people { display: grid; gap: 12px; margin: 22px 0; }
-  .gate-sep { height: 1px; background: var(--rule-soft); margin: 2px 0; }
-  .who {
-    display: flex; gap: 12px; align-items: flex-start;
-    border: 0; border-radius: 0; padding: 13px 14px; text-align: left;
-    transition: border-color .12s, background .12s;
-  }
-  .who:hover { background: var(--accent-wash); }
-  .who-ico {
-    flex: none; width: 30px; height: 30px; border-radius: 0;
-    display: inline-flex; align-items: center; justify-content: center;
-    color: var(--ink-soft); background: var(--accent-wash);
-  }
-  .who-main { min-width: 0; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
-  .who-name { font-size: 17px; font-weight: 500; }
 
   /* stretch: the content column grows to match the (usually taller) sticky
      nav, so a short/empty guide fills exactly to the menu's height — no more. */

@@ -9,7 +9,9 @@
 
 import { InheritancePackage } from './package.js';
 import { collectRoleIds, humanizeKey, normalizedRoles, slugifyTag } from './package.js';
-import { saveDraft, clearDraft } from './persist.js';
+import { saveDraft, saveDraftBlob, deleteDraftBlob, clearDraft } from './persist.js';
+import { DEFAULT_ITERATIONS } from './crypto.js';
+import { DRAFT_ENC_VERSION, newDraftSalt, deriveDraftKey, encryptString, encryptBlob } from './draftcrypto.js';
 
 const KINDS = ['people', 'locations', 'items', 'guides', 'folders', 'attachments'];
 const PLAN_ARRAYS = [...KINDS, 'readiness_checks', 'readiness_runs'];
@@ -20,6 +22,16 @@ const nowIso = () => new Date().toISOString();
 function stableKey(snap) {
   const p = snap?.package ? { ...snap.package, updated: undefined } : snap?.package;
   return JSON.stringify({ ...snap, package: p });
+}
+
+// Read every property of a deeply-reactive tree WITHOUT cloning it, so the
+// enclosing $effect subscribes to all of it. This is the cheap per-keystroke
+// path — the expensive snapshot + stringify happens only once per debounce
+// window, in #processChanges.
+function touchAll(v) {
+  if (v && typeof v === 'object') {
+    for (const k in v) touchAll(v[k]);
+  }
 }
 
 export class Store {
@@ -34,28 +46,44 @@ export class Store {
 
   #timer = null;
   #baseline = null; // last-seen content key (excluding the auto "updated" date)
+  #persistedBlobs = new Map(); // id -> Blob already written to IndexedDB
+
+  // Draft-at-rest protection: when set, everything written to IndexedDB is
+  // AES-GCM encrypted with this in-memory key (see draftcrypto.js).
+  draftProtected = $state(false);
+  #draftKey = null;   // CryptoKey — memory only, never persisted
+  #draftSalt = null;  // Uint8Array — stored in the draft record for re-derivation
 
   constructor() {
     // Auto-save on a real change while editing, and stamp the plan's "updated"
-    // date automatically (never on mere open / no-op).
+    // date automatically (never on mere open / no-op). The effect only walks
+    // the tree (to subscribe) and debounces; the change detection and the save
+    // run at most once per debounce window.
     $effect.root(() => {
       $effect(() => {
         if (!this.editable || !this.data) return;
-        const key = stableKey($state.snapshot(this.data));
-        if (this.#baseline === null) { this.#baseline = key; return; }
-        if (key !== this.#baseline) {
-          this.#baseline = key;
-          if (this.data.package) this.data.package.updated = today();
-          this.#scheduleSave($state.snapshot(this.data));
+        touchAll(this.data);
+        if (this.#baseline === null) {
+          // First run after editing starts: remember the opening state NOW —
+          // debouncing this would swallow any edits made in the first window.
+          this.#baseline = stableKey($state.snapshot(this.data));
+          return;
         }
+        this.#scheduleProcess();
       });
     });
   }
 
-  load({ data, attachmentUrls = {}, blobs = new Map() }) {
+  load({ data, attachmentUrls = {}, blobs = new Map(), persistedDraft = false, draftKey = null, draftSalt = null }) {
     this.data = data;
     this.attachmentUrls = attachmentUrls;
     this.attachmentBlobs = blobs;
+    // A resumed draft's blobs already live in IndexedDB — don't rewrite them on
+    // the first save. Anything else (import, new plan) must be written once.
+    this.#persistedBlobs = persistedDraft ? new Map(blobs) : new Map();
+    this.#draftKey = draftKey;
+    this.#draftSalt = draftSalt;
+    this.draftProtected = !!draftKey;
     this.mode = 'read';
     this.editable = false;
     this.savedAt = null;
@@ -66,9 +94,50 @@ export class Store {
     this.data = null;
     this.attachmentUrls = {};
     this.attachmentBlobs = new Map();
+    this.#persistedBlobs = new Map();
+    this.#draftKey = null;
+    this.#draftSalt = null;
+    this.draftProtected = false;
     this.mode = 'read';
     this.editable = false;
     this.#baseline = null;
+  }
+
+  /** Turn on draft-at-rest encryption for this plan: derive the key, keep it
+   *  in memory, and rewrite the stored draft + every blob encrypted. */
+  async enableDraftProtection(passphrase) {
+    const salt = newDraftSalt();
+    const key = await deriveDraftKey(passphrase, salt, DEFAULT_ITERATIONS);
+    this.#draftSalt = salt;
+    this.#draftKey = key;
+    this.draftProtected = true;
+    // Force a full re-persist: the plaintext record is overwritten and every
+    // blob is rewritten encrypted under the same keys.
+    this.#persistedBlobs = new Map();
+    this.#baseline = '';
+    clearTimeout(this.#timer);
+    await this.#processChanges();
+  }
+
+  /** Turn draft protection OFF: rewrite the stored draft + blobs in plaintext
+   *  and forget the key. (Changing the passphrase = enableDraftProtection with
+   *  the new one — it re-derives, re-salts, and rewrites everything.) */
+  async disableDraftProtection() {
+    this.#draftKey = null;
+    this.#draftSalt = null;
+    this.draftProtected = false;
+    this.#persistedBlobs = new Map();
+    this.#baseline = '';
+    clearTimeout(this.#timer);
+    await this.#processChanges();
+  }
+
+  /** Flush any pending save, then drop the plan and the key from memory.
+   *  The encrypted draft stays on disk; resuming asks for the passphrase. */
+  async lockDraft() {
+    clearTimeout(this.#timer);
+    await this.#processChanges();
+    this.reset();
   }
 
   ensureArrays() {
@@ -116,18 +185,70 @@ export class Store {
     this.editable = true;
   }
 
-  #scheduleSave(snap) {
+  #scheduleProcess() {
     clearTimeout(this.#timer);
-    this.#timer = setTimeout(async () => {
-      const attachments = [];
-      for (const [id, blob] of this.attachmentBlobs) attachments.push({ id, blob });
-      const at = new Date().toISOString();
-      const ok = await saveDraft({ data: snap, attachments, savedAt: at });
-      if (ok) this.savedAt = at;
-    }, 600);
+    this.#timer = setTimeout(() => this.#processChanges(), 600);
   }
 
-  async discardDraft() { await clearDraft(this.data?.package?.id || 'current'); this.savedAt = null; }
+  async #processChanges() {
+    if (!this.editable || !this.data) return;
+    const snap = $state.snapshot(this.data);
+    const key = stableKey(snap);
+    if (key === this.#baseline) {
+      await this.#syncBlobs(); // a re-uploaded file can change without changing the JSON
+      return;
+    }
+    this.#baseline = key;
+    const stamp = today();
+    if (this.data.package) this.data.package.updated = stamp;
+    if (snap.package) snap.package.updated = stamp; // save what we stamped, without re-snapshotting
+    const at = new Date().toISOString();
+    const planKey = snap.package?.id || 'current';
+    let record;
+    if (this.#draftKey) {
+      const { iv, ct } = await encryptString(this.#draftKey, planKey, JSON.stringify(snap));
+      record = {
+        enc: DRAFT_ENC_VERSION,
+        salt: this.#draftSalt,
+        iterations: DEFAULT_ITERATIONS,
+        iv,
+        ct,
+        // Kept readable so the "Resume a draft" list can show which plan this
+        // is without the passphrase. Only the title and date — nothing else.
+        title: snap.package?.title || '',
+        savedAt: at
+      };
+    } else {
+      record = { data: snap, savedAt: at };
+    }
+    const ok = await saveDraft(record, planKey);
+    await this.#syncBlobs();
+    if (ok) this.savedAt = at;
+  }
+
+  // Write only new/replaced attachment blobs; delete removed ones. Keeps every
+  // keystroke from rewriting megabytes of files into IndexedDB.
+  async #syncBlobs() {
+    const planKey = this.data?.package?.id || 'current';
+    for (const [id, blob] of this.attachmentBlobs) {
+      if (this.#persistedBlobs.get(id) !== blob) {
+        const value = this.#draftKey ? await encryptBlob(this.#draftKey, planKey, blob) : blob;
+        if (await saveDraftBlob(planKey, id, value)) this.#persistedBlobs.set(id, blob);
+      }
+    }
+    for (const id of [...this.#persistedBlobs.keys()]) {
+      if (!this.attachmentBlobs.has(id)) {
+        await deleteDraftBlob(planKey, id);
+        this.#persistedBlobs.delete(id);
+      }
+    }
+  }
+
+  async discardDraft() {
+    await clearDraft(this.data?.package?.id || 'current');
+    this.#persistedBlobs = new Map();
+    this.savedAt = null;
+  }
 
   // ---- lookups ----
   /** The live (reactive) raw object for an id, for forms to bind to. */

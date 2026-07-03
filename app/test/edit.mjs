@@ -20,7 +20,7 @@ try {
   await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Demo'), { timeout: 8000 });
   await clickText('Demo');
   await page.waitForFunction(() => /who are you/i.test(document.body.innerText), { timeout: 8000 });
-  await clickText('Just show me everything');
+  await clickText('Admin');
   await page.waitForFunction(() => !!document.querySelector('.plan-edit'), { timeout: 8000 });
 
   ok('idb available on file://', await page.evaluate(() => !!window.indexedDB));

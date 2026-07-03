@@ -30,7 +30,7 @@ try {
   ok('the rest follow after the divider', order.length > 2 && order.includes('John'));
 
   // Edit mode → a guide's audience picker lists the primary recipient first.
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything/i.test(b.textContent))?.click());
+  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything|admin/i.test(b.textContent))?.click());
   await page.waitForFunction(() => !!document.querySelector('nav .navlink-section'), { timeout: 8000 });
   await page.evaluate(() => document.querySelector('.plan-edit')?.click()); await pause(400);
   // Settings exposes both the explicit plan owner and primary recipients.

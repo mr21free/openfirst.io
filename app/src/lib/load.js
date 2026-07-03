@@ -1,17 +1,19 @@
 /*
-  Load an inheritance package from the user's disk — entirely in the browser,
+  Load a life package from the user's disk — entirely in the browser,
   nothing uploaded. Returns the raw { data, attachmentUrls, blobs } so the store
   can own the editable data and the read-only InheritancePackage view.
 
-  Supports a single inheritance.json, a whole package folder, or a .zip.
+  Supports a single lifepackage.json, a whole package folder, or a .zip.
+  Legacy inheritance.json packages are still accepted.
   Plus the bundled demo sample (works offline in the single-file build).
 */
 
 import { unzipSync } from 'fflate';
 import { isEncryptedEnvelope, decryptEnvelope } from './crypto.js';
 import { validatePackage } from './validate.js';
+import { SOURCE_FILE, SOURCE_FILES, isSourceFile, sourceBase, sourceFileRank, normalizePackageFormat } from './format.js';
 
-import sampleData from '../sample/inheritance.json';
+import sampleData from '../sample/lifepackage.json';
 
 const norm = (p) => (p || '').replace(/^\.?\//, '');
 
@@ -54,17 +56,35 @@ function normalizeAttachmentLinks(data) {
   return data;
 }
 
+// Raw secrets are not supported: the plan is a map, not a vault. Older plans
+// could carry `item.secret = { kind, value, note }` — strip it on load so a
+// forgotten secret can never ride invisibly into a new export or the heir
+// reader. (The boolean `sensitive` badge is kept — it holds no secret.)
+function stripRawSecrets(data) {
+  if (!data || !Array.isArray(data.items)) return data;
+  let stripped = 0;
+  for (const it of data.items) {
+    if (it && typeof it === 'object' && 'secret' in it) { delete it.secret; stripped++; }
+  }
+  if (stripped) {
+    console.warn(`OpenFirst: removed ${stripped} stored raw secret(s) — this plan format no longer carries secrets. Keep secrets outside the plan and describe where to find them.`);
+  }
+  return data;
+}
+
 function findSourceBase(paths) {
-  const candidates = paths.filter((p) => /(^|\/)inheritance\.json$/i.test(p));
+  const candidates = paths.filter(isSourceFile);
   if (!candidates.length) return [null, ''];
-  candidates.sort((a, b) => a.split('/').length - b.split('/').length);
+  candidates.sort((a, b) => sourceFileRank(a) - sourceFileRank(b) || a.split('/').length - b.split('/').length);
   const src = candidates[0];
-  return [src, src.replace(/inheritance\.json$/i, '')];
+  return [src, sourceBase(src)];
 }
 
 // fileMap: Map<relpath, () => Blob>. Resolve attachment blobs + object URLs.
 function buildLoaded(data, fileMap, base) {
   normalizeAttachmentLinks(data);
+  normalizePackageFormat(data);
+  stripRawSecrets(data);
   const attachmentUrls = {};
   const blobs = new Map();
   for (const att of data.attachments || []) {
@@ -102,18 +122,20 @@ export async function loadFromFiles(fileList) {
     catch { throw new Error('That file is not valid JSON.'); }
     if (isEncryptedEnvelope(obj)) return needsPassword(obj);
     normalizeAttachmentLinks(obj);
+    stripRawSecrets(obj);
     const problems = validatePackage(obj);
     if (problems.length) {
       const shown = problems.slice(0, 12).map((p) => '• ' + p).join('\n');
       const more = problems.length > 12 ? `\n• …and ${problems.length - 12} more` : '';
       throw new Error('This plan can’t be imported — fix these and try again:\n' + shown + more);
     }
+    normalizePackageFormat(obj);
     return { data: obj, attachmentUrls: {}, blobs: new Map() };
   }
 
   const paths = files.map((f) => f.webkitRelativePath || f.name);
   const [src, base] = findSourceBase(paths);
-  if (!src) throw new Error('Could not find "inheritance.json" in the dropped files.');
+  if (!src) throw new Error(`Could not find "${SOURCE_FILE}" in the dropped files. Legacy "${SOURCE_FILES[1]}" is also supported.`);
 
   const byPath = new Map();
   files.forEach((f, i) => byPath.set(norm(paths[i]), f));
@@ -128,7 +150,7 @@ export function loadFromZip(arrayBuffer) {
   const entries = unzipSync(new Uint8Array(arrayBuffer));
   const paths = Object.keys(entries);
   const [src, base] = findSourceBase(paths);
-  if (!src) throw new Error('Could not find "inheritance.json" inside the zip.');
+  if (!src) throw new Error(`Could not find "${SOURCE_FILE}" inside the zip. Legacy "${SOURCE_FILES[1]}" is also supported.`);
 
   const data = JSON.parse(new TextDecoder().decode(entries[src]));
   const fileMap = new Map();
@@ -154,7 +176,7 @@ function b64ToBlob(b64, mime) {
   return new Blob([arr], { type: mime || '' });
 }
 
-const notReader = () => new Error('This file isn’t a Life Plan reader. Pick a start-here.html exported from this app.');
+const notReader = () => new Error('This file isn’t an OpenFirst reader. Pick a start-here.html exported from this app.');
 
 /** Pull the `window.__LIFE_PACKAGE__` payload out of a reader's HTML text. */
 export function extractReaderPayload(htmlText) {
@@ -175,6 +197,8 @@ export function loadFromReaderHtml(htmlText) {
   const data = payload.data;
   if (!data) throw new Error('This reader has no plan to recover.');
   normalizeAttachmentLinks(data);
+  normalizePackageFormat(data);
+  stripRawSecrets(data);
 
   const problems = validatePackage(data);
   if (problems.length) {
@@ -195,6 +219,6 @@ export function loadFromReaderHtml(htmlText) {
 }
 
 export async function loadSample() {
-  const data = normalizeAttachmentLinks(JSON.parse(JSON.stringify(sampleData)));
+  const data = normalizePackageFormat(normalizeAttachmentLinks(JSON.parse(JSON.stringify(sampleData))));
   return { data, attachmentUrls: {}, blobs: new Map() };
 }

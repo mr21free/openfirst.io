@@ -33,7 +33,7 @@ const get = (ics, key) => ics.split(/\r\n/).find((l) => l.startsWith(key + ':'))
   const expectByday = (ord >= 5 ? '-1' : String(ord)) + 'SA';
   ok('RRULE recurs every 3 months', rrule.includes('FREQ=MONTHLY') && rrule.includes('INTERVAL=3'));
   ok('RRULE pins the weekday via BYDAY', rrule.includes('BYDAY=' + expectByday));
-  ok('summary + description present', /SUMMARY:Review my Life Plan/.test(ics) && ics.includes('DESCRIPTION:'));
+  ok('summary + description present', /SUMMARY:Review my OpenFirst plan/.test(ics) && ics.includes('DESCRIPTION:'));
 }
 
 // Scenario 2: every 6 months, Monday evening — interval + weekday/time honoured.

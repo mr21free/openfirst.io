@@ -22,7 +22,7 @@ try {
   await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Demo'), { timeout: 8000 });
   await clickText(page, 'Demo');
   await page.waitForFunction(() => /who are you/i.test(document.body.innerText), { timeout: 8000 });
-  await clickText(page, 'Just show me everything');
+  await clickText(page, 'Admin');
   await page.waitForFunction(() => !!document.querySelector('.plan-edit'), { timeout: 8000 });
 
   // Export → self-contained reader (default on), no password → Create reader.
@@ -48,7 +48,7 @@ try {
   await p2.goto('file://' + out, { waitUntil: 'load' });
   await p2.waitForFunction(() => /who are you/i.test(document.body.innerText), { timeout: 8000 });
   ok('produced reader boots into the plan', true);
-  await p2.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything/i.test(b.textContent))?.click());
+  await p2.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything|admin/i.test(b.textContent))?.click());
   await p2.waitForFunction(() => !!document.querySelector('main'), { timeout: 8000 });
   ok('produced reader is read-only (no edit pencil)', !(await p2.evaluate(() => !!document.querySelector('.plan-edit'))));
   ok('produced reader has the theme toggle', await p2.evaluate(() => [...document.querySelectorAll('button')].some((b) => (b.getAttribute('aria-label') || '') === 'Toggle dark mode')));

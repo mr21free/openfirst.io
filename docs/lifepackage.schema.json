@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://lifepackage.io/schema/inheritance-package-v1.json",
-  "title": "Inheritance Package (inheritance-package/v1)",
+  "$id": "https://openfirst.io/schema/lifepackage-v1.json",
+  "title": "Life Package (lifepackage/v1)",
   "description": "A local-first inheritance / 'in case I die' plan. A MAP of where things live and who should receive them — not a place to store raw secrets. IDs are arbitrary strings but must be unique within their array and referenced consistently.",
   "type": "object",
   "additionalProperties": true,
   "required": ["schema", "package", "people"],
   "properties": {
-    "schema": { "const": "inheritance-package/v1" },
+    "schema": { "const": "lifepackage/v1" },
     "package": {
       "type": "object",
       "additionalProperties": true,

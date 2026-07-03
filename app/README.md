@@ -1,18 +1,18 @@
-# lifepackage.io
+# openfirst.io
 
-A calm, **local-first, offline** way to create, edit, and read an inheritance
-plan. No server, no account, no tracking. The whole app is a single
+A calm, **local-first, offline** way to create, edit, and read a life package
+for inheritance, recovery, and handover. No server, no account, no tracking. The whole app is a single
 self-contained `index.html` that runs from disk in any modern browser, so it
 keeps working even if this project disappears.
 
-The **app** is lifepackage.io; the **open file format** it reads/writes keeps a
-neutral, vendor-independent name (`inheritance-package/v1`) so other tools can
-adopt it. See [FORMAT.md](./FORMAT.md).
+The **app** is openfirst.io; the **open file format** it reads/writes is Life
+Package (`lifepackage/v1`) so other tools can adopt it. See [FORMAT.md](./FORMAT.md).
 
 ## What it does
 
-- Open an inheritance **package** — a folder, a `.zip`, or a single
-  `inheritance.json` — entirely in the browser. Nothing is uploaded.
+- Open a **life package** — a folder, a `.zip`, or a single
+  `lifepackage.json` — entirely in the browser. Nothing is uploaded. Legacy
+  `inheritance.json` packages still open.
 - Create and edit the people, roles, locations, items, guides, files, languages,
   and map permissions that make up a plan.
 - Asks the reader *“who are you?”* and shows the right things first for that role.
@@ -31,7 +31,7 @@ adopt it. See [FORMAT.md](./FORMAT.md).
   never emits raw HTML, so a package cannot inject scripts.
 - **Outlives the app.** The package is plain, open files (JSON + Markdown +
   folders). Even with no app at all, the text inside is readable. The format is
-  documented in [FORMAT.md](./FORMAT.md) and [schema/inheritance.schema.json](./schema/inheritance.schema.json).
+  documented in [FORMAT.md](./FORMAT.md) and [schema/lifepackage.schema.json](./schema/lifepackage.schema.json).
 - **Fits on the key.** The built `index.html` is one file — you can keep it on the
   same encrypted USB as the package and open it offline.
 
@@ -47,7 +47,7 @@ npm run build    # → dist/index.html  (one self-contained file)
 
 Open `dist/index.html` directly (double-click, or `file://...`). Click **Demo**
 to explore a demo plan, or drop your own package folder / `.zip` /
-`inheritance.json`.
+`lifepackage.json` (`inheritance.json` still works for older packages).
 
 ## Samples (for testing the drop zone)
 
@@ -55,7 +55,7 @@ Under `public/`:
 
 - `sample-package/` — a full package **folder** (drag it in).
 - `sample-package.zip` — the same package zipped.
-- `sample-package/inheritance.json` — just the source (the demo is JSON-only).
+- `sample-package/lifepackage.json` — just the source (the demo is JSON-only).
 - `sample-package.encrypted.json` — a **password-protected** package. Password:
   `open-sesame-2026`. Dropping it makes the app prompt for the password.
 
@@ -73,7 +73,7 @@ standalone recipe in [FORMAT.md](./FORMAT.md). Minimum password length: 12.
 ## Layout
 
 ```
-schema/inheritance.schema.json   JSON Schema for the package format (v1)
+schema/lifepackage.schema.json   JSON Schema for the package format (v1)
 public/sample-package/           a complete on-disk demo package
 src/sample/                      the demo bundled into the app ("Try the sample")
 src/lib/package.js               parse + resolve the graph

@@ -3,16 +3,9 @@
   import GuideContentEditor from './GuideContentEditor.svelte';
 
   let { pkg, raw, onDelete } = $props();
-  const SECRET_KINDS = ['password', 'passphrase', 'pin', 'seed', 'key', 'code', 'other'];
 
   let firstInput = $state(null);
   $effect(() => { if (firstInput) firstInput.focus(); });
-
-  function toggleSensitive(e) {
-    raw.sensitive = e.target.checked;
-    if (!raw.sensitive) delete raw.secret;
-    else if (!raw.secret) raw.secret = { kind: 'password', value: '' };
-  }
 </script>
 
 {#if raw}
@@ -54,18 +47,9 @@
       <EntityPicker {pkg} target={raw} reverse reverseKey="item_ids" kinds={['attachment']} placeholder="Add a file…" />
     </div>
 
-    <label class="toggle"><input type="checkbox" checked={raw.sensitive || false} onchange={toggleSensitive} /> <span>Sensitive — may hold a raw secret</span></label>
-    {#if raw.sensitive && raw.secret}
-      <div class="caution-box">
-        <div class="grid2">
-          <label class="f"><span class="lbl">Secret kind</span>
-            <select bind:value={raw.secret.kind}>{#each SECRET_KINDS as k}<option value={k}>{k}</option>{/each}</select>
-          </label>
-          <label class="f"><span class="lbl">Value</span><input bind:value={raw.secret.value} /></label>
-        </div>
-        <label class="f"><span class="lbl">Note</span><input bind:value={raw.secret.note} /></label>
-        <p class="tiny muted">Best practice: store a pointer to where the secret lives, not the secret itself.</p>
-      </div>
+    <label class="toggle"><input type="checkbox" checked={raw.sensitive || false} onchange={(e) => (raw.sensitive = e.target.checked)} /> <span>Sensitive — handle with care</span></label>
+    {#if raw.sensitive}
+      <p class="tiny muted">Never store the actual secret (password, PIN, seed) in this plan — describe where to find it instead. The plan is a map, not a vault.</p>
     {/if}
 
     <div class="form-foot"><button class="btn btn-ghost form-danger" onclick={() => onDelete?.()}>Delete</button></div>

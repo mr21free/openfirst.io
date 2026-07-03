@@ -16,7 +16,7 @@
 
 {#if prompt}
   <div class="modal-scrim" onclick={() => cancelable && close(false)} role="presentation"></div>
-  <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message">
+  <div class="modal-card" class:danger={prompt.tone === 'danger'} role="alertdialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message">
     <div class="modal-head">
       <span class="eyebrow">{prompt.eyebrow || 'Confirm'}</span>
       <h2 id="modal-title">{prompt.title}</h2>
@@ -45,13 +45,14 @@
     left: 50%;
     top: 50%;
     z-index: 101;
-    width: min(440px, calc(100vw - 32px));
+    width: min(460px, calc(100vw - 32px));
     transform: translate(-50%, -50%);
     background: var(--paper);
     border: 1px solid var(--rule);
-    border-radius: 10px;
+    border-left: 2px solid var(--accent);
+    border-radius: 0; /* dialogs share the app's sharp paper edges */
     box-shadow: 0 30px 80px oklch(0.2 0.03 255 / 0.26);
-    padding: 20px;
+    padding: 30px 32px;
   }
   .modal-head h2 {
     margin-top: 6px;
@@ -73,6 +74,7 @@
     margin-top: 22px;
     flex-wrap: wrap;
   }
+  .modal-card.danger { border-left-color: var(--warn); }
   .btn-danger {
     background: var(--warn);
     border-color: var(--warn);

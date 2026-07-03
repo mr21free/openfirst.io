@@ -21,7 +21,7 @@ const pause = (ms = 300) => new Promise((r) => setTimeout(r, ms));
 
 const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--no-sandbox', '--allow-file-access-from-files'] });
 const errs = [];
-const showEverything = (pg) => pg.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything/i.test(b.textContent))?.click());
+const showEverything = (pg) => pg.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything|admin/i.test(b.textContent))?.click());
 
 try {
   const dir = mkdtempSync(resolve(tmpdir(), 'lp-att-'));

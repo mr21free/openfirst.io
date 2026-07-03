@@ -1,6 +1,6 @@
 // Rebuilds the derived sample artifacts from the canonical folder:
 //   public/sample-package/ (source of truth)
-//     → src/sample/inheritance.json  (bundled into the app for "Try the sample")
+//     → src/sample/lifepackage.json  (bundled into the app for "Try the sample")
 //     → public/sample-package.zip
 //     → public/sample-package.encrypted.json  (password: open-sesame-2026)
 import { readFileSync, writeFileSync, readdirSync, statSync, copyFileSync } from 'node:fs';
@@ -14,7 +14,7 @@ const pub = resolve(__dirname, '../public');
 const pkgDir = join(pub, 'sample-package');
 
 // 1. bundled copy
-copyFileSync(join(pkgDir, 'inheritance.json'), resolve(__dirname, '../src/sample/inheritance.json'));
+copyFileSync(join(pkgDir, 'lifepackage.json'), resolve(__dirname, '../src/sample/lifepackage.json'));
 
 // 2. zip the folder (entries keep the "sample-package/..." prefix)
 const files = {};

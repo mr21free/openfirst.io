@@ -1,30 +1,48 @@
-# Inheritance Package Format - v1
+# Life Package Format - v1
 
-`schema: "inheritance-package/v1"`
+`schema: "lifepackage/v1"`
 
-This document describes the open, durable format used by lifepackage.io. The
+This document describes the open, durable format used by openfirst.io. The
 goals are simple: **human-readable**, **machine-readable**, and **still openable
 in 10+ years** with no server, account, or proprietary runtime. The authoritative
-contract is [schema/inheritance.schema.json](./schema/inheritance.schema.json);
+contract is [schema/lifepackage.schema.json](./schema/lifepackage.schema.json);
 this file is the friendly explanation.
 
 ## Package Shapes
 
-The source of truth is always `inheritance.json`. A package may be:
+The source of truth is always `lifepackage.json`. A package may be:
 
-- a single `inheritance.json` file,
-- a folder containing `inheritance.json`, `manifest.json`, `START_HERE.txt`, and
+- a single `lifepackage.json` file,
+- a folder containing `lifepackage.json`, `manifest.json`, `START_HERE.txt`, and
   optional `attachments/`,
 - a `.zip` of that folder,
 - or an encrypted JSON envelope whose plaintext is the package `.zip`.
 
+Legacy packages named `inheritance.json` with `schema:
+"inheritance-package/v1"` still open in OpenFirst. When you re-export them, the
+new package uses `lifepackage.json` and `schema: "lifepackage/v1"`.
+
+## Updating Old Packages
+
+Old packages do not need to be changed to open in OpenFirst. To make one use the
+new canonical format:
+
+1. Rename `inheritance.json` to `lifepackage.json`.
+2. In that JSON file, change the top-level `"schema"` from
+   `"inheritance-package/v1"` to `"lifepackage/v1"`.
+3. If the package has `manifest.json`, change `schema` to `"lifepackage/v1"` and
+   `files.source` to `"lifepackage.json"`.
+4. If the package is zipped, re-create the `.zip` after the rename.
+5. If the package is encrypted, open it with the old password and export it
+   again. Do not hand-edit the encrypted envelope.
+
 Typical folder layout:
 
 ```text
-InheritancePackage_YYYY-MM-DD/
+LifePackage_YYYY-MM-DD/
   START_HERE.txt
   manifest.json
-  inheritance.json
+  lifepackage.json
   attachments/
 ```
 
@@ -89,7 +107,11 @@ that matters:
 
 `id`, `name`, `importance`, `description`, `notes`, `price`, `location_ids[]`,
 `container_ids[]`, `access_person_ids[]`, `depends_on_ids[]`, `guide_ids[]`,
-`attachment_ids[]`, `sensitive`, and optional `secret`.
+`attachment_ids[]`, and `sensitive`.
+
+`sensitive: true` is a handle-with-care badge only — it marks an item whose
+real-world counterpart is a secret (a seed, PIN, password). The item itself
+must still only *describe where the secret lives*, never hold its value.
 
 `depends_on_ids[]` is intentionally general: it can represent keys, codes,
 devices, accounts, documents, or other prerequisites needed to access/use an
@@ -156,15 +178,14 @@ heir reader.
 
 ## Secrets
 
-By default the package points to where secrets live and how they relate. A raw
-secret is stored only when an item is explicitly marked `sensitive: true` and
-carries:
+The package never stores raw secrets. It points to where secrets live and how
+they relate — a **map, not a vault**. Seeds, passphrases, PINs, and passwords
+stay outside the package (hardware, paper, a password manager), and items
+describe how to find them.
 
-```json
-{ "secret": { "kind": "password", "value": "...", "note": "optional" } }
-```
-
-Apps must treat `sensitive` items visibly and carefully.
+Earlier drafts of this format allowed an optional `item.secret` object. It is
+removed: readers must ignore it, and importers should strip it so a forgotten
+secret can never ride along invisibly into a new export.
 
 ## Languages
 
@@ -182,7 +203,7 @@ For people who will not keep the package on encrypted hardware, the package
 
 ```json
 {
-  "format": "inheritance-encrypted/v1",
+  "format": "lifepackage-encrypted/v1",
   "cipher": "AES-256-GCM",
   "kdf": "PBKDF2-SHA256",
   "iterations": 600000,
@@ -190,6 +211,7 @@ For people who will not keep the package on encrypted hardware, the package
   "iv": "<base64, 12 bytes>",
   "ciphertext": "<base64>",
   "content": "package-zip",
+  "aad": "v1",
   "hint": "optional password hint"
 }
 ```
@@ -197,6 +219,21 @@ For people who will not keep the package on encrypted hardware, the package
 The app decrypts on the device. The password is never sent anywhere. Because
 every parameter is stored in the envelope, the package can be decrypted without
 this app using standard Web Crypto or Node.js primitives.
+
+**Tamper-proof metadata (`aad: "v1"`).** The plaintext fields a reader shows
+before decryption — most importantly the `hint` — are bound to the ciphertext
+as AES-GCM *additional authenticated data*, so nobody can rewrite the hint on
+an encrypted file (say, into a phishing instruction) without breaking
+decryption. To decrypt an `aad: "v1"` envelope, pass this UTF-8 string as the
+GCM `additionalData`:
+
+```text
+lifepackage-aad/v1\n<format>\n<content>\n<hint or empty string>
+```
+
+Envelopes without the `aad` field decrypt the classic way (no additionalData).
+Legacy encrypted envelopes with `format: "inheritance-encrypted/v1"` are also
+accepted.
 
 ## Durability Rules
 

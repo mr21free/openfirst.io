@@ -86,7 +86,7 @@ try {
   let zguides = [], zgroups = [];
   if (zipName) {
     const files = unzipSync(new Uint8Array(readFileSync(resolve(dir, zipName))));
-    const key = Object.keys(files).find((k) => k.endsWith('inheritance.json'));
+    const key = Object.keys(files).find((k) => k.endsWith('lifepackage.json'));
     const zdata = JSON.parse(strFromU8(files[key]));
     zguides = zdata.guides || []; zgroups = zdata.guide_groups || [];
   }

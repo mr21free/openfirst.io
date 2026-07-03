@@ -32,7 +32,7 @@ function fold(line) {
   return out + '\r\n ' + rest;
 }
 
-const SUMMARY = 'Review my Life Plan';
+const SUMMARY = 'Review my OpenFirst plan';
 const describe = (title) =>
   `Time to review ${title && title.trim() ? `“${title.trim()}”` : 'your plan'}: check what changed, update values, re-export the reader, and replace the copy you gave your loved ones.`;
 
@@ -68,7 +68,7 @@ export function buildReviewIcs(opts = {}) {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Life Plan//Review reminder//EN',
+    'PRODID:-//OpenFirst//Review reminder//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',

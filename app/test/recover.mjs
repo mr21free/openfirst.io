@@ -26,7 +26,7 @@ try {
   await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Demo'), { timeout: 8000 });
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Demo')?.click());
   await page.waitForFunction(() => /who are you/i.test(document.body.innerText), { timeout: 8000 });
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything/i.test(b.textContent))?.click());
+  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything|admin/i.test(b.textContent))?.click());
   await page.waitForFunction(() => !!document.querySelector('.plan-edit'), { timeout: 8000 });
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => (b.getAttribute('aria-label') || '') === 'Export')?.click());
   await page.waitForFunction(() => document.body.innerText.includes('Save a copy to disk'), { timeout: 5000 });
@@ -44,7 +44,7 @@ try {
   await input.uploadFile(out);
   await p2.waitForFunction(() => /who are you/i.test(document.body.innerText) || !!document.querySelector('nav .navcount'), { timeout: 8000 });
   // Past the gate, into the plan.
-  await p2.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything/i.test(b.textContent))?.click());
+  await p2.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything|admin/i.test(b.textContent))?.click());
   await p2.waitForFunction(() => !!document.querySelector('nav .navcount'), { timeout: 8000 });
   await pause();
 
@@ -84,7 +84,7 @@ try {
   await p4.type('input.pw', PW);
   await p4.evaluate(() => [...document.querySelectorAll('button')].find((b) => /unlock/i.test(b.textContent))?.click());
   await p4.waitForFunction(() => /who are you/i.test(document.body.innerText) || !!document.querySelector('nav .navcount'), { timeout: 8000 });
-  await p4.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything/i.test(b.textContent))?.click());
+  await p4.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything|admin/i.test(b.textContent))?.click());
   await p4.waitForFunction(() => !!document.querySelector('nav .navcount'), { timeout: 8000 });
   ok('encrypted reader recovers after unlock', await p4.evaluate(() => Number([...document.querySelectorAll('nav .navlink-section')].find((b) => /People/.test(b.textContent))?.querySelector('.navcount')?.textContent) === 9));
   rmSync(dir2, { recursive: true, force: true });
@@ -98,7 +98,7 @@ try {
   const inp3 = await p3.$('input[type=file]:not([webkitdirectory])');
   await inp3.uploadFile(junk);
   await pause(600);
-  ok('non-reader .html shows a friendly error', await p3.evaluate(() => /isn.t a Life Plan reader/i.test(document.querySelector('.error')?.textContent || '')));
+  ok('non-reader .html shows a friendly error', await p3.evaluate(() => /isn.t an OpenFirst reader/i.test(document.querySelector('.error')?.textContent || '')));
 } catch (e) { ok('flow threw: ' + e.message, false); }
 finally { await browser.close(); rmSync(dir, { recursive: true, force: true }); }
 

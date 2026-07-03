@@ -1,5 +1,5 @@
 /*
-  Validate an inheritance-package/v1 object before loading it: schema, required
+  Validate a lifepackage/v1 object before loading it: schema, required
   fields, unique ids, and that every cross-reference resolves. Returns a list of
   human-readable problems ([] = valid). Used on import so an AI-built or
   hand-edited plan fails loudly with actionable messages instead of loading
@@ -7,13 +7,15 @@
   supplies defaults / creates implied groups.
 */
 
+import { PACKAGE_SCHEMA, PACKAGE_SCHEMAS, isPackageSchema } from './format.js';
+
 export function validatePackage(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
     return ['The file is not a plan object.'];
   }
   const errors = [];
-  if (data.schema && data.schema !== 'inheritance-package/v1') {
-    errors.push(`Unknown schema "${data.schema}" (expected "inheritance-package/v1").`);
+  if (data.schema && !isPackageSchema(data.schema)) {
+    errors.push(`Unknown schema "${data.schema}" (expected "${PACKAGE_SCHEMA}"; legacy ${PACKAGE_SCHEMAS.slice(1).join(', ')} is also supported).`);
   }
   if (!data.package || typeof data.package !== 'object') errors.push('Missing "package" section.');
 

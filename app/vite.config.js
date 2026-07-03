@@ -22,18 +22,21 @@ function injectCspOnBuild() {
   };
 }
 
-// Dev only: serve the standalone /how-to-use page for its directory URL.
+// Dev only: serve the standalone static pages for their directory URLs.
 // Vite's dev server doesn't resolve a public sub-directory's index.html for a
 // bare "/how-to-use/" request (it falls through to the SPA). Production static
 // hosts resolve the directory index natively, so this is needed in dev only.
-function howToUseRoute() {
+const STATIC_PAGES = ['how-to-use', 'security'];
+function staticPageRoutes() {
   return {
-    name: 'how-to-use-route',
+    name: 'static-page-routes',
     apply: 'serve',
     configureServer(server) {
       server.middlewares.use((req, _res, next) => {
         const path = (req.url || '').split('?')[0];
-        if (path === '/how-to-use' || path === '/how-to-use/') req.url = '/how-to-use/index.html';
+        for (const page of STATIC_PAGES) {
+          if (path === `/${page}` || path === `/${page}/`) req.url = `/${page}/index.html`;
+        }
         next();
       });
     }
@@ -44,7 +47,7 @@ function howToUseRoute() {
 // with no network calls, no CDN, no fonts-from-web. Everything (JS, CSS, fonts)
 // is inlined so the built file is the durable, "outlives-the-company" artifact.
 export default defineConfig({
-  plugins: [howToUseRoute(), svelte(), viteSingleFile(), injectCspOnBuild()],
+  plugins: [staticPageRoutes(), svelte(), viteSingleFile(), injectCspOnBuild()],
   build: {
     target: 'es2020',
     // Inline every asset (incl. woff2 fonts) as base64 so nothing is fetched.

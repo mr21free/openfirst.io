@@ -1,7 +1,9 @@
 /*
-  Parse + resolve an inheritance package into a graph the UI can render.
+  Parse + resolve a life package into a graph the UI can render.
   Pure functions, no I/O. Loading from disk/zip lives in load.js.
 */
+
+import { PACKAGE_SCHEMA, PACKAGE_SCHEMAS, isPackageSchema } from './format.js';
 
 export const DEFAULT_ROLES = [
   { id: 'owner', name: 'Owner' },
@@ -61,8 +63,8 @@ const IMP_ORDER = { high: 0, medium: 1, low: 2, undefined: 3 };
 
 export class InheritancePackage {
   constructor(data, attachmentUrls = {}) {
-    if (!data || data.schema !== 'inheritance-package/v1') {
-      throw new Error('Not an inheritance package (expected schema "inheritance-package/v1").');
+    if (!data || !isPackageSchema(data.schema)) {
+      throw new Error(`Not a life package (expected schema "${PACKAGE_SCHEMA}"; legacy ${PACKAGE_SCHEMAS.slice(1).join(', ')} is also supported).`);
     }
     this.raw = data;
     this.meta = data.package || {};

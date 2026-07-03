@@ -1,5 +1,5 @@
 You are helping me build an inheritance / "in case I die" plan as a single JSON
-file in the format "inheritance-package/v1". The plan is a map of where things
+file in the format "lifepackage/v1". The plan is a map of where things
 live, who can access them, and what guidance each person should see. It is NOT a
 store of raw secrets.
 
@@ -33,7 +33,7 @@ Follow these rules exactly:
    invented categories.
 
 SCHEMA SUMMARY
-- Top level: { "schema": "inheritance-package/v1", "package": {...}, "people":
+- Top level: { "schema": "lifepackage/v1", "package": {...}, "people":
   [...], "roles": [...], "locations": [...], "items": [...], "guide_groups":
   [...], "guides": [...], "attachments": [] }
 - package: { id, title, owner_id (a people id), created (YYYY-MM-DD), updated,
@@ -67,10 +67,10 @@ SCHEMA SUMMARY
 
 MINIMAL VALID EXAMPLE (shape only):
 {
-  "schema": "inheritance-package/v1",
+  "schema": "lifepackage/v1",
   "package": {
     "id": "plan-1",
-    "title": "My inheritance plan",
+    "title": "My life package",
     "owner_id": "person_me",
     "created": "2026-01-01",
     "updated": "2026-01-01",

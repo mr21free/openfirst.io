@@ -7,7 +7,7 @@ const FILE = 'file://' + resolve(__dirname, '../dist/index.html');
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const results = []; const ok = (n, c) => results.push([c ? 'PASS' : 'FAIL', n]);
 
-const sample = JSON.parse(readFileSync(resolve(__dirname, '../src/sample/inheritance.json'), 'utf8'));
+const sample = JSON.parse(readFileSync(resolve(__dirname, '../src/sample/lifepackage.json'), 'utf8'));
 const payload = { reader: true, v: 1, data: sample, attachments: {} };
 
 const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--no-sandbox', '--allow-file-access-from-files'] });
@@ -29,7 +29,7 @@ try {
   // The theme toggle must be reachable even on the "who are you?" gate.
   ok('theme toggle exposed on the gate', await page.evaluate(() => [...document.querySelectorAll('button')].some((b) => (b.getAttribute('aria-label') || '') === 'Toggle dark mode')));
 
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything/i.test(b.textContent))?.click());
+  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything|admin/i.test(b.textContent))?.click());
   await page.waitForFunction(() => !!document.querySelector('main'), { timeout: 8000 });
 
   ok('read-only: no edit (pencil) control', !(await page.evaluate(() => !!document.querySelector('.plan-edit'))));

@@ -18,7 +18,7 @@ into the app with **Open existing plan**.
 
 ````text
 You are helping me build an inheritance / "in case I die" plan as a single JSON
-file in the format "inheritance-package/v1". The plan is a MAP of where things
+file in the format "lifepackage/v1". The plan is a MAP of where things
 live and who should receive them — NOT a store of raw secrets.
 
 Follow these rules exactly:
@@ -43,7 +43,7 @@ Follow these rules exactly:
 7. Leave "attachments" empty — I will add real files in the app.
 
 SCHEMA SUMMARY
-- Top level: { "schema": "inheritance-package/v1", "package": {...}, "people":
+- Top level: { "schema": "lifepackage/v1", "package": {...}, "people":
   [...], "roles": [...], "locations": [...], "items": [...], "guide_groups":
   [...], "guides": [...], "attachments": [] }
 - package: { id, title, owner_id (a people id), created (YYYY-MM-DD), updated,
@@ -65,8 +65,8 @@ SCHEMA SUMMARY
 
 MINIMAL VALID EXAMPLE (shape only):
 {
-  "schema": "inheritance-package/v1",
-  "package": { "id": "plan-1", "title": "My inheritance plan",
+  "schema": "lifepackage/v1",
+  "package": { "id": "plan-1", "title": "My life package",
     "owner_id": "person_me", "created": "2026-01-01", "updated": "2026-01-01",
     "languages": ["en"], "default_language": "en" },
   "roles": [ { "id": "owner", "name": "Owner" },
@@ -104,6 +104,6 @@ every id is unique, then output the final JSON only.
    still drafting to **Draft**, and **upload your files** (and tag them). Then
    **Export** the encrypted reader for your heirs.
 
-The machine-readable contract is [`inheritance-package.schema.json`](./inheritance-package.schema.json);
+The machine-readable contract is [`lifepackage.schema.json`](./lifepackage.schema.json);
 the human reference is [`SCHEMA.md`](./SCHEMA.md). Both are public, so a capable
 AI can also read them directly from the repository.

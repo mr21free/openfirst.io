@@ -514,13 +514,6 @@
 
       <!-- ITEM -->
       {#if e.kind === 'item'}
-        {#if obj.sensitive && obj.secret}
-          <div class="caution">
-            <strong>Sensitive — {obj.secret.kind}.</strong>
-            <div class="secret">{obj.secret.value}</div>
-            {#if obj.secret.note}<div class="small muted" style="margin-top:6px">{obj.secret.note}</div>{/if}
-          </div>
-        {/if}
         {#if obj.location_ids?.length}
           <div class="field">
             {@render fieldHead(`item-locations:${id}`, 'Where it is', obj.location_ids.length)}
@@ -713,9 +706,8 @@
   .plain { list-style: none; padding: 0; }
   .plain li + li { margin-top: 4px; }
   .caution-chip { color: var(--warn); border-color: oklch(0.85 0.06 50); }
-  .secret { font-weight: 600; margin-top: 6px; word-break: break-all; color: var(--ink); }
-  .att-img { width: 100%; border-radius: 10px; border: 1px solid var(--rule-soft); margin-top: 16px; margin-bottom: 12px; display: block; }
-  .att-pdf { width: 100%; min-height: 78vh; border-radius: 10px; border: 1px solid var(--rule-soft); margin-top: 16px; margin-bottom: 12px; background: var(--paper); }
+  .att-img { width: 100%; border-radius: 0; border: 1px solid var(--rule-soft); margin-top: 16px; margin-bottom: 12px; display: block; }
+  .att-pdf { width: 100%; min-height: 78vh; border-radius: 0; border: 1px solid var(--rule-soft); margin-top: 16px; margin-bottom: 12px; background: var(--paper); }
   /* Inline image attachment in an item's read view — clickable to open full. */
   .att-figure { display: block; width: 100%; padding: 0; border: none; background: none; text-align: left; cursor: pointer; }
   .att-figure .att-img { border-radius: 0; }

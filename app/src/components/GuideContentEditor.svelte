@@ -547,7 +547,7 @@
 
 <style>
   .ce { background: var(--paper); display: flex; flex-direction: column; }
-  .ce.full { position: fixed; inset: 24px; z-index: 80; border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; box-shadow: 0 30px 80px oklch(0.2 0.03 255 / 0.3); }
+  .ce.full { position: fixed; inset: 24px; z-index: 80; border: 1px solid var(--rule); border-radius: 0; overflow: hidden; box-shadow: 0 30px 80px oklch(0.2 0.03 255 / 0.3); }
   .fs-scrim { position: fixed; inset: 0; background: oklch(0.2 0.03 255 / 0.3); z-index: 79; }
   /* Keep the formatting actions reachable while scrolling a long guide. In
      full mode the editor body scrolls internally, so the bar already stays put;

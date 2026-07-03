@@ -6,6 +6,7 @@
 
 import { zipSync, strToU8 } from 'fflate';
 import { encryptToEnvelope } from './crypto.js';
+import { APP_NAME, PACKAGE_SCHEMA, SOURCE_FILE, packageForExport } from './format.js';
 
 function slugDate() {
   return new Date().toISOString().slice(0, 10);
@@ -34,12 +35,12 @@ export function draftCount(data) {
 }
 
 function packageFolderName(data, name) {
-  const t = (name || data.package?.title || 'inheritance-plan').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '');
-  return `${t || 'inheritance-plan'}_${slugDate()}`;
+  const t = (name || data.package?.title || 'life-package').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '');
+  return `${t || 'life-package'}_${slugDate()}`;
 }
 
 function startHereText(data) {
-  const title = data.package?.title || 'an inheritance plan';
+  const title = data.package?.title || 'a life package';
   return [
     'START HERE',
     '==========',
@@ -47,10 +48,10 @@ function startHereText(data) {
     `This folder is ${title}. Take your time. There is no rush.`,
     '',
     'Read it without any app: open the guides in this package as plain text.',
-    'Or open it with the Life Package reader and drop this folder / the .zip in.',
+    `Or open it with the ${APP_NAME} reader and drop this folder / the .zip in.`,
     '',
-    'The machine-readable source of truth is "inheritance.json" (open format,',
-    'schema: inheritance-package/v1), so this plan stays readable for many years.',
+    `The machine-readable source of truth is "${SOURCE_FILE}" (open format,`,
+    `schema: ${PACKAGE_SCHEMA}), so this plan stays readable for many years.`,
     '',
     `Last updated: ${data.package?.updated || slugDate()}`,
     ''
@@ -59,26 +60,27 @@ function startHereText(data) {
 
 function manifest(data) {
   return {
-    schema: 'inheritance-package/v1',
+    schema: PACKAGE_SCHEMA,
     package_id: data.package?.id,
     title: data.package?.title,
     updated: data.package?.updated,
     languages: data.package?.languages,
     default_language: data.package?.default_language,
-    generator: 'Life Package (editor export)',
-    files: { source: 'inheritance.json', human_entry: 'START_HERE.txt', attachments_dir: 'attachments/' }
+    generator: `${APP_NAME} (editor export)`,
+    files: { source: SOURCE_FILE, human_entry: 'START_HERE.txt', attachments_dir: 'attachments/' }
   };
 }
 
 /** Build the package as a zip Uint8Array. `blobs` is Map<attachmentId, Blob>. */
 export async function buildPackageZip(data, blobs, name) {
   const root = packageFolderName(data, name);
+  const out = packageForExport(data);
   const files = {};
-  files[`${root}/inheritance.json`] = strToU8(JSON.stringify(data, null, 2) + '\n');
-  files[`${root}/START_HERE.txt`] = strToU8(startHereText(data));
-  files[`${root}/manifest.json`] = strToU8(JSON.stringify(manifest(data), null, 2) + '\n');
+  files[`${root}/${SOURCE_FILE}`] = strToU8(JSON.stringify(out, null, 2) + '\n');
+  files[`${root}/START_HERE.txt`] = strToU8(startHereText(out));
+  files[`${root}/manifest.json`] = strToU8(JSON.stringify(manifest(out), null, 2) + '\n');
 
-  for (const att of data.attachments || []) {
+  for (const att of out.attachments || []) {
     const blob = blobs.get(att.id);
     if (!blob || !att.path) continue;
     const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -104,7 +106,7 @@ export async function exportPackageZip(data, blobs, name) {
 }
 
 /** Export password-protected: the package .zip encrypted into our open envelope
- *  (inheritance-encrypted/v1) — which the Reader can unlock with the password. */
+ *  (lifepackage-encrypted/v1) — which the Reader can unlock with the password. */
 export async function exportEncryptedPackage(data, blobs, password, hint = '', name) {
   const { zip } = await buildPackageZip(data, blobs, name);
   const envelope = await encryptToEnvelope(zip, password, { hint });
@@ -202,7 +204,7 @@ function buildReaderHtml(payload, keepFonts = null) {
 export async function exportSelfContainedReader(data, blobs, { password = '', hint = '', name } = {}) {
   // The heir reader (.html) is the published view: draft guides are dropped here
   // only. The .zip and encrypted .json exports keep everything (owner's record).
-  const heir = publishedOnly(data);
+  const heir = packageForExport(publishedOnly(data));
   let payload;
   if (password) {
     const { zip } = await buildPackageZip(heir, blobs, name);
@@ -225,6 +227,7 @@ export async function exportSelfContainedReader(data, blobs, { password = '', hi
 
 /** Export just the JSON source (no attachments) — quick backup. */
 export function exportJson(data) {
-  const name = `${packageFolderName(data)}.inheritance.json`;
-  triggerDownload(new Blob([JSON.stringify(data, null, 2) + '\n'], { type: 'application/json' }), name);
+  const out = packageForExport(data);
+  const name = `${packageFolderName(out)}.${SOURCE_FILE}`;
+  triggerDownload(new Blob([JSON.stringify(out, null, 2) + '\n'], { type: 'application/json' }), name);
 }

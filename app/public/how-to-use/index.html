@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>How to use · Life Plan</title>
-  <meta name="description" content="Build an inheritance plan your loved ones can open offline, with no app or account — optionally scaffolded by your own AI." />
+  <title>How to use · OpenFirst</title>
+  <meta name="description" content="Build a life package your loved ones can open offline, with no app or account — optionally scaffolded by your own AI." />
   <link rel="icon" href="/logo.svg" />
   <style>
     /* IBM Plex Mono — the same family as the app. */
@@ -88,10 +88,11 @@
 <body>
   <header class="topbar">
     <div class="container row">
-      <a class="brand row" href="/"><img class="logo" src="/logo.svg" alt="" /><span>Life Plan</span></a>
+      <a class="brand row" href="/"><img class="logo" src="/logo.svg" alt="" /><span>OpenFirst</span></a>
       <span class="spacer"></span>
       <nav class="topnav">
         <a href="/how-to-use/">How to use</a>
+        <a href="/security/">Security</a>
         <a href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener">The story</a>
       </nav>
     </div>
@@ -120,7 +121,7 @@
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
       </button>
       <pre class="prompt"><code id="ai-prompt">You are helping me build an inheritance / "in case I die" plan as a single JSON
-file in the format "inheritance-package/v1". The plan is a map of where things
+file in the format "lifepackage/v1". The plan is a map of where things
 live, who can access them, and what guidance each person should see. It is NOT a
 store of raw secrets.
 
@@ -154,7 +155,7 @@ Follow these rules exactly:
    invented categories.
 
 SCHEMA SUMMARY
-- Top level: { "schema": "inheritance-package/v1", "package": {...}, "people":
+- Top level: { "schema": "lifepackage/v1", "package": {...}, "people":
   [...], "roles": [...], "locations": [...], "items": [...], "guide_groups":
   [...], "guides": [...], "attachments": [] }
 - package: { id, title, owner_id (a people id), created (YYYY-MM-DD), updated,
@@ -187,8 +188,8 @@ SCHEMA SUMMARY
 
 MINIMAL VALID EXAMPLE (shape only):
 {
-  "schema": "inheritance-package/v1",
-  "package": { "id": "plan-1", "title": "My inheritance plan",
+  "schema": "lifepackage/v1",
+  "package": { "id": "plan-1", "title": "My life package",
     "owner_id": "person_me", "created": "2026-01-01", "updated": "2026-01-01",
     "languages": ["en"], "default_language": "en",
     "map_audience_roles": ["primary_heir"] },
@@ -240,9 +241,13 @@ resolves and every id is unique, then output the final JSON only.</code></pre>
 
   <footer class="screen">
     <div class="container row wrap">
-      <span class="footer-tag">lifepackage.io · your plan, in safe hands</span>
+      <span class="footer-tag">openfirst.io · your plan, in safe hands</span>
       <span class="spacer"></span>
-      <span class="tiny">Open format · MIT · works offline</span>
+      <nav class="row wrap" style="gap:16px">
+        <a class="tiny" href="/how-to-use/" style="color:var(--screen-px)">How to use</a>
+        <a class="tiny" href="/security/" style="color:var(--screen-px)">Security</a>
+        <span class="tiny">Open format · MIT · works offline</span>
+      </nav>
     </div>
   </footer>
 

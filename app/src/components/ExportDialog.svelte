@@ -2,36 +2,32 @@
   import { untrack } from 'svelte';
   import { exportPackageZip, exportEncryptedPackage, exportSelfContainedReader, draftCount } from '../lib/export.js';
   import { MIN_PASSWORD_LENGTH } from '../lib/crypto.js';
-  import { generatePassphrase, estimateBits, strength } from '../lib/passphrase.js';
   import { downloadReviewIcs, googleCalendarUrl } from '../lib/calendar.js';
+  import PassphraseField from './PassphraseField.svelte';
 
   let { data, blobs, onClose } = $props();
 
-  let name = $state(untrack(() => data.package?.title) || 'My inheritance plan');
+  let name = $state(untrack(() => data.package?.title) || 'My life package');
   let asReader = $state(true);
   let protect = $state(false);
   let password = $state('');
-  let show = $state(false);
   let hint = $state('');
   let busy = $state(false);
   let error = $state('');
 
   const drafts = $derived(draftCount(data));
-  const bits = $derived(estimateBits(password));
-  const str = $derived(strength(bits));
-  const barW = $derived(({ weak: 28, ok: 55, strong: 80, vstrong: 100 })[str.tone] || 0);
-  function suggest() { password = generatePassphrase(6); show = true; }
 
-  let copied = $state(false);
-  let copyTimer;
-  function copyPassword() {
-    if (!password || !navigator.clipboard) return;
-    navigator.clipboard.writeText(password).then(() => {
-      copied = true;
-      clearTimeout(copyTimer);
-      copyTimer = setTimeout(() => (copied = false), 1500);
-    }).catch(() => {});
-  }
+  // Rough size of what's about to be written: attachments (+33% when base64'd
+  // into the one-file reader) plus the ~1.2 MB reader shell. Past ~50 MB a
+  // single HTML file gets unwieldy — steer to the .zip package.
+  const attachmentBytes = $derived.by(() => {
+    let bytes = 0;
+    for (const a of data?.attachments || []) bytes += blobs?.get?.(a.id)?.size || 0;
+    return bytes;
+  });
+  const estBytes = $derived(asReader ? Math.round(attachmentBytes * (4 / 3) + 1.2 * 1024 * 1024) : attachmentBytes);
+  const estMb = $derived((estBytes / (1024 * 1024)).toFixed(estBytes > 10 * 1024 * 1024 ? 0 : 1));
+  const tooBig = $derived(asReader && estBytes > 50 * 1024 * 1024);
 
   // Review reminder (.ics): user picks cadence + when; their calendar does the rest.
   let remind = $state(false);
@@ -62,7 +58,7 @@
   const fileName = $derived(
     asReader
       ? 'start-here.html'
-      : ((name || 'inheritance-plan').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') || 'inheritance-plan') +
+      : ((name || 'life-package').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') || 'life-package') +
           '_' + datePart + (protect ? '.encrypted.json' : '.zip')
   );
 
@@ -99,16 +95,23 @@
 
   <div class="namefield">
     <span class="nlbl">Plan name</span>
-    <input class="inp" bind:value={name} placeholder="My inheritance plan" />
+    <input class="inp" bind:value={name} placeholder="My life package" />
     <span class="tiny muted">Saves as <code>{fileName}</code></span>
   </div>
 
   <label class="toggle">
     <input type="checkbox" bind:checked={asReader} />
     <span>Self-contained reader</span>
+    {#if asReader}<span class="tiny muted">— export will be ~{estMb} MB</span>{/if}
   </label>
   {#if asReader && drafts > 0}
     <p class="reader-note tiny muted">{drafts} draft {drafts === 1 ? 'guide is' : 'guides are'} not included.</p>
+  {/if}
+  {#if tooBig}
+    <p class="reader-note tiny" style="color: var(--warn)">
+      A one-file reader this large can open slowly (or fail) on some computers.
+      Consider the .zip package instead — it keeps files separate and stays fast at any size.
+    </p>
   {/if}
 
   <label class="toggle">
@@ -118,38 +121,7 @@
 
   {#if protect}
     <div class="pw-block">
-      <div class="pw-field">
-        <input
-          class="inp"
-          type={show ? 'text' : 'password'}
-          bind:value={password}
-          placeholder="Password or passphrase"
-          autocomplete="off"
-          onkeydown={(e) => e.key === 'Enter' && doExport()}
-        />
-        <button class="pw-icon pw-eye" type="button" title={show ? 'Hide' : 'Show'} aria-label={show ? 'Hide password' : 'Show password'} onclick={() => (show = !show)}>
-          {#if show}
-            <!-- password is visible → crossed-out eye: clicking hides it -->
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
-          {:else}
-            <!-- password is hidden → open eye: clicking reveals it -->
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-          {/if}
-        </button>
-        <button class="pw-icon pw-copy" class:ok={copied} type="button" title="Copy password" aria-label="Copy password" onclick={copyPassword}>
-          {#if copied}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-          {:else}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
-          {/if}
-        </button>
-      </div>
-
-      <div class="pw-bar"><span class="pw-fill {str.tone}" style="width:{password ? barW : 0}%"></span></div>
-      <div class="pw-meta-row">
-        <span class="pw-strength {str.tone}">{password ? str.label : ''}</span>
-        <button class="pw-gen-link" type="button" onclick={suggest}>Suggest a passphrase</button>
-      </div>
+      <PassphraseField bind:value={password} onEnter={doExport} />
 
       <p class="tiny muted">
         A <strong>6-word passphrase</strong> is far stronger than a short password and easy to write down. The file
@@ -224,10 +196,12 @@
   .scrim { position: fixed; inset: 0; background: oklch(0.2 0.03 255 / 0.32); z-index: 70; }
   .modal {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    z-index: 71; width: min(560px, 94vw);
+    z-index: 71; width: min(580px, 94vw);
     border-left: 2px solid var(--accent);
     display: flex; flex-direction: column; gap: 12px;
     box-shadow: 0 24px 60px oklch(0.2 0.03 255 / 0.18);
+    padding: 30px 32px; /* dialogs get more air than inline cards */
+    max-height: 92vh; overflow-y: auto;
   }
   .modal h3 { font-size: 19px; }
   .namefield { display: flex; flex-direction: column; gap: 6px; }
@@ -241,26 +215,7 @@
   }
   .inp:focus { outline: none; border-color: var(--accent-deep); }
   .error { color: var(--warn); }
-  /* Password field with in-field show + copy icons (FreedomClock pattern) */
-  .pw-field { position: relative; }
-  .pw-field .inp { width: 100%; padding-right: 70px; }
-  .pw-icon { position: absolute; top: 50%; transform: translateY(-50%); display: flex; align-items: center; background: none; border: none; cursor: pointer; color: var(--ink-mute); padding: 2px 4px; line-height: 1; }
-  .pw-icon:hover { color: var(--ink); }
-  .pw-eye { right: 36px; }
-  .pw-copy { right: 10px; }
-  .pw-copy.ok { color: oklch(0.55 0.14 150); }
   /* Strength bar + label row, with the suggest link on the right */
-  .pw-bar { height: 4px; border-radius: 2px; background: var(--rule); overflow: hidden; }
-  .pw-fill { display: block; height: 100%; width: 0; border-radius: 2px; transition: width .3s, background .3s; }
-  .pw-fill.weak { background: var(--warn); }
-  .pw-fill.ok { background: oklch(0.78 0.13 75); }
-  .pw-fill.strong { background: var(--accent-deep); }
-  .pw-fill.vstrong { background: oklch(0.62 0.15 150); }
-  .pw-meta-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: -3px; }
-  .pw-strength { font-size: 11px; color: var(--ink-mute); }
-  .pw-strength.weak { color: var(--warn); }
-  .pw-strength.vstrong { color: oklch(0.55 0.14 150); }
-  .pw-gen-link { font-size: 11px; color: var(--ink-mute); background: none; border: none; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; padding: 0; }
   .pw-gen-link:hover { color: var(--ink); }
   .hint-note { margin-top: -4px; }
   .reader-note { margin: -6px 0 0 27px; color: var(--ink-mute); }

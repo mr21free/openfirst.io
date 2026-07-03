@@ -13,7 +13,7 @@ const ok = (n, c) => results.push([c ? 'PASS' : 'FAIL', n]);
 
 const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--no-sandbox', '--allow-file-access-from-files'] });
 const page = await browser.newPage();
-const click = (t) => page.evaluate((t) => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === t); if (b) b.click(); }, t);
+const click = (t) => page.evaluate((t) => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim().includes(t)); if (b) b.click(); }, t);
 const pause = (ms = 400) => new Promise((r) => setTimeout(r, ms));
 
 try {
@@ -21,7 +21,7 @@ try {
   await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Demo'), { timeout: 8000 });
   await click('Demo'); await pause();
   await page.waitForFunction(() => /who are you/i.test(document.body.innerText), { timeout: 8000 });
-  await click('Just show me everything'); await pause();
+  await click('Admin'); await pause();
 
   await page.evaluate(() => [...document.querySelectorAll('nav .navlink-section')].find((b) => b.textContent.trim() === 'Map')?.click()); await pause();
   ok('Map view opens', await page.evaluate(() => document.querySelector('main .vh')?.textContent.trim() === 'Map'));

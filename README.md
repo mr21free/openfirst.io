@@ -51,12 +51,15 @@ prompt. Privacy stays in your hands; we never see your data.
 ```bash
 cd app
 npm install
-npm run dev        # http://localhost:5173 — the builder
-npm run build      # produces app/dist/index.html (single self-contained file)
+npm run dev        # http://localhost:5173 — whole local site (/ + app pages)
+npm run build      # produces app/dist/ with /, /build/, /open/, /demo/
+npm run preview:site # rebuilds and serves the production IA locally
 npm test           # headless end-to-end checks (needs Google Chrome)
 ```
 
-Open the built `app/dist/index.html` directly, or host it — it's one file. Use
+For the full website locally, use `npm run dev` while developing or
+`npm run preview:site` to test the built output. The self-contained app file is
+`app/dist/build/index.html` if you want to double-click it from disk. Use
 **Demo** to explore a realistic sample.
 
 ## Documentation

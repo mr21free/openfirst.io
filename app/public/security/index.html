@@ -92,8 +92,12 @@
       <a class="brand row" href="/"><img class="logo" src="/logo.svg" alt="" /><span>OpenFirst</span></a>
       <span class="spacer"></span>
       <nav class="topnav">
+        <a href="/build/">Build</a>
+        <a href="/open/">Open</a>
+        <a href="/demo/">Demo</a>
         <a href="/how-to-use/">How to use</a>
         <a href="/security/">Security</a>
+        <a href="/pricing/">Pricing</a>
         <a href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener">The story</a>
       </nav>
     </div>
@@ -140,7 +144,7 @@
     <h2>Verify it yourself</h2>
     <ol class="steps">
       <li><strong>Read the source.</strong> It's small and dependency-light — one runtime dependency for zip, everything else native Web Crypto.</li>
-      <li><strong>Reproduce the build</strong> and open <code>dist/index.html</code> from disk with your network set to offline. It works, because it never needed the network.</li>
+      <li><strong>Reproduce the build</strong> and open <code>dist/build/index.html</code> from disk with your network set to offline. It works, because it never needed the network.</li>
       <li><strong>Inspect an encrypted export.</strong> It's JSON — you can see the algorithm, KDF, iterations, salt, and IV, and decrypt it with the standalone recipe using only Node.js or Web Crypto.</li>
       <li><strong>Watch the network</strong> with devtools open: loading a heir reader makes zero requests.</li>
     </ol>

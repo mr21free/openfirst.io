@@ -105,14 +105,60 @@
     });
     return out;
   }
-  function syncFromDom() { if (editorEl) { guardChips(); setVal(serializeNodes(editorEl.childNodes)); } }
+  function syncFromDom() {
+    if (editorEl) {
+      guardChips();
+      const v = serializeNodes(editorEl.childNodes);
+      setVal(v);
+      schedulePushHistory(v);
+    }
+  }
+
+  // ---- Undo / redo ----
+  // Native contenteditable undo would fight our programmatic DOM (chips,
+  // toolbar inserts), so we keep our own value history: each input burst
+  // (350ms debounce) becomes one step. Undo/redo re-render from markdown and
+  // put the caret at the end — coarse but predictable.
+  let history = $state([]);
+  let histIndex = $state(-1);
+  let histTimer = null;
+  const canUndo = $derived(histIndex > 0);
+  const canRedo = $derived(histIndex < history.length - 1);
+
+  function resetHistory(v) {
+    clearTimeout(histTimer);
+    history = [v ?? ''];
+    histIndex = 0;
+  }
+  function schedulePushHistory(v) {
+    clearTimeout(histTimer);
+    histTimer = setTimeout(() => {
+      if (history[histIndex] === v) return;
+      history = [...history.slice(Math.max(0, histIndex - 99), histIndex + 1), v];
+      histIndex = history.length - 1;
+    }, 350);
+  }
+  function applyHistory(v) {
+    renderDom(v);
+    setVal(v);
+    // Caret to the end — the render rebuilt the DOM.
+    editorEl?.focus();
+    const sel = window.getSelection();
+    const r = document.createRange();
+    r.selectNodeContents(editorEl); r.collapse(false);
+    sel.removeAllRanges(); sel.addRange(r);
+  }
+  function undo() { if (canUndo) { clearTimeout(histTimer); histIndex -= 1; applyHistory(history[histIndex]); } }
+  function redo() { if (canRedo) { clearTimeout(histTimer); histIndex += 1; applyHistory(history[histIndex]); } }
 
   // Re-render the DOM only when the editor mounts, the guide changes, or the
   // language changes — never on input (so the caret stays put).
   $effect(() => {
     const el = editorEl, a = L, id = raw?.id;
     if (!el) return;
-    renderDom(untrack(() => (plain ? (value || '') : ((id, raw?.content?.[a]) || ''))));
+    const v = untrack(() => (plain ? (value || '') : ((id, raw?.content?.[a]) || '')));
+    renderDom(v);
+    resetHistory(v);
   });
 
   // ---- caret helpers ----
@@ -432,6 +478,13 @@
     syncFromDom();
   }
   function onEditorKey(e) {
+    // Undo/redo — ours, not the browser's (native undo fights the chip DOM).
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+      e.preventDefault();
+      if (e.shiftKey) redo(); else undo();
+      return;
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
     if (!mention) return;
     const n = mentionOptions.length;
     if (!n && e.key !== 'Escape') return;
@@ -473,16 +526,23 @@
     <input bind:this={mediaInput} type="file" accept="image/*,video/mp4,.mp4" hidden onchange={onMediaPicked} />
   {/if}
   <div class="toolbar">
-    <button class="tb" title="Bold" onclick={() => surround('**')}><b>B</b></button>
-    <button class="tb" title="Italic" onclick={() => surround('*')}><i>I</i></button>
-    <button class="tb" title="Heading" onclick={() => prefixLine('## ')}>H</button>
-    <button class="tb" title="Bullet list" onclick={() => prefixLine('- ')}>
+    <button class="iconbtn tb" data-tip="Undo (⌘Z)" aria-label="Undo" disabled={!canUndo} onclick={undo}>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4" /><path d="M20 20v-7a4 4 0 0 0-4-4H4" /></svg>
+    </button>
+    <button class="iconbtn tb" data-tip="Redo (⇧⌘Z)" aria-label="Redo" disabled={!canRedo} onclick={redo}>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 14 20 9 15 4" /><path d="M4 20v-7a4 4 0 0 1 4-4h12" /></svg>
+    </button>
+    <span class="tb-sep" aria-hidden="true"></span>
+    <button class="iconbtn tb" data-tip="Bold" onclick={() => surround('**')}><b>B</b></button>
+    <button class="iconbtn tb" data-tip="Italic" onclick={() => surround('*')}><i>I</i></button>
+    <button class="iconbtn tb" data-tip="Heading" onclick={() => prefixLine('## ')}>H</button>
+    <button class="iconbtn tb" data-tip="Bullet list" onclick={() => prefixLine('- ')}>
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
         <line x1="9" y1="6" x2="20" y2="6" /><line x1="9" y1="12" x2="20" y2="12" /><line x1="9" y1="18" x2="20" y2="18" />
         <circle cx="4" cy="6" r="1.5" fill="currentColor" stroke="none" /><circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none" /><circle cx="4" cy="18" r="1.5" fill="currentColor" stroke="none" />
       </svg>
     </button>
-    <button class="tb" title="Numbered list" onclick={() => orderedList()}>
+    <button class="iconbtn tb" data-tip="Numbered list" onclick={() => orderedList()}>
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="10" y1="6" x2="20" y2="6" /><line x1="10" y1="12" x2="20" y2="12" /><line x1="10" y1="18" x2="20" y2="18" />
         <text x="0.5" y="8.5" font-size="8" stroke="none" fill="currentColor">1</text>
@@ -490,14 +550,14 @@
         <text x="0.5" y="20.5" font-size="8" stroke="none" fill="currentColor">3</text>
       </svg>
     </button>
-    <button class="tb" title="Link" onclick={() => surround('[', '](https://)')}>
+    <button class="iconbtn tb" data-tip="Link" onclick={() => surround('[', '](https://)')}>
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
         <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
       </svg>
     </button>
     {#if onUploadMedia}
-      <button class="tb" title="Upload media" aria-label="Upload media" onmousedown={(e) => { e.preventDefault(); saveCaret(); }} onclick={() => { saveCaret(); mediaInput?.click(); }}>
+      <button class="iconbtn tb" data-tip="Upload media" aria-label="Upload media" onmousedown={(e) => { e.preventDefault(); saveCaret(); }} onclick={() => { saveCaret(); mediaInput?.click(); }}>
         <svg class="tb-media-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="5" width="18" height="14" rx="1" />
           <circle cx="8.5" cy="10" r="1.5" />
@@ -524,7 +584,13 @@
         </div>
       {/if}
     </div>
-    <button class="tb tb-expand" title={full ? 'Collapse' : 'Expand to full screen'} onclick={() => (full = !full)}>{full ? '⤡' : '⤢'}</button>
+    <button class="iconbtn tb tb-expand" data-tip={full ? 'Collapse' : 'Expand to full screen'} data-tip-pos="left" aria-label={full ? 'Collapse' : 'Expand to full screen'} onclick={() => (full = !full)}>
+      {#if full}
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" /><line x1="14" y1="10" x2="21" y2="3" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
+      {:else}
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
+      {/if}
+    </button>
   </div>
   <div bind:this={editorEl} class="ce-edit" contenteditable="true" role="textbox" tabindex="0" aria-multiline="true"
     data-ph={placeholder ?? GUIDE_PH}
@@ -547,7 +613,7 @@
 
 <style>
   .ce { background: var(--paper); display: flex; flex-direction: column; }
-  .ce.full { position: fixed; inset: 24px; z-index: 80; border: 1px solid var(--rule); border-radius: 0; overflow: hidden; box-shadow: 0 30px 80px oklch(0.2 0.03 255 / 0.3); }
+  .ce.full { position: fixed; inset: 24px; z-index: var(--z-editor-full); border: 1px solid var(--rule); border-radius: 0; overflow: hidden; box-shadow: 0 30px 80px oklch(0.2 0.03 255 / 0.3); }
   .fs-scrim { position: fixed; inset: 0; background: oklch(0.2 0.03 255 / 0.3); z-index: 79; }
   /* Keep the formatting actions reachable while scrolling a long guide. In
      full mode the editor body scrolls internally, so the bar already stays put;
@@ -558,20 +624,19 @@
   .toolbar { position: sticky; top: var(--ce-toolbar-top, 0px); z-index: 10; background: var(--paper); display: flex; align-items: center; gap: 6px; padding: 8px 22px; border-top: 1px solid var(--rule-soft); border-bottom: 1px solid var(--rule-soft); flex-wrap: wrap; flex: none; }
   .ce.full .toolbar { position: static; }
   .tb {
-    width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--rule);
-    color: var(--ink-soft); background: var(--paper);
+    width: 30px; height: 30px;
     display: inline-grid; place-items: center;
     padding: 0; line-height: 1;
   }
   .tb svg { display: block; width: 15px; height: 15px; }
   .tb b, .tb i { display: block; line-height: 1; }
   .tb .tb-media-ico { width: 18px; height: 18px; }
-  .tb:hover { border-color: var(--accent-deep); color: var(--accent-deep); }
   .tb-expand { margin-left: auto; }
+  .tb-sep { width: 1px; height: 18px; background: var(--rule); margin: 0 4px; flex: none; }
   .refwrap { position: relative; }
   .tb-ref { font-size: 13px; border: 1px solid var(--rule); border-radius: 999px; padding: 6px 12px; background: var(--paper); color: var(--accent-deep); cursor: pointer; }
   .tb-ref:hover { border-color: var(--accent-deep); }
-  .refpop { position: absolute; top: 36px; left: 0; z-index: 5; width: 320px; max-width: 80vw; background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18); padding: 8px; }
+  .refpop { position: absolute; top: 36px; left: 0; z-index: var(--z-popover); width: 320px; max-width: 80vw; background: var(--paper); border: 1px solid var(--rule); border-radius: 0; box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18); padding: 8px; }
   .refq { width: 100%; font: inherit; font-size: 14px; border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; background: var(--paper); color: var(--ink); }
   .reflist { max-height: 240px; overflow-y: auto; margin-top: 6px; display: flex; flex-direction: column; scrollbar-width: thin; }
   /* Always show a slim scrollbar so it's clear when the list runs longer than the box. */
@@ -582,7 +647,7 @@
   .refrow:hover, .refrow.on { background: var(--accent-wash); }
   .mentionpop {
     position: fixed; z-index: 90; width: 280px; max-width: 80vw;
-    background: var(--paper); border: 1px solid var(--rule); border-radius: 10px;
+    background: var(--paper); border: 1px solid var(--rule); border-radius: 0;
     box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18); padding: 6px;
   }
   .mentionpop .reflist { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; }

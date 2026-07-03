@@ -55,8 +55,8 @@
   .gs-ico { position: absolute; left: 11px; color: var(--ink-mute); pointer-events: none; }
   .gs-input { width: 100%; font: inherit; font-size: 14px; padding: 7px 12px 7px 33px; border: 1px solid var(--rule); border-radius: 0; background: var(--paper); color: var(--ink); }
   .gs-input:focus { outline: none; border-color: var(--accent-deep); }
-  .gs-pop { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 40; background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18); padding: 6px; max-height: 60vh; overflow-y: auto; }
-  .gs-row { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; text-align: left; padding: 7px 10px; border-radius: 8px; }
+  .gs-pop { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: var(--z-popover); background: var(--paper); border: 1px solid var(--rule); border-radius: 0; box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18); padding: 6px; max-height: 60vh; overflow-y: auto; }
+  .gs-row { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; text-align: left; padding: 7px 10px; border-radius: 0; }
   .gs-row:hover, .gs-row.on { background: var(--accent-wash); }
   .gs-name { font-size: 14px; color: var(--ink); }
   .gs-meta { font-size: 11px; color: var(--ink-mute); }

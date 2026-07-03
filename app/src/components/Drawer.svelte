@@ -185,14 +185,22 @@
 <div class="drawer" class:full role="dialog" aria-modal="true" aria-label="Details" tabindex="-1">
   {#snippet headActions()}
     <div class="dhead-actions">
-      <button class="btn btn-ghost close" onclick={() => (full = !full)} title={full ? 'Shrink panel' : 'Expand panel'} aria-label={full ? 'Shrink panel' : 'Expand panel'}>{full ? '⤡' : '⤢'}</button>
-      <button class="btn btn-ghost close" onclick={onClose} aria-label="Close">✕</button>
+      <button class="iconbtn" onclick={() => (full = !full)} data-tip={full ? 'Shrink panel' : 'Expand panel'} data-tip-pos="left" aria-label={full ? 'Shrink panel' : 'Expand panel'}>
+        {#if full}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" /><line x1="14" y1="10" x2="21" y2="3" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
+        {:else}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
+        {/if}
+      </button>
+      <button class="iconbtn" onclick={onClose} data-tip="Close" data-tip-pos="left" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+      </button>
     </div>
   {/snippet}
   {#snippet fieldHead(key, label, count = 0)}
     <div class="field-head">
       {#if count > 3}
-        <button class="collapse-toggle" onclick={() => toggleSection(key)} aria-label={sectionOpen(key, count) ? `Collapse ${label}` : `Expand ${label}`} title={sectionOpen(key, count) ? 'Collapse' : 'Expand'}>
+        <button class="iconbtn collapse-toggle" onclick={() => toggleSection(key)} aria-label={sectionOpen(key, count) ? `Collapse ${label}` : `Expand ${label}`} data-tip={sectionOpen(key, count) ? 'Collapse' : 'Expand'}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             {#if sectionOpen(key, count)}<polyline points="6 9 12 15 18 9" />{:else}<polyline points="9 18 15 12 9 6" />{/if}
           </svg>
@@ -218,7 +226,7 @@
     <div class="dhead">
       <div class="dhead-main">
         {#if canBack}
-          <button class="back" onclick={() => onBack?.()} title="Back" aria-label="Back">
+          <button class="iconbtn back" onclick={() => onBack?.()} data-tip="Back" data-tip-pos="right" aria-label="Back">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
         {/if}
@@ -242,7 +250,7 @@
                       <strong>{pkg.name(result.check_id)}</strong>
                       {#if result.notes}<p class="soft small">{result.notes}</p>{/if}
                     </span>
-                    <button class="mini-danger" title="Delete answer" aria-label="Delete answer" onclick={() => deleteResult(testRun.id, result.check_id)}><TrashIcon size={12} /></button>
+                    <button class="iconbtn danger mini-danger" data-tip="Delete answer" data-tip-pos="left" aria-label="Delete answer" onclick={() => deleteResult(testRun.id, result.check_id)}><TrashIcon size={12} /></button>
                   </div>
                 {/each}
               </div>
@@ -265,7 +273,7 @@
     <div class="dhead">
       <div class="dhead-main">
         {#if canBack}
-          <button class="back" onclick={() => onBack?.()} title="Back" aria-label="Back">
+          <button class="iconbtn back" onclick={() => onBack?.()} data-tip="Back" data-tip-pos="right" aria-label="Back">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
         {/if}
@@ -366,7 +374,7 @@
                     <span class="muted small">{testerName(rr.run)} · {testName(rr.run)}</span>
                     {#if rr.result.notes}<p class="soft small">{rr.result.notes}</p>{/if}
                   </span>
-                  <button class="mini-danger" title="Delete answer" aria-label="Delete answer" onclick={() => deleteResult(rr.run.id, rr.result.check_id)}><TrashIcon size={12} /></button>
+                  <button class="iconbtn danger mini-danger" data-tip="Delete answer" data-tip-pos="left" aria-label="Delete answer" onclick={() => deleteResult(rr.run.id, rr.result.check_id)}><TrashIcon size={12} /></button>
                 </div>
               {/each}
             </div>{/if}
@@ -467,7 +475,7 @@
                             <strong>{pkg.name(result.check_id)}</strong>
                             {#if result.notes}<p class="soft small">{result.notes}</p>{/if}
                           </span>
-                          <button class="mini-danger" title="Delete answer" aria-label="Delete answer" onclick={() => deleteResult(run.id, result.check_id)}><TrashIcon size={12} /></button>
+                          <button class="iconbtn danger mini-danger" data-tip="Delete answer" data-tip-pos="left" aria-label="Delete answer" onclick={() => deleteResult(run.id, result.check_id)}><TrashIcon size={12} /></button>
                         </div>
                       {/each}
                     {/if}
@@ -584,7 +592,7 @@
         {#if attUrl}
           <div class="attachment-actions row wrap">
             <a class="btn btn-primary" href={attUrl} download={obj.filename}>Download</a>
-            <button class="iconbtn-print" onclick={printAttachment} title="Print" aria-label="Print">
+            <button class="iconbtn" onclick={printAttachment} data-tip="Print this file" data-tip-pos="left" aria-label="Print">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 6 2 18 2 18 9" />
                 <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
@@ -600,9 +608,9 @@
 </div>
 
 <style>
-  .scrim { position: fixed; inset: 0; background: oklch(0.2 0.03 255 / 0.32); z-index: 60; }
+  .scrim { position: fixed; inset: 0; background: var(--scrim); z-index: var(--z-scrim); }
   .drawer {
-    position: fixed; top: 0; right: 0; bottom: 0; z-index: 61;
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: var(--z-drawer);
     width: clamp(380px, 44vw, 680px);
     background: var(--paper);
     border-left: 1px solid var(--rule);
@@ -618,20 +626,7 @@
   .dhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .dhead-main { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
   .dhead h2 { margin-top: 4px; font-size: 24px; }
-  .back {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px; border-radius: 8px; flex: none; margin-top: 2px;
-    color: var(--ink-soft); border: 1px solid transparent;
-  }
-  .back:hover { color: var(--ink); border-color: var(--rule); background: var(--paper); }
-  .iconbtn-print {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 40px; height: 40px; border-radius: 999px;
-    border: 1px solid var(--rule); color: var(--ink-soft);
-  }
-  .iconbtn-print:hover { color: var(--ink); border-color: var(--accent-deep); }
-  /* Productboard-style: a touch larger and clearly tappable. */
-  .close { min-height: 36px; min-width: 36px; padding: 4px 8px; font-size: 20px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+  .back { width: 32px; height: 32px; margin-top: 2px; }
   /* One consistent text size across the whole panel body (values, list rows,
      breadcrumbs…). The header title and the small uppercase field labels keep
      their own sizes. */
@@ -643,18 +638,7 @@
   .field > .muted { font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-mute); }
   .field-head { display: flex; align-items: center; gap: 8px; min-height: 22px; }
   .field-head .muted { font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-mute); }
-  .collapse-toggle {
-    width: 24px;
-    height: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: none;
-    color: var(--ink-soft);
-    border: 1px solid transparent;
-    background: transparent;
-  }
-  .collapse-toggle:hover { color: var(--ink); border-color: var(--rule); background: var(--paper); }
+  .collapse-toggle { width: 24px; height: 24px; }
   .field-count {
     display: inline-flex;
     align-items: center;
@@ -688,17 +672,7 @@
   .run-block { padding-top: 10px; border-top: 1px solid var(--rule-soft); }
   .run-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; padding: 4px 0; text-align: left; color: var(--ink); }
   .run-title { display: inline-flex; align-items: center; gap: 8px; }
-  .mini-danger {
-    width: 24px;
-    height: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    align-self: center;
-    color: var(--ink-mute);
-    border: 1px solid transparent;
-  }
-  .mini-danger:hover { color: var(--warn); border-color: var(--rule); background: var(--paper); }
+  .mini-danger { width: 24px; height: 24px; align-self: center; }
   .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 2px; }
   .crumb { font-size: 13px; color: var(--accent-deep); padding: 1px 2px; border-radius: 4px; }
   .crumb:hover { text-decoration: underline; text-underline-offset: 3px; }

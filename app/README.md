@@ -39,15 +39,25 @@ Package (`lifepackage/v1`) so other tools can adopt it. See [FORMAT.md](./FORMAT
 
 ```bash
 npm install
-npm run dev      # local dev server
-npm run build    # → dist/index.html  (one self-contained file)
+npm run dev           # live whole-site dev server: /, /build/, /open/, /demo/
+npm run build         # → dist/ with the marketing root and app routes
+npm run preview:site  # rebuild, then serve the production IA locally
 ```
 
-## Use the built file
+## Use the built site
 
-Open `dist/index.html` directly (double-click, or `file://...`). Click **Demo**
-to explore a demo plan, or drop your own package folder / `.zip` /
-`lifepackage.json` (`inheritance.json` still works for older packages).
+For the full website locally, use `npm run preview:site` and open the printed
+URL. The built tree mirrors the public IA:
+
+- `/` — static marketing home (`dist/index.html`)
+- `/build/` — app builder (`dist/build/index.html`)
+- `/open/` — app launcher for opening existing packages
+- `/demo/` — app with the sample plan
+
+To run the durable app file directly from disk, open `dist/build/index.html`
+(double-click, or `file://...`). Click **Demo** to explore a demo plan, or drop
+your own package folder / `.zip` / `lifepackage.json` (`inheritance.json` still
+works for older packages).
 
 ## Samples (for testing the drop zone)
 

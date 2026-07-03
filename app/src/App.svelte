@@ -18,14 +18,42 @@ import { deriveDraftKey, decryptString, decryptToBlob } from './lib/draftcrypto.
   let drafts = $state([]);
 
   // The same built file is served at /build/, /open/ and /demo/ — the path is
-  // the boot mode. file:// (the exported reader, local test runs) never
-  // matches, so double-clicked files always boot normally.
+  // the boot mode, each with ONE job:
+  //   /open  → the launcher: your plans, resume, open a file (the start point)
+  //   /build → the editor: boots straight into building a new plan when
+  //            nothing is loaded; opening/resuming from /open lands here too
+  //   /demo  → the sample plan, opened as the primary heir would see it
+  // file:// (the exported reader, local test runs) never matches, so
+  // double-clicked files always boot like the launcher.
+  const onHttp = typeof location !== 'undefined' && location.protocol !== 'file:';
   const bootMode = (() => {
-    if (readerMode || typeof location === 'undefined' || location.protocol === 'file:') return 'build';
+    if (readerMode || !onHttp) return 'open';
     const m = /^\/(build|open|demo)\/?$/.exec(location.pathname);
-    return m ? m[1] : 'build';
+    return m ? m[1] : 'open';
   })();
-  let bootedDemo = false;
+  let booted = false; // the boot mode fires once, not on every return to the launcher
+
+  // While a plan is open, the URL is the editor's (/build/) — like any app.
+  function showEditorUrl() {
+    if (onHttp && !readerMode && location.pathname !== '/build/') history.pushState(null, '', '/build/');
+  }
+
+  // Auto screen-lock: while a passphrase-protected plan is open, 10 minutes
+  // without any interaction flushes the encrypted save, drops the key and the
+  // plan from memory, and returns to the start. Free with draft protection —
+  // it completes the security story (see DESIGN/strategy notes).
+  const IDLE_LOCK_MS = 10 * 60 * 1000;
+  let lockedNotice = $state(false);
+  $effect(() => {
+    if (readerMode || !store.pkg || !store.draftProtected) return;
+    let t;
+    const lock = async () => { await store.lockDraft(); lockedNotice = true; };
+    const arm = () => { clearTimeout(t); t = setTimeout(lock, IDLE_LOCK_MS); };
+    const evs = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
+    for (const e of evs) window.addEventListener(e, arm, { passive: true });
+    arm();
+    return () => { clearTimeout(t); for (const e of evs) window.removeEventListener(e, arm); };
+  });
 
   function base64ToBytes(b64) {
     const bin = atob(b64);
@@ -68,12 +96,25 @@ import { deriveDraftKey, decryptString, decryptToBlob } from './lib/draftcrypto.
       return;
     }
     if (store.pkg) return; // editing/reading — don't check
-    if (bootMode === 'demo' && !bootedDemo) {
-      // /demo boots straight into the sample plan.
-      bootedDemo = true;
-      (async () => { store.load(await loadSample()); window.scrollTo({ top: 0 }); })();
+    if (!booted && bootMode === 'demo') {
+      // /demo boots straight into the sample plan, read as the primary heir.
+      booted = true;
+      (async () => {
+        const loaded = await loadSample();
+        demoAudience = loaded.data?.package?.primary_person_ids?.[0] || null;
+        store.load(loaded);
+        window.scrollTo({ top: 0 });
+      })();
       return;
     }
+    if (!booted && bootMode === 'build') {
+      // /build with nothing loaded = start building. (An untouched new plan is
+      // never auto-saved, so stray visits don't leave draft clutter.)
+      booted = true;
+      newPlan();
+      return;
+    }
+    booted = true;
     (async () => {
       const all = await loadAllDrafts();
       drafts = all
@@ -94,13 +135,15 @@ import { deriveDraftKey, decryptString, decryptToBlob } from './lib/draftcrypto.
     gateEnvelope = null;
   }
 
-  function onLoaded(loaded) { store.load(loaded); window.scrollTo({ top: 0 }); }
+  let demoAudience = $state(null);
+
+  function onLoaded(loaded) { store.load(loaded); showEditorUrl(); window.scrollTo({ top: 0 }); }
   function close() {
     store.reset();
-    // Leaving a /demo or /open boot lands on the builder home, so a reload
-    // doesn't re-trigger the boot mode.
-    if (bootMode !== 'build' && location.protocol !== 'file:') {
-      history.replaceState(null, '', '/build/');
+    demoAudience = null;
+    // Closing a plan always lands on the launcher — and the URL says so.
+    if (onHttp && !readerMode && location.pathname !== '/open/') {
+      history.replaceState(null, '', '/open/');
     }
   }
 
@@ -149,6 +192,7 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
     };
     store.load({ data, attachmentUrls: {}, blobs: new Map() });
     store.startEditing();
+    showEditorUrl();
     window.scrollTo({ top: 0 });
   }
 
@@ -179,6 +223,7 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
     // (inline) blobs must be written to it on the first save.
     store.load({ data: d.data, attachmentUrls, blobs, persistedDraft: !d.legacyBlobs });
     store.startEditing();
+    showEditorUrl();
     drafts = [];
     window.scrollTo({ top: 0 });
   }
@@ -200,7 +245,9 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
     }
     store.load({ data, attachmentUrls, blobs, persistedDraft: true, draftKey: cryptoKey, draftSalt: new Uint8Array(d.salt) });
     store.startEditing();
+    showEditorUrl();
     draftGate = null;
+    lockedNotice = false;
     drafts = [];
     window.scrollTo({ top: 0 });
   }
@@ -218,9 +265,27 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
     <UnlockGate hint={gateEnvelope.hint} onUnlock={unlockEmbedded} />
   {/if}
 {:else if store.pkg}
-  <Reader {store} onClose={close} />
+  <Reader {store} onClose={close} initialAudience={demoAudience} />
 {:else if draftGate}
   <UnlockGate hint="Your draft passphrase (not the export password)." onUnlock={unlockDraft} onCancel={() => (draftGate = null)} />
 {:else}
-  <Landing {onLoaded} {newPlan} {drafts} {resumeDraft} {discardDraft} focus={bootMode === 'open' ? 'open' : ''} />
+  {#if lockedNotice}
+    <div class="locked-note no-print" role="status">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+      Locked after 10 minutes of inactivity. Your encrypted draft is saved — resume to continue.
+      <button class="iconbtn locked-x" data-tip="Dismiss" data-tip-pos="left" aria-label="Dismiss" onclick={() => (lockedNotice = false)}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></button>
+    </div>
+  {/if}
+  <Landing {onLoaded} {newPlan} {drafts} {resumeDraft} {discardDraft} />
 {/if}
+
+<style>
+  .locked-note {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 18px; font-size: 13px;
+    background: var(--accent-wash); color: var(--ink-soft);
+    border-bottom: 1px solid var(--rule);
+  }
+  .locked-note svg:first-child { flex: none; color: var(--accent-deep); }
+  .locked-x { width: 28px; height: 28px; margin-left: auto; }
+</style>

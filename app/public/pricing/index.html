@@ -3,12 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>OpenFirst — a private inheritance plan your family can actually use</title>
-  <meta name="description" content="Nothing breaks if you're gone tomorrow. Build a calm, private map of everything that matters — on your device, no account, no cloud. Your family opens one file. Free & open source." />
-  <meta property="og:title" content="OpenFirst — nothing breaks if you're gone tomorrow" />
-  <meta property="og:description" content="A private life package built on your device. Your family opens one file — no app, no account, no internet." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://openfirst.io/" />
+  <title>Pricing · OpenFirst</title>
+  <meta name="description" content="OpenFirst pricing: the full builder, reader and all encryption are free forever. Pay once — never rent — for breadth and comfort: version history, multiple plans, templates." />
   <link rel="icon" href="/logo.svg" />
   <style>
     /* IBM Plex Mono — the same family as the app. */
@@ -88,26 +84,26 @@
 
     @media (max-width: 640px) { .container, .content { padding-left: 18px; padding-right: 18px; } }
 
-    /* ---- home page ---- */
-    .hero { padding: 92px 0 64px; }
-    .hero h1 { font-size: clamp(38px, 5.8vw, 72px); font-weight: 300; letter-spacing: -0.015em; line-height: 1.06; max-width: 22ch; margin: 14px 0 0; }
-    .hero .lede { margin-top: 26px; max-width: 58ch; font-size: 17.5px; line-height: 1.7; }
-    .method { margin-top: 28px; display: flex; align-items: center; gap: 14px; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); }
-    .method::before { content: ''; display: inline-block; width: 34px; height: 1px; background: var(--accent); flex: none; }
-    .cta-row { margin-top: 34px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 46px; padding: 12px 22px; border-radius: 999px; border: 1px solid var(--rule); background: var(--paper); font-size: 14.5px; font-weight: 500; color: var(--ink); }
+    /* ---- pricing ---- */
+    .plans { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-top: 26px; align-items: stretch; }
+    .plan { display: flex; flex-direction: column; background: var(--paper); border: 1px solid var(--rule-soft); border-top: 2px solid var(--rule); padding: 26px 26px 24px; }
+    .plan.featured { border-top-color: var(--accent-deep); }
+    .plan h3 { font-size: 18px; font-weight: 600; }
+    .plan .price { font-size: 34px; font-weight: 300; letter-spacing: -0.01em; margin: 10px 0 2px; }
+    .plan .cadence { font-size: 12px; color: var(--ink-mute); letter-spacing: 0.06em; text-transform: uppercase; }
+    .plan ul { list-style: none; padding: 0; margin: 18px 0 22px; flex: 1; }
+    .plan li { padding-left: 24px; position: relative; margin: 9px 0; font-size: 14px; color: var(--ink-soft); }
+    .plan li::before { content: ''; position: absolute; left: 0; top: 7px; width: 12px; height: 7px; border-left: 2px solid var(--accent-deep); border-bottom: 2px solid var(--accent-deep); transform: rotate(-45deg); }
+    .plan li.na { color: var(--ink-mute); }
+    .plan li.na::before { border-color: var(--rule); }
+    .plan .btn { width: 100%; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 11px 18px; border-radius: 999px; border: 1px solid var(--rule); background: var(--paper); font-size: 14px; font-weight: 500; color: var(--ink); }
     .btn:hover { text-decoration: none; border-color: var(--accent-deep); }
     .btn-primary { background: var(--accent-deep); border-color: var(--accent-deep); color: #fff; }
     .btn-primary:hover { background: oklch(0.5 0.13 250); }
-    .trust { margin-top: 26px; font-size: 12px; letter-spacing: 0.05em; color: var(--ink-mute); }
-    .problems { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin: 8px 0 0; }
-    .problem { background: var(--paper); border: 1px solid var(--rule-soft); border-left: 2px solid var(--accent); padding: 26px 28px; }
-    .problem h3 { font-size: 18px; font-weight: 500; line-height: 1.35; margin-bottom: 10px; }
-    .problem p { color: var(--ink-soft); font-size: 14.5px; margin: 0; }
-    .sec-eyebrow { display: flex; align-items: center; gap: 14px; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 72px 0 18px; }
-    .sec-eyebrow::before { content: ''; display: inline-block; width: 34px; height: 1px; background: var(--accent); flex: none; }
-    .quiet-strip { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: center; color: var(--ink-soft); font-size: 14px; margin-top: 8px; }
-    .home-main { max-width: var(--maxw); margin: 0 auto; padding: 0 28px 72px; width: 100%; }
+    .promise { margin-top: 34px; }
+    .faq dt { font-weight: 600; margin-top: 22px; font-size: 15px; }
+    .faq dd { margin: 6px 0 0; color: var(--ink-soft); font-size: 14.5px; }
   </style>
 </head>
 <body>
@@ -123,61 +119,86 @@
         <a href="/security/">Security</a>
         <a href="/pricing/">Pricing</a>
         <a href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener">The story</a>
-        <a class="btn" style="min-height:38px;padding:8px 16px" href="/open/">Open the app</a>
       </nav>
     </div>
   </header>
-  <main class="home-main">
-    <section class="hero">
-      <span class="eyebrow">OPENFIRST · A PRIVATE LIFE PACKAGE, BUILT ON YOUR DEVICE</span>
-      <h1>Nothing breaks<br />if you're gone tomorrow.</h1>
-      <p class="lede">
-        That's the promise — to each other. Build a calm map of everything that
-        matters: the people, the places, the accounts, the keys, the instructions.
-        It stays on your device. Your family opens one file, whenever the time
-        comes — no app, no account, no cloud.
-      </p>
-      <p class="method">Start with the map · Build the system together · Test it before it matters</p>
-      <div class="cta-row">
-        <a class="btn btn-primary" href="/build/">Start your plan</a>
-        <a class="btn" href="/demo/">See a real example</a>
-      </div>
-      <p class="trust">FREE &amp; OPEN SOURCE · WORKS OFFLINE · NO ACCOUNT · ONE FILE YOUR HEIRS DOUBLE-CLICK</p>
-    </section>
+  <main class="content" style="max-width: 1060px">
+    <span class="eyebrow">Pricing</span>
+    <h1>Pay once. Never rent your family's safety.</h1>
+    <p class="lede">Everything that protects your plan is free, forever — the full builder, the reader your heirs open, all encryption. You pay once for breadth and comfort. No subscription, no account: your license is a signed file you keep, verified on your device, like everything else here.</p>
 
-    <div class="sec-eyebrow">Why this exists</div>
-    <div class="problems">
-      <div class="problem">
-        <h3>She shouldn't have to solve your life like a puzzle.</h3>
-        <p>When something happens, your partner becomes detective, accountant, and IT admin overnight — while grieving. OpenFirst turns what's in your head into a runbook: what exists, where it is, who helps, what to do first.</p>
+    <div class="plans">
+      <div class="plan">
+        <h3>Free</h3>
+        <div class="price">€0</div>
+        <div class="cadence">forever</div>
+        <ul>
+          <li>Full builder &amp; heir reader</li>
+          <li>All encryption (export + draft-at-rest)</li>
+          <li>Auto screen-lock, tamper-evident files</li>
+          <li>Dry runs &amp; readiness checks</li>
+          <li>One plan</li>
+          <li>Open format — your file works without us</li>
+        </ul>
+        <a class="btn" href="/build/">Start your plan</a>
       </div>
-      <div class="problem">
-        <h3>A plan you never tested is a hope, not a plan.</h3>
-        <p>You told her the password. She still couldn't open it — true story, ours. OpenFirst has dry runs: sit together, let her actually find, open, and follow the plan, and record what broke.</p>
+
+      <div class="plan featured">
+        <h3>Plus</h3>
+        <div class="price">€59</div>
+        <div class="cadence">one-time · yours for life</div>
+        <ul>
+          <li>Everything in Free</li>
+          <li><strong>Version history</strong> — snapshots, “what changed since the last export?”, restore</li>
+          <li>Multiple plans</li>
+          <li>Template pack: First 72 Hours, Money Runway, Bitcoin Runbook, Trusted-Helper protocol</li>
+          <li>Readiness score by person</li>
+          <li>Passkey / hardware-key unlock <span style="font-size:11px;color:var(--ink-mute)">(coming)</span></li>
+          <li>Priority email support</li>
+        </ul>
+        <a class="btn btn-primary" href="/build/">Get Plus</a>
       </div>
-      <div class="problem">
-        <h3>Made to outlive us. Even the company.</h3>
-        <p>One open file: plain text and files inside, strong encryption if you want it, provably offline — the reader physically cannot phone home. If OpenFirst disappears tomorrow, your plan still opens in 2046.</p>
+
+      <div class="plan">
+        <h3>Family</h3>
+        <div class="price">€99</div>
+        <div class="cadence">one-time · whole household</div>
+        <ul>
+          <li>Everything in Plus — for the household</li>
+          <li>Plans for both partners &amp; the parents</li>
+          <li>Joint dry-run mode</li>
+          <li>One license file, shared at home</li>
+        </ul>
+        <a class="btn" href="/build/">Get Family</a>
+      </div>
+
+      <div class="plan">
+        <h3>Professional</h3>
+        <div class="price" style="font-size:22px; padding-top:9px">Let's talk</div>
+        <div class="cadence">advisors · insurers · white-label</div>
+        <ul>
+          <li>White-label reader &amp; co-branding</li>
+          <li>Client-side deployment — you hold no client data either</li>
+          <li>Commercial license (AGPL alternative)</li>
+          <li>Certification &amp; format SLA</li>
+        </ul>
+        <a class="btn" href="mailto:id.miro@foremsec.com">Contact us</a>
       </div>
     </div>
 
-    <div class="sec-eyebrow">How it works</div>
-    <ol class="steps">
-      <li><strong>Build the map</strong> — people, the places things live, items (accounts, wallets, keys, documents), files, and calm plain-language guides. Your own AI can scaffold it in minutes.</li>
-      <li><strong>Test it before it matters</strong> — run a dry run with the person who'd use it. Watch where they hesitate. Fix that.</li>
-      <li><strong>Hand over one file</strong> — export a self-contained <code>start-here.html</code> (optionally encrypted), put it where they'd look, and tell them it exists.</li>
-    </ol>
+    <div class="card promise"><strong>The promise behind the prices.</strong> If a feature protects your family, it's free — encryption, locks, the reader, the format. Paid tiers buy breadth (more plans), history (versioning), and comfort (templates, scores, support). If we ever disappear, everything you paid for keeps working: it runs on your device and your license is a file, not a login.</div>
 
-    <div class="sec-eyebrow">Private by design</div>
-    <div class="quiet-strip">
-      <span>No servers, no telemetry — nothing to leak</span>
-      <span>·</span>
-      <span>AES-256-GCM encryption, decryptable without us</span>
-      <span>·</span>
-      <span>Open source (AGPL) · open MIT format</span>
-      <span>·</span>
-      <a href="/security/">Read the full security model →</a>
-    </div>
+    <h2>Questions you should ask</h2>
+    <dl class="faq">
+      <dt>Why one-time and not a subscription?</dt>
+      <dd>Because this product must outlive us, and you shouldn't have to bet on that. A subscription to a 30-year promise is the wrong deal — roughly forty of our competitors proved it. You pay once; the software is local; done.</dd>
+      <dt>Do I need an account?</dt>
+      <dd>No. There are no accounts. Payment happens at checkout with the payment provider; you receive a signed license file that the app verifies offline. We couldn't track you if we wanted to.</dd>
+      <dt>What happens to my plan if I stop paying?</dt>
+      <dd>Nothing — there's nothing to stop paying. And the Free tier is never a trial: one full plan, full security, forever.</dd>
+      <dt>Is the heir's file ever paid?</dt>
+      <dd>Never. The reader your family opens is free, open source, and works offline, whoever built the plan.</dd>
+    </dl>
   </main>
 
   <footer class="screen">
@@ -187,6 +208,7 @@
       <nav class="row wrap" style="gap:16px">
         <a class="tiny" href="/how-to-use/" style="color:var(--screen-px)">How to use</a>
         <a class="tiny" href="/security/" style="color:var(--screen-px)">Security</a>
+        <a class="tiny" href="/pricing/" style="color:var(--screen-px)">Pricing</a>
         <span class="tiny">Open source (AGPL) · MIT format · works offline</span>
       </nav>
     </div>

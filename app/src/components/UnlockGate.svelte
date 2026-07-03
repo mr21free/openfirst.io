@@ -1,6 +1,14 @@
 <script>
+  /*
+    The ONE password-entry gate (see DESIGN.md). Two shells, same card:
+     • full-page (default) — the heir reader's opening screen, resume of a
+       protected draft;
+     • `modal` — unlocking an encrypted file from within another screen
+       (scrim + centered card, Escape/scrim-click cancels).
+    `onUnlock(password)` may throw — that's shown as a kind, retryable error.
+  */
   import logo from '../assets/logo.svg';
-  let { hint = '', onUnlock, onCancel = null } = $props();
+  let { hint = '', onUnlock, onCancel = null, modal = false } = $props();
 
   let password = $state('');
   let show = $state(false);
@@ -24,9 +32,11 @@
   }
 </script>
 
-<div class="gate-page">
-  <div class="card gate">
-    <div class="brand row"><img class="logo" src={logo} alt="" aria-hidden="true" /><span>OpenFirst</span></div>
+{#snippet gateCard()}
+  <div class="card gate" class:modal-card={modal} role={modal ? 'dialog' : undefined} aria-modal={modal ? 'true' : undefined} aria-label={modal ? 'Enter password' : undefined}>
+    {#if !modal}
+      <div class="brand row"><img class="logo" src={logo} alt="" aria-hidden="true" /><span>OpenFirst</span></div>
+    {/if}
     <span class="lock-ico" aria-hidden="true">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
     </span>
@@ -45,7 +55,18 @@
       <button class="btn btn-primary" onclick={unlock} disabled={busy || !password}>{busy ? 'Opening…' : 'Unlock'}</button>
     </div>
   </div>
-</div>
+{/snippet}
+
+<svelte:window onkeydown={(e) => modal && e.key === 'Escape' && onCancel?.()} />
+
+{#if modal}
+  <div class="scrim" role="presentation" onclick={() => onCancel?.()}></div>
+  {@render gateCard()}
+{:else}
+  <div class="gate-page">
+    {@render gateCard()}
+  </div>
+{/if}
 
 <style>
   .gate-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
@@ -55,11 +76,16 @@
     box-shadow: 0 24px 60px oklch(0.2 0.03 255 / 0.14);
     padding: 30px 32px; /* dialogs get more air than inline cards */
   }
+  .scrim { position: fixed; inset: 0; background: var(--scrim); z-index: var(--z-scrim); }
+  .gate.modal-card {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    z-index: var(--z-modal);
+  }
   .brand { font-weight: 500; gap: 10px; margin-bottom: 4px; }
   .logo { width: 24px; height: 24px; }
   .lock-ico { display: inline-flex; color: var(--ink-soft); }
   .gate h3 { font-size: 19px; }
-  .hint { background: var(--accent-wash); border-radius: 8px; padding: 8px 12px; }
+  .hint { background: var(--accent-wash); border-radius: 0; padding: 8px 12px; }
   .pw-row { display: flex; gap: 8px; }
   .pw {
     flex: 1; font: inherit; font-size: 15px; color: var(--ink);

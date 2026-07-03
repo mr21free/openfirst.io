@@ -18,13 +18,26 @@
   import ReadinessView from './ReadinessView.svelte';
   import { langValue } from '../lib/package.js';
 
-  let { store, onClose, readOnly = false } = $props();
+  let { store, onClose, readOnly = false, initialAudience = null } = $props();
 
   const pkg = $derived(store.pkg);
   const editing = $derived(!readOnly && store.mode === 'edit');
 
-  function toggleEdit() {
+  // /demo (and similar) can pre-answer the "who are you?" gate — e.g. open the
+  // sample directly as the primary heir would see it.
+  $effect(() => {
+    if (initialAudience && !chosen && audiences.some((p) => p.id === initialAudience)) {
+      chooseAudience(initialAudience);
+    }
+  });
+
+  async function toggleEdit() {
     if (readOnly) return;
+    // Stay on the guide being read: 'start' is an alias for "first guide in
+    // the CURRENT list", and that list changes between read (published, per
+    // audience) and edit (everything, incl. drafts) — without pinning, EDIT
+    // could land on whichever draft happens to sort first.
+    const stayOn = currentGuide;
     if (editing) {
       store.stopEditing();
       // Owner previewing their own plan — skip the heir "who are you?" gate and
@@ -32,6 +45,10 @@
       chosen = true;
     } else {
       store.startEditing();
+    }
+    if (stayOn) {
+      await tick(); // let homeGuide re-derive for the new mode before aliasing
+      view = guideTarget(stayOn);
     }
   }
   function isTextEditingTarget(target) {
@@ -1294,7 +1311,7 @@
 <style>
   .shell { min-height: 100vh; --reader-section-gap: 18px; --topbar-h: 58px; }
   .topbar {
-    position: sticky; top: 0; z-index: 50;
+    position: sticky; top: 0; z-index: var(--z-topbar);
     background: color-mix(in oklch, var(--paper) 92%, transparent);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--rule-soft);

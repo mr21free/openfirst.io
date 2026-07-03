@@ -56,9 +56,9 @@
           <div class="dry-section">
             <span class="dry-label">Answer</span>
             <div class="dry-buttons">
-              <button class:on={result.status === 'pass'} onclick={() => setStatus(check.id, 'pass')} title="Done / found it" aria-label="Done / found it"><StatusIcon status="pass" size={18} /></button>
-              <button class:on={result.status === 'not_sure'} onclick={() => setStatus(check.id, 'not_sure')} title="Not sure" aria-label="Not sure"><StatusIcon status="not_sure" size={18} /></button>
-              <button class:on={result.status === 'fail'} onclick={() => setStatus(check.id, 'fail')} title="Could not do it" aria-label="Could not do it"><StatusIcon status="fail" size={18} /></button>
+              <button class="iconbtn" class:on={result.status === 'pass'} onclick={() => setStatus(check.id, 'pass')} data-tip="Done / found it" aria-label="Done / found it"><StatusIcon status="pass" size={18} /></button>
+              <button class="iconbtn" class:on={result.status === 'not_sure'} onclick={() => setStatus(check.id, 'not_sure')} data-tip="Not sure" aria-label="Not sure"><StatusIcon status="not_sure" size={18} /></button>
+              <button class="iconbtn" class:on={result.status === 'fail'} onclick={() => setStatus(check.id, 'fail')} data-tip="Could not do it" aria-label="Could not do it"><StatusIcon status="fail" size={18} /></button>
             </div>
             <textarea
               rows="3"
@@ -114,8 +114,7 @@
   .dry-prose :global(.prose) :global(p:first-child) { margin-top: 0; }
   .dry-prose :global(.prose) :global(p:last-child) { margin-bottom: 0; }
   .dry-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
-  .dry-buttons button { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--rule); color: var(--ink-soft); }
-  .dry-buttons button.on { color: var(--accent-deep); border-color: var(--accent-deep); background: var(--accent-wash); }
+  /* Status buttons use the global .iconbtn (bare) — see DESIGN.md. */
   textarea {
     width: 100%;
     resize: vertical;

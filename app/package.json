@@ -9,6 +9,7 @@
     "dev": "vite",
     "build": "vite build && node scripts/postbuild.mjs",
     "preview": "vite preview",
+    "preview:site": "npm run build && vite preview --host 127.0.0.1",
     "test:smoke": "node test/smoke.mjs",
     "test:edit": "node test/edit.mjs",
     "test:guide-reorder": "node test/guide-reorder.mjs",

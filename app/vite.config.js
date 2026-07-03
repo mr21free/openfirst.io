@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { viteSingleFile } from 'vite-plugin-singlefile';
@@ -22,21 +24,62 @@ function injectCspOnBuild() {
   };
 }
 
-// Dev only: serve the standalone static pages for their directory URLs.
-// Vite's dev server doesn't resolve a public sub-directory's index.html for a
-// bare "/how-to-use/" request (it falls through to the SPA). Production static
-// hosts resolve the directory index natively, so this is needed in dev only.
-const STATIC_PAGES = ['how-to-use', 'security'];
-function staticPageRoutes() {
+const MARKETING_HOME = fileURLToPath(new URL('./site/index.html', import.meta.url));
+const APP_ROUTES = ['build', 'open', 'demo'];
+const STATIC_PAGES = ['how-to-use', 'security', 'pricing'];
+
+function matchesDir(path, dir) {
+  return path === `/${dir}` || path === `/${dir}/` || path === `/${dir}/index.html`;
+}
+
+// Dev only: make `npm run dev` mirror the public information architecture.
+// The final build is split by scripts/postbuild.mjs, but during dev we keep the
+// Vite app shell at /build/, /open/ and /demo/, and serve the static marketing
+// home at /. This lets the whole site be clicked through locally without a
+// rebuild after every app change.
+function localSiteRoutes() {
   return {
-    name: 'static-page-routes',
+    name: 'local-site-routes',
     apply: 'serve',
     configureServer(server) {
-      server.middlewares.use((req, _res, next) => {
+      server.watcher.add(MARKETING_HOME);
+      server.watcher.on('change', (file) => {
+        if (file === MARKETING_HOME) server.ws.send({ type: 'full-reload', path: '/' });
+      });
+
+      server.middlewares.use(async (req, res, next) => {
         const path = (req.url || '').split('?')[0];
-        for (const page of STATIC_PAGES) {
-          if (path === `/${page}` || path === `/${page}/`) req.url = `/${page}/index.html`;
+        if (path === '/' || path === '/index.html') {
+          try {
+            const html = readFileSync(MARKETING_HOME, 'utf8');
+            const transformed = await server.transformIndexHtml('/', html);
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.end(transformed);
+          } catch (err) {
+            next(err);
+          }
+          return;
         }
+
+        for (const route of APP_ROUTES) {
+          if (matchesDir(path, route)) {
+            req.url = '/index.html';
+            next();
+            return;
+          }
+        }
+
+        // Vite's dev server doesn't resolve a public sub-directory's index.html
+        // for a bare "/how-to-use/" request (it falls through to the SPA).
+        for (const page of STATIC_PAGES) {
+          if (matchesDir(path, page)) {
+            req.url = `/${page}/index.html`;
+            next();
+            return;
+          }
+        }
+
         next();
       });
     }
@@ -47,7 +90,7 @@ function staticPageRoutes() {
 // with no network calls, no CDN, no fonts-from-web. Everything (JS, CSS, fonts)
 // is inlined so the built file is the durable, "outlives-the-company" artifact.
 export default defineConfig({
-  plugins: [staticPageRoutes(), svelte(), viteSingleFile(), injectCspOnBuild()],
+  plugins: [localSiteRoutes(), svelte(), viteSingleFile(), injectCspOnBuild()],
   build: {
     target: 'es2020',
     // Inline every asset (incl. woff2 fonts) as base64 so nothing is fetched.

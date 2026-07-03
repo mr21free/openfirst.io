@@ -98,7 +98,7 @@
       </div>
       <div class="row-add">
         <input bind:value={newLang} placeholder="e.g. sk" onkeydown={(e) => e.key === 'Enter' && (e.preventDefault(), addLanguage())} />
-        <button class="mini" title="Add language" onclick={addLanguage}>+</button>
+        <button class="iconbtn" data-tip="Add language" aria-label="Add language" onclick={addLanguage}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
       </div>
     </div>
     <label class="f"><span class="lbl">Default language</span>
@@ -161,9 +161,9 @@
             If you forget it, this draft can't be recovered — keep the encrypted export as your backup.
           </p>
           {#if draftErr}<p class="tiny" style="color: var(--warn)">{draftErr}</p>{/if}
-          <div class="row" style="gap:8px">
-            <button class="btn btn-small" disabled={draftBusy || !draftPass} onclick={applyProtection}>{draftBusy ? 'Encrypting…' : store?.draftProtected ? 'Change passphrase' : 'Turn on'}</button>
-            <button class="btn-link" onclick={() => { showProtect = false; draftPass = ''; draftErr = ''; }}>Cancel</button>
+          <div class="row" style="gap:8px; justify-content: flex-end">
+            <button class="btn btn-small btn-ghost" onclick={() => { showProtect = false; draftPass = ''; draftErr = ''; }}>Cancel</button>
+            <button class="btn btn-small btn-primary" disabled={draftBusy || !draftPass} onclick={applyProtection}>{draftBusy ? 'Encrypting…' : store?.draftProtected ? 'Change passphrase' : 'Turn on'}</button>
           </div>
         </div>
       {/if}

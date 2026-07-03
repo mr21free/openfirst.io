@@ -81,7 +81,7 @@
   .filterwrap { position: relative; flex: none; }
   .filterbtn { position: relative; }
   .fcount { position: absolute; top: -6px; right: -6px; background: var(--accent-deep); color: var(--paper); border-radius: 999px; min-width: 17px; height: 17px; padding: 0 4px; display: inline-grid; place-items: center; font-size: 10px; line-height: 1; }
-  .filterpop { position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; width: 280px; max-width: 86vw; max-height: 60vh; overflow-y: auto; background: var(--paper); border: 1px solid var(--rule); border-radius: 0; box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18); padding: 8px; }
+  .filterpop { position: absolute; top: calc(100% + 6px); right: 0; z-index: var(--z-popover); width: 280px; max-width: 86vw; max-height: 60vh; overflow-y: auto; background: var(--paper); border: 1px solid var(--rule); border-radius: 0; box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18); padding: 8px; }
   .facet { padding: 6px 4px; border-bottom: 1px solid var(--rule-soft); }
   .facet:last-of-type { border-bottom: none; }
   .facet-label { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-mute); padding: 2px 6px 6px; }

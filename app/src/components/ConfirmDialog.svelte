@@ -37,14 +37,14 @@
   .modal-scrim {
     position: fixed;
     inset: 0;
-    z-index: 100;
+    z-index: calc(var(--z-alert) - 1);
     background: oklch(0.2 0.03 255 / 0.42);
   }
   .modal-card {
     position: fixed;
     left: 50%;
     top: 50%;
-    z-index: 101;
+    z-index: var(--z-alert);
     width: min(460px, calc(100vw - 32px));
     transform: translate(-50%, -50%);
     background: var(--paper);

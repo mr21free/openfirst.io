@@ -98,8 +98,8 @@
     Downloads the plan to keep on a USB key or drive.
   </p>
 
-  <div class="namefield">
-    <span class="nlbl">Plan name</span>
+  <div class="f namefield">
+    <span class="lbl">Plan name</span>
     <input class="inp" bind:value={name} placeholder="My life package" />
     <span class="tiny muted">Saves as <code>{fileName}</code></span>
   </div>
@@ -198,10 +198,10 @@
 </div>
 
 <style>
-  .scrim { position: fixed; inset: 0; background: oklch(0.2 0.03 255 / 0.32); z-index: 70; }
+  .scrim { position: fixed; inset: 0; background: var(--scrim); z-index: var(--z-scrim); }
   .modal {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    z-index: 71; width: min(580px, 94vw);
+    z-index: var(--z-modal); width: min(580px, 94vw);
     border-left: 2px solid var(--accent);
     display: flex; flex-direction: column; gap: 12px;
     box-shadow: 0 24px 60px oklch(0.2 0.03 255 / 0.18);

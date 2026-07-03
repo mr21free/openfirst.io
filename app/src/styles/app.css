@@ -26,6 +26,17 @@
   --maxw: 1480px;
   /* Square corners throughout — the calm "paper document" look. */
   --radius: 0px;
+
+  /* Layer scale (see DESIGN.md) — don't invent new z-indexes. */
+  --z-popover: 40;   /* dropdowns, search results, filter panels */
+  --z-topbar: 50;
+  --z-scrim: 60;     /* drawer + dialog scrims sit above chrome */
+  --z-drawer: 61;
+  --z-modal: 71;
+  --z-editor-full: 80;
+  --z-alert: 101;    /* confirm dialogs above everything */
+  --z-tooltip: 200;
+  --scrim: oklch(0.2 0.03 255 / 0.34);
 }
 
 /* Dark mode — same heaven-blue hue, cooled down for night reading. */
@@ -150,7 +161,7 @@ strong { font-weight: 600; }
 [data-tip] { position: relative; }
 [data-tip]::after {
   content: attr(data-tip);
-  position: absolute; z-index: 200;
+  position: absolute; z-index: var(--z-tooltip);
   background: oklch(0.21 0.02 255); color: oklch(0.99 0 0);
   font-size: 12px; font-weight: 500; line-height: 1; font-family: inherit;
   padding: 7px 10px; border-radius: 6px; white-space: nowrap;

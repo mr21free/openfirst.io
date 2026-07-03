@@ -35,7 +35,7 @@ try {
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => (b.getAttribute('aria-label') || '') === 'Settings')?.click());
   await page.waitForFunction(() => !!document.querySelector('[role="dialog"] .row-add input'), { timeout: 4000 });
   await page.type('[role="dialog"] .row-add input', 'sk');
-  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] .row-add button')].find((b) => b.textContent.trim() === '+')?.click());
+  await page.evaluate(() => document.querySelector('[role="dialog"] .row-add button[aria-label="Add language"]')?.click());
   await pause(); await page.keyboard.press('Escape'); await pause();
   ok('language selector appears with a 2nd language', await page.evaluate(() => !!document.querySelector('select.sel.lang')));
 

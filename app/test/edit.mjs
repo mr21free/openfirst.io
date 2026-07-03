@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const FILE = 'file://' + resolve(__dirname, '../dist/index.html');
+const FILE = 'file://' + resolve(__dirname, '../dist/build/index.html');
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const results = []; const ok = (n, c) => results.push([c ? 'PASS' : 'FAIL', n]);
 
@@ -127,7 +127,7 @@ try {
   const inserted = await page.waitForFunction(() => !!document.querySelector('main .ce .ce-edit .refchip'), { timeout: 4000 }).then(() => true).catch(() => false);
   ok('guide editor inserts a reference pill', inserted);
   // the Settings (pencil) button opens the properties panel — with no content editor in it
-  await page.evaluate(() => document.querySelector('main .gtool-icon')?.click());
+  await page.evaluate(() => [...document.querySelectorAll('main button')].find((b) => (b.getAttribute('aria-label') || '') === 'Guide properties')?.click());
   await page.waitForFunction(() => !!document.querySelector('[role="dialog"] .frm'), { timeout: 4000 });
   ok('guide settings panel holds properties, not the content editor', await page.evaluate(() => !!document.querySelector('[role="dialog"] .frm') && !document.querySelector('[role="dialog"] .ce')));
   await page.keyboard.press('Escape');
@@ -189,3 +189,4 @@ for (const [s, n] of results) console.log(`  [${s}] ${n}`);
 if (errors.length) { console.log('\n errors:'); errors.forEach((e) => console.log('  - ' + e)); }
 const failed = results.filter((r) => r[0] === 'FAIL').length;
 console.log(`\n${failed ? '✗ ' + failed + ' failed' : '✓ all passed'} (${results.length})\n`);
+process.exit(failed ? 1 : 0);

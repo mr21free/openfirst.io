@@ -3,7 +3,7 @@
   import logo from '../assets/logo.svg';
   import ConfirmDialog from './ConfirmDialog.svelte';
 
-  let { onLoaded, newPlan, drafts = [], resumeDraft, discardDraft } = $props();
+  let { onLoaded, newPlan, drafts = [], resumeDraft, discardDraft, focus = '' } = $props();
 
   function draftWhen(savedAt) {
     return savedAt ? new Date(savedAt).toLocaleString() : '';
@@ -78,10 +78,10 @@
 <div class="page">
   <header class="topbar no-print">
     <div class="container row">
-      <div class="brand row">
+      <a class="brand row" href="/">
         <img class="logo" src={logo} alt="" aria-hidden="true" />
         <span>OpenFirst</span>
-      </div>
+      </a>
       <span class="spacer"></span>
       <nav class="topnav">
         <a href="/how-to-use/">How to use</a>
@@ -93,14 +93,12 @@
 
   <main class="container">
     <section class="hero">
-      <p class="eyebrow">OpenFirst · a private life package, built on your device</p>
-      <h1>Nothing breaks<br />if you're gone tomorrow.</h1>
+      <p class="eyebrow">The builder</p>
+      <h1>{focus === 'open' ? 'Open a plan.' : drafts.length ? 'Welcome back.' : 'Start your plan.'}</h1>
       <p class="lede soft">
-        That's the promise — to each other. Build a calm map of everything that
-        matters, on this device, with no account and no cloud. Hand your family
-        one file they can open with a double-click, whenever the time comes.
+        Everything you build stays on this device — no account, no cloud.
+        {#if !drafts.length}Start with the map: the people, the places, the things that matter.{/if}
       </p>
-      <p class="hero-steps soft">Start with the map. Build the system together. Test it before it matters.</p>
 
       {#each drafts as draft (draft.key)}
         <div class="draft card no-print">
@@ -116,15 +114,15 @@
       {/each}
 
       <div class="action-grid no-print">
-        <div class="action-card">
+        <div class="action-card" style:order={focus === 'open' ? 1 : 0}>
           <p class="soft small">Start building your life package. Everything stays on this device.</p>
-          <button class="btn btn-primary" onclick={() => newPlan?.()}>Create new plan</button>
+          <button class="btn {focus === 'open' ? 'btn-secondary' : 'btn-primary'}" onclick={() => newPlan?.()}>Create new plan</button>
         </div>
-        <div class="action-card">
+        <div class="action-card" style:order={focus === 'open' ? 0 : 1}>
           <p class="soft small">Open a <code>.json</code> or <code>.zip</code> backup — or recover an editable plan from a heir <code>start-here.html</code>.</p>
-          <button class="btn btn-secondary" onclick={() => fileInput.click()}>Open existing plan</button>
+          <button class="btn {focus === 'open' ? 'btn-primary' : 'btn-secondary'}" onclick={() => fileInput.click()}>Open existing plan</button>
         </div>
-        <div class="action-card">
+        <div class="action-card" style="order: 2">
           <p class="soft small">Explore a sample plan to see how everything works.</p>
           <button class="btn btn-secondary" onclick={() => run(loadSample)}>Demo</button>
         </div>
@@ -221,24 +219,19 @@
     border-bottom: 1px solid var(--rule-soft);
   }
   .topbar .row { height: 60px; }
-  .brand { font-weight: 500; gap: 10px; }
+  .brand { font-weight: 500; gap: 10px; color: var(--ink); }
+  .brand:hover { text-decoration: none; }
   .logo { width: 24px; height: 24px; display: block; }
   .topnav { display: flex; align-items: center; gap: 24px; }
   .topnav a { color: var(--ink-soft); font-size: 14px; }
   .topnav a:hover { color: var(--ink); text-decoration: none; }
   main { flex: 1; width: 100%; }
-  .hero { padding: 84px 0 56px; }
+  .hero { padding: 64px 0 48px; }
   h1 {
-    margin-top: 16px; font-size: clamp(36px, 5.6vw, 68px);
-    font-weight: 300; letter-spacing: -0.015em; line-height: 1.06; max-width: 22ch;
+    margin-top: 14px; font-size: clamp(30px, 4.2vw, 46px);
+    font-weight: 300; letter-spacing: -0.012em; line-height: 1.08; max-width: 24ch;
   }
-  .lede { margin-top: 24px; max-width: 58ch; font-size: 17.5px; line-height: 1.7; }
-  /* The quiet three-beat method line — small caps, hairline lead-in. */
-  .hero-steps {
-    margin-top: 26px; display: flex; align-items: center; gap: 14px;
-    font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute);
-  }
-  .hero-steps::before { content: ''; display: inline-block; width: 34px; height: 1px; background: var(--accent); flex: none; }
+  .lede { margin-top: 18px; max-width: 58ch; font-size: 16.5px; line-height: 1.7; }
   .error { color: var(--warn); margin-top: 14px; white-space: pre-line; text-align: left; }
 
   /* Draft cards */

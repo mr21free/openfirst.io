@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const FILE = 'file://' + resolve(__dirname, '../dist/index.html');
+const FILE = 'file://' + resolve(__dirname, '../dist/build/index.html');
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const results = []; const ok = (n, c) => results.push([c ? 'PASS' : 'FAIL', n]);
 
@@ -53,3 +53,4 @@ for (const [s, n] of results) console.log(`  [${s}] ${n}`);
 if (errors.length) { console.log('\n errors:'); errors.forEach((e) => console.log('  - ' + e)); }
 const failed = results.filter((r) => r[0] === 'FAIL').length;
 console.log(`\n${failed ? '✗ ' + failed + ' failed' : '✓ all passed'} (${results.length})\n`);
+process.exit(failed ? 1 : 0);

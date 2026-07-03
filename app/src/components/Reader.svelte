@@ -747,7 +747,7 @@
               </select>
             </label>
             {#if !readOnly}
-            <button class="iconbtn" class:editing-on={dryRun} title={dryRun ? 'Dry run in progress' : 'Start dry run'} aria-label={dryRun ? 'Dry run in progress' : 'Start dry run'} onclick={() => dryRun ? null : startDryRun()}>
+            <button class="iconbtn" class:on={dryRun} data-tip={dryRun ? 'Dry run in progress' : 'Start dry run'} aria-label={dryRun ? 'Dry run in progress' : 'Start dry run'} onclick={() => dryRun ? null : startDryRun()}>
                 {#if dryRun}
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
                 {:else}
@@ -776,14 +776,14 @@
         {/if}
         {#if !showGate}
           {#if !readOnly && store.draftProtected}
-            <button class="iconbtn" title="Lock the draft and return to start" aria-label="Lock draft" onclick={lockDraft}>
+            <button class="iconbtn" data-tip="Lock the draft and return to start" aria-label="Lock draft" onclick={lockDraft}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </button>
           {/if}
           {#if !readOnly}
-            <button class="iconbtn" class:editing-on={editing} class:plan-done={editing} class:plan-edit={!editing} title={editing ? 'Done editing — view the plan' : 'Edit this plan'} aria-label={editing ? 'Done editing' : 'Edit'} onclick={toggleEdit}>
+            <button class="iconbtn" class:on={editing} class:plan-done={editing} class:plan-edit={!editing} data-tip={editing ? 'Done editing — view the plan' : 'Edit this plan'} aria-label={editing ? 'Done editing' : 'Edit'} onclick={toggleEdit}>
               {#if editing}
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" /><circle cx="12" cy="12" r="3" />
@@ -801,7 +801,7 @@
             </select>
           {/if}
           {#if !readOnly}
-            <button class="iconbtn" title="Export plan to disk" aria-label="Export" onclick={() => (showExport = true)}>
+            <button class="iconbtn" data-tip="Export plan to disk" aria-label="Export" onclick={() => (showExport = true)}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
@@ -809,7 +809,7 @@
               </svg>
             </button>
           {/if}
-          <button class="iconbtn" title="Print" aria-label="Print" onclick={() => window.print()}>
+          <button class="iconbtn" data-tip="Print" aria-label="Print" onclick={() => window.print()}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="6 9 6 2 18 2 18 9" />
               <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
@@ -817,7 +817,7 @@
             </svg>
           </button>
           {#if !readOnly}
-            <button class="iconbtn" title="Settings" aria-label="Settings" onclick={openSettings}>
+            <button class="iconbtn" data-tip="Settings" aria-label="Settings" onclick={openSettings}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />
                 <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6l-.08.1a2 2 0 0 1-3.84 0L10 20a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1l-.1-.08a2 2 0 0 1 0-3.84L4 10a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6l.08-.1a2 2 0 0 1 3.84 0L14 4a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.08.36.28.7.6 1l.1.08a2 2 0 0 1 0 3.84L20 14c-.32.3-.52.64-.6 1Z" />
@@ -1176,7 +1176,7 @@
             </div>
             {#if editing}
               <aside class="map-side no-print">
-                <button class="map-tool" title="Map settings (who can see it)" aria-label="Map settings" onclick={openMapSettings}>
+                <button class="iconbtn" data-tip="Map settings (who can see it)" aria-label="Map settings" onclick={openMapSettings}>
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
                     <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
@@ -1327,7 +1327,6 @@
   }
   .plan-title-input:hover { border-color: var(--rule); }
   .plan-title-input:focus { outline: none; border-color: var(--accent); background: var(--paper); }
-  .iconbtn.editing-on { color: var(--accent-deep); background: var(--accent-wash); }
   .reader-tools { display: inline-flex; align-items: center; gap: 8px; }
   .sel-wrap { display: inline-flex; align-items: center; gap: 8px; }
 
@@ -1344,15 +1343,7 @@
   }
   .sel:hover { border-color: var(--accent-deep); }
   .lang { font-weight: 500; }
-  .iconbtn {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 38px; height: 38px; border-radius: 999px;
-    border: 1px solid transparent; color: var(--ink-soft); flex: none;
-    transition: color .12s, border-color .12s, background .12s;
-  }
-  .iconbtn:hover { color: var(--ink); border-color: var(--rule); background: var(--paper); }
-  .iconbtn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .iconbtn:disabled:hover { color: var(--ink-soft); border-color: transparent; background: transparent; }
+  /* .iconbtn is global (app.css) — the bare pattern from DESIGN.md. */
 
 
   /* stretch: the content column grows to match the (usually taller) sticky
@@ -1471,12 +1462,6 @@
   .map-row { position: relative; flex: 1; display: flex; flex-direction: column; }
   .map-col { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 22px; }
   .map-side { position: absolute; top: 0; right: -52px; display: flex; flex-direction: column; gap: 8px; }
-  .map-tool {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 36px; height: 36px; border-radius: 9px;
-    color: var(--ink-soft); border: 1px solid var(--rule); background: var(--paper);
-  }
-  .map-tool:hover { color: var(--accent-deep); border-color: var(--accent-deep); }
 
   /* drag & drop reordering */
   .navrow.dragging { opacity: 0.4; }

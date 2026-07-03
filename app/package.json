@@ -7,7 +7,7 @@
   "description": "openfirst.io — local-first, offline, no-server life package builder and reader.",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/postbuild.mjs",
     "preview": "vite preview",
     "test:smoke": "node test/smoke.mjs",
     "test:edit": "node test/edit.mjs",

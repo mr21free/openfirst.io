@@ -61,7 +61,7 @@
     </span>
     <span class="stale-actions">
       {#if onReview}<button class="btn btn-small" onclick={() => onReview()}>Open readiness</button>{/if}
-      <button class="stale-x" title="Dismiss for now" aria-label="Dismiss" onclick={() => (dismissed = true)}>✕</button>
+      <button class="iconbtn stale-x" data-tip="Dismiss for now" data-tip-pos="left" aria-label="Dismiss" onclick={() => (dismissed = true)}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </span>
   </div>
 {/if}
@@ -75,6 +75,5 @@
   }
   .stale-txt strong { color: var(--ink); margin-right: 4px; }
   .stale-actions { display: inline-flex; gap: 8px; align-items: center; flex: none; }
-  .stale-x { font-size: 13px; color: var(--ink-mute); background: none; border: none; cursor: pointer; padding: 4px; }
-  .stale-x:hover { color: var(--ink); }
+  .stale-x { width: 28px; height: 28px; }
 </style>

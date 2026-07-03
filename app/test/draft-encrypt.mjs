@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const FILE = 'file://' + resolve(__dirname, '../dist/index.html');
+const FILE = 'file://' + resolve(__dirname, '../dist/build/index.html');
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const results = []; const ok = (n, c) => results.push([c ? 'PASS' : 'FAIL', n]);
 const pause = (ms = 300) => new Promise((r) => setTimeout(r, ms));
@@ -55,7 +55,7 @@ try {
   // Settings → Protect this draft.
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => (b.getAttribute('aria-label') || '') === 'Settings')?.click());
   await page.waitForFunction(() => /draft protection/i.test(document.body.innerText), { timeout: 5000 });
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /protect this draft/i.test(b.textContent))?.click());
+  await page.evaluate(() => document.querySelector('.protect [role="switch"]')?.click());
   await page.waitForSelector('.protect input[type=password]', { timeout: 4000 });
   await page.type('.protect input[type=password]', PASS);
   // Hand-typed passphrases must be repeated (typo guard) — fill the confirm field.

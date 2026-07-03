@@ -87,9 +87,10 @@
   {#if editing}
     <aside class="guide-side no-print">
       <button
-        class="gtool gtool-pub"
+        class="iconbtn gtool-pub"
         class:is-draft={guide.draft}
-        title={guide.draft ? 'Draft — hidden from the exported plan. Click to publish.' : 'Published — your heir will see this. Click to make it a draft.'}
+        data-tip={guide.draft ? 'Draft — hidden from the exported plan. Click to publish.' : 'Published — your heir will see this. Click to make it a draft.'}
+        data-tip-pos="left"
         aria-label={guide.draft ? 'Draft guide. Click to publish.' : 'Published guide. Click to make draft.'}
         aria-pressed={!!guide.draft}
         onclick={() => onToggleDraft?.()}
@@ -106,7 +107,7 @@
           </svg>
         {/if}
       </button>
-      <button class="gtool gtool-icon" title="Guide properties (who it's for, importance)" aria-label="Guide properties" onclick={() => onEdit?.()}>
+      <button class="iconbtn" data-tip="Guide properties (who it's for, importance)" data-tip-pos="left" aria-label="Guide properties" onclick={() => onEdit?.()}>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
           <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
@@ -114,7 +115,7 @@
           <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
         </svg>
       </button>
-      <button class="gtool gtool-del" title="Delete guide" aria-label="Delete guide" onclick={() => onDelete?.()}><TrashIcon /></button>
+      <button class="iconbtn danger" data-tip="Delete guide" data-tip-pos="left" aria-label="Delete guide" onclick={() => onDelete?.()}><TrashIcon /></button>
     </aside>
   {/if}
 </div>
@@ -134,17 +135,9 @@
     .guide-row { display: flex; flex-direction: column-reverse; }
     .guide-side { position: static; flex-direction: row; justify-content: flex-end; margin-bottom: 6px; }
   }
-  .gtool {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 36px; height: 36px; border-radius: 9px;
-    color: var(--ink-soft); border: 1px solid var(--rule); background: var(--paper);
-  }
-  .gtool:hover { color: var(--accent-deep); border-color: var(--accent-deep); }
-  .gtool-del { color: var(--ink-mute); }
-  .gtool-del:hover { color: var(--warn); border-color: var(--rule); }
-  /* Publish / draft toggle: neutral when published, soft amber when draft. */
-  .gtool-pub.is-draft { color: var(--draft); border-color: var(--draft); background: var(--draft-wash); }
-  .gtool-pub.is-draft:hover { color: var(--draft); border-color: var(--draft); }
+  /* Publish / draft toggle: neutral when published, soft amber when draft.
+     (Base look comes from the global .iconbtn — see DESIGN.md.) */
+  :global(.iconbtn).gtool-pub.is-draft { color: var(--draft); background: var(--draft-wash); }
   .draft-banner {
     display: flex; align-items: center; gap: 9px;
     margin: 0; padding: 9px 13px;

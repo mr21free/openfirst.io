@@ -4,7 +4,7 @@
   import UnlockGate from './components/UnlockGate.svelte';
   import { Store } from './lib/store.svelte.js';
 import { loadDraft, loadAllDrafts, clearDraft } from './lib/persist.js';
-import { decryptAndLoad } from './lib/load.js';
+import { decryptAndLoad, loadSample } from './lib/load.js';
 import { PACKAGE_SCHEMA } from './lib/format.js';
 import { deriveDraftKey, decryptString, decryptToBlob } from './lib/draftcrypto.js';
 
@@ -16,6 +16,16 @@ import { deriveDraftKey, decryptString, decryptToBlob } from './lib/draftcrypto.
   let gateEnvelope = $state(null);
 
   let drafts = $state([]);
+
+  // The same built file is served at /build/, /open/ and /demo/ — the path is
+  // the boot mode. file:// (the exported reader, local test runs) never
+  // matches, so double-clicked files always boot normally.
+  const bootMode = (() => {
+    if (readerMode || typeof location === 'undefined' || location.protocol === 'file:') return 'build';
+    const m = /^\/(build|open|demo)\/?$/.exec(location.pathname);
+    return m ? m[1] : 'build';
+  })();
+  let bootedDemo = false;
 
   function base64ToBytes(b64) {
     const bin = atob(b64);
@@ -58,6 +68,12 @@ import { deriveDraftKey, decryptString, decryptToBlob } from './lib/draftcrypto.
       return;
     }
     if (store.pkg) return; // editing/reading — don't check
+    if (bootMode === 'demo' && !bootedDemo) {
+      // /demo boots straight into the sample plan.
+      bootedDemo = true;
+      (async () => { store.load(await loadSample()); window.scrollTo({ top: 0 }); })();
+      return;
+    }
     (async () => {
       const all = await loadAllDrafts();
       drafts = all
@@ -79,7 +95,14 @@ import { deriveDraftKey, decryptString, decryptToBlob } from './lib/draftcrypto.
   }
 
   function onLoaded(loaded) { store.load(loaded); window.scrollTo({ top: 0 }); }
-  function close() { store.reset(); }
+  function close() {
+    store.reset();
+    // Leaving a /demo or /open boot lands on the builder home, so a reload
+    // doesn't re-trigger the boot mode.
+    if (bootMode !== 'build' && location.protocol !== 'file:') {
+      history.replaceState(null, '', '/build/');
+    }
+  }
 
   // Start a brand-new plan and drop straight into edit mode with a "Start here"
   // guide in a "General" group so the user knows where to begin.
@@ -199,5 +222,5 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
 {:else if draftGate}
   <UnlockGate hint="Your draft passphrase (not the export password)." onUnlock={unlockDraft} onCancel={() => (draftGate = null)} />
 {:else}
-  <Landing {onLoaded} {newPlan} {drafts} {resumeDraft} {discardDraft} />
+  <Landing {onLoaded} {newPlan} {drafts} {resumeDraft} {discardDraft} focus={bootMode === 'open' ? 'open' : ''} />
 {/if}

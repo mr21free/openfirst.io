@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { unzipSync, strFromU8 } from 'fflate';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const FILE = 'file://' + resolve(__dirname, '../dist/index.html');
+const FILE = 'file://' + resolve(__dirname, '../dist/build/index.html');
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
 const results = [];

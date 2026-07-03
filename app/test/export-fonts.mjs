@@ -8,7 +8,7 @@ import { mkdtempSync, existsSync, statSync, readFileSync, writeFileSync, rmSync 
 import { tmpdir } from 'node:os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DIST = resolve(__dirname, '../dist/index.html');
+const DIST = resolve(__dirname, '../dist/build/index.html');
 const FILE = 'file://' + DIST;
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const results = []; const ok = (n, c) => results.push([c ? 'PASS' : 'FAIL', n]);

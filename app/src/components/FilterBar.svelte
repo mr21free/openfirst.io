@@ -33,7 +33,7 @@
 
   {#if usable.length}
     <div class="filterwrap">
-      <button class="filterbtn" class:on={activeCount > 0} onclick={() => (open = !open)} aria-expanded={open} aria-label="Filter" title="Filter">
+      <button class="iconbtn filterbtn" class:on={activeCount > 0} onclick={() => (open = !open)} aria-expanded={open} aria-label="Filter" data-tip="Filter">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
         {#if activeCount}<span class="fcount">{activeCount}</span>{/if}
       </button>
@@ -79,9 +79,7 @@
   .filterbar .search { flex: 1; min-width: 160px; height: 40px; font: inherit; font-size: 14px; border: 1px solid var(--rule); border-radius: 0; padding: 0 12px; background: var(--paper); color: var(--ink); }
   .filterbar .search:focus { outline: none; border-color: var(--accent-deep); }
   .filterwrap { position: relative; flex: none; }
-  .filterbtn { position: relative; display: inline-grid; place-items: center; width: 40px; height: 40px; color: var(--ink-soft); border: 1px solid var(--rule); border-radius: 0; background: var(--paper); }
-  .filterbtn:hover { border-color: var(--accent-deep); color: var(--accent-deep); }
-  .filterbtn.on { color: var(--accent-deep); border-color: var(--accent-deep); background: var(--accent-wash); }
+  .filterbtn { position: relative; }
   .fcount { position: absolute; top: -6px; right: -6px; background: var(--accent-deep); color: var(--paper); border-radius: 999px; min-width: 17px; height: 17px; padding: 0 4px; display: inline-grid; place-items: center; font-size: 10px; line-height: 1; }
   .filterpop { position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; width: 280px; max-width: 86vw; max-height: 60vh; overflow-y: auto; background: var(--paper); border: 1px solid var(--rule); border-radius: 0; box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18); padding: 8px; }
   .facet { padding: 6px 4px; border-bottom: 1px solid var(--rule-soft); }

@@ -45,7 +45,7 @@
       Best practice: keep photos/videos small, or export the <em>.zip package</em> instead —
       it stores files normally and stays fast at any size. The heir opens it with the same reader.
     </span>
-    <button class="size-x" title="Got it — don't show this again for this plan" aria-label="Dismiss" onclick={dismiss}>✕</button>
+    <button class="iconbtn size-x" data-tip="Got it — don't show this again for this plan" data-tip-pos="left" aria-label="Dismiss" onclick={dismiss}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   </div>
 {/if}
 
@@ -64,6 +64,5 @@
     border-bottom-color: oklch(0.45 0.06 70);
   }
   .sizebar strong { margin-right: 6px; }
-  .size-x { flex: none; font-size: 13px; color: inherit; opacity: 0.7; background: none; border: none; cursor: pointer; padding: 2px 4px; }
-  .size-x:hover { opacity: 1; }
+  .size-x { width: 28px; height: 28px; color: inherit; }
 </style>

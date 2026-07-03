@@ -26,7 +26,7 @@ function injectCspOnBuild() {
 
 const MARKETING_HOME = fileURLToPath(new URL('./site/index.html', import.meta.url));
 const APP_ROUTES = ['build', 'open', 'demo'];
-const STATIC_PAGES = ['how-to-use', 'security', 'pricing'];
+const STATIC_PAGES = ['how-to-use', 'security', 'pricing', 'guides'];
 
 function matchesDir(path, dir) {
   return path === `/${dir}` || path === `/${dir}/` || path === `/${dir}/index.html`;
@@ -72,9 +72,15 @@ function localSiteRoutes() {
 
         // Vite's dev server doesn't resolve a public sub-directory's index.html
         // for a bare "/how-to-use/" request (it falls through to the SPA).
+        // /guides/ has nested pages, so any depth under a static page works.
         for (const page of STATIC_PAGES) {
           if (matchesDir(path, page)) {
             req.url = `/${page}/index.html`;
+            next();
+            return;
+          }
+          if (path.startsWith(`/${page}/`) && path.endsWith('/')) {
+            req.url = `${path}index.html`;
             next();
             return;
           }

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Security · OpenFirst</title>
-  <meta name="description" content="How OpenFirst protects your inheritance plan — local-first, provably offline, open encryption — and the limits it is honest about." />
+  <title>Guides & templates · OpenFirst</title>
+  <meta name="description" content="Free inheritance-plan guides and templates: the first 72 hours, the Bitcoin inheritance runbook, dry runs, the trusted-helper protocol. Read, copy, or open directly in the app." />
   <link rel="icon" href="/logo.svg" />
   <style>
     /* IBM Plex Mono — the same family as the app. */
@@ -61,7 +61,6 @@
     h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 300; letter-spacing: -0.01em; line-height: 1.1; margin: 10px 0 12px; }
     .lede { color: var(--ink-soft); font-size: 17px; }
     h2 { font-size: 22px; font-weight: 500; letter-spacing: -0.005em; margin: 46px 0 10px; }
-    h3 { font-size: 17px; font-weight: 600; margin: 26px 0 6px; }
     p { margin: 10px 0; } ul { padding-left: 1.3rem; } li { margin: 7px 0; }
     code { background: var(--accent-wash); color: var(--accent-deep); padding: 1px 5px; border-radius: 5px; font-size: 0.92em; }
     .pill { display: inline-block; background: var(--accent-wash); color: var(--accent-deep); border-radius: 999px; padding: 2px 10px; font-size: 12px; }
@@ -84,6 +83,20 @@
     .screen .tiny { color: var(--screen-px); font-size: 11px; letter-spacing: 0.04em; }
 
     @media (max-width: 640px) { .container, .content { padding-left: 18px; padding-right: 18px; } }
+
+    /* ---- guides ---- */
+    .g-list { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-top: 26px; }
+    .g-card { background: var(--paper); border: 1px solid var(--rule-soft); border-left: 2px solid var(--accent); padding: 24px 26px; display: flex; flex-direction: column; }
+    .g-card h3 { font-size: 18px; font-weight: 500; margin-bottom: 8px; }
+    .g-card p { color: var(--ink-soft); font-size: 14.5px; margin: 0 0 14px; flex: 1; }
+    .g-kind { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-deep); margin-bottom: 8px; }
+    .open-tpl { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 42px; padding: 10px 18px; border-radius: 999px; border: 1px solid var(--accent-deep); background: var(--accent-deep); color: #fff; font-size: 14px; font-weight: 500; }
+    .open-tpl:hover { text-decoration: none; background: oklch(0.5 0.13 250); }
+    .open-tpl.quiet { background: var(--paper); color: var(--ink); border-color: var(--rule); }
+    .open-tpl.quiet:hover { border-color: var(--accent-deep); }
+    .g-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 26px 0 8px; }
+    ol li, ul li { margin: 8px 0; }
+    h3 { font-size: 17px; font-weight: 600; margin: 28px 0 6px; }
   </style>
 </head>
 <body>
@@ -103,62 +116,70 @@
       </nav>
     </div>
   </header>
+  <main class="content" style="max-width: 1060px">
+    <span class="eyebrow">Guides &amp; templates</span>
+    <h1>Borrow our homework.</h1>
+    <p class="lede">Everything here is free: read it, copy it, print it. And every template opens directly in the app as a ready-made plan you fill in — no account, nothing leaves your device.</p>
 
+    <div class="g-list">
+      <div class="g-card">
+        <div class="g-kind">Template · for your heir</div>
+        <h3>The First 72 Hours</h3>
+        <p>What to do — and what not to touch — in the first three days. Separates the truly urgent from everything that can wait, so grief doesn't have to make decisions.</p>
+        <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
+          <a class="open-tpl quiet" href="/guides/first-72-hours/">Read</a>
+          <a class="open-tpl" href="/build/?template=first-72-hours">Open in the app</a>
+        </div>
+      </div>
 
-  <main class="content">
-    <span class="eyebrow">Security</span>
-    <h1>Built to be trusted — and honest about the limits.</h1>
-    <p class="lede">OpenFirst runs entirely on your device and hands your loved ones a single file they open offline. Here's what that protects, what it deliberately doesn't, and how you can check every claim yourself. The full threat model lives in <a href="https://github.com/mr21free/inheritance/blob/main/docs/SECURITY.md">SECURITY.md</a>.</p>
+      <div class="g-card">
+        <div class="g-kind">Template · Bitcoin</div>
+        <h3>The Bitcoin Inheritance Runbook</h3>
+        <p>Self-custody that outlives you. What to document (and what never to write down), whom to involve, and the irreversible mistakes to design out.</p>
+        <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
+          <a class="open-tpl quiet" href="/guides/bitcoin-inheritance-runbook/">Read</a>
+          <a class="open-tpl" href="/build/?template=bitcoin-inheritance-runbook">Open in the app</a>
+        </div>
+      </div>
 
-    <h2>The four principles</h2>
-    <ul>
-      <li><strong>Local-first, no server.</strong> There is no backend. The app is static files. Nothing you type is uploaded, because there is nowhere to upload it to.</li>
-      <li><strong>A map, not a vault.</strong> The plan records <em>where</em> secrets live and how to find them — never the seeds, passwords, or PINs themselves. The app won't even let you store a raw secret, and strips any an older file tries to carry.</li>
-      <li><strong>Outlives the company.</strong> Every export is an open, documented format — plain JSON + Markdown + files, or one self-contained HTML — readable and decryptable with standard tools in 20 years, with no OpenFirst in the loop.</li>
-      <li><strong>Verifiable.</strong> The whole app is open source and builds to one auditable file.</li>
-    </ul>
+      <div class="g-card">
+        <div class="g-kind">Method · for you</div>
+        <h3>How to Run a Dry Run</h3>
+        <p>A plan you never tested is a hope. The 45-minute test that shows whether the person you love can actually use what you built — before it matters.</p>
+        <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
+          <a class="open-tpl quiet" href="/guides/dry-run/">Read</a>
+          <a class="open-tpl" href="/build/?template=dry-run">Open in the app</a>
+        </div>
+      </div>
 
-    <h2>What is protected</h2>
+      <div class="g-card">
+        <div class="g-kind">Template · anti-scam</div>
+        <h3>The Trusted-Helper Protocol</h3>
+        <p>Grief attracts predators. How your heir verifies that a helper is really who they say they are — and the one rule that stops nearly every crypto scam.</p>
+        <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
+          <a class="open-tpl quiet" href="/guides/trusted-helper-protocol/">Read</a>
+          <a class="open-tpl" href="/build/?template=trusted-helper-protocol">Open in the app</a>
+        </div>
+      </div>
 
-    <h3>Provably offline</h3>
-    <p>The built app ships a strict Content-Security-Policy with <code>connect-src 'none'</code>. Even a maliciously crafted package cannot make the reader phone home — the browser forbids every network connection. All code, fonts, and styles are inlined; nothing is ever fetched.</p>
-
-    <h3>Strong, standard encryption</h3>
-    <p>Password-protected exports use <strong>AES-256-GCM</strong> with a key derived by <strong>PBKDF2-HMAC-SHA256 at 600,000 iterations</strong> (OWASP 2023 guidance), random salt and IV per file. Every parameter is stored in the file, so it can be decrypted <em>without OpenFirst</em> — the recipe is public.</p>
-    <div class="card"><strong>Entropy is the real lever.</strong> The app generates and nudges you toward a 6-word passphrase (~77 bits), which makes brute force infeasible. A short PIN does not — treat it as friction, not protection.</div>
-    <p>The visible password <strong>hint is tamper-evident</strong>: it's cryptographically bound to the file, so nobody can rewrite it (say, into a phishing instruction for a grieving heir) without breaking decryption.</p>
-
-    <h3>Encrypt the draft too</h3>
-    <p>While you build, the auto-saved draft can be encrypted at rest with a passphrase (Settings → Draft protection) — the plan and its files — with the key held in memory only. This protects a copied disk, profile, or backup.</p>
-
-    <h3>Safe rendering</h3>
-    <p>Guide text is rendered by a small, hand-written Markdown renderer that escapes all HTML and emits only a fixed set of safe tags. A tampered package cannot inject scripts or dangerous links.</p>
-
-    <h2>What is <em>not</em> protected — please read</h2>
-    <div class="card warn">
-      <p style="margin-top:0"><strong>Your unlocked device.</strong> OpenFirst can't protect you from malware, a malicious browser extension, or someone at your unlocked screen while you edit. Draft encryption protects copies <em>at rest</em>, not a live-compromised browser.</p>
-      <p><strong>Don't store secrets in the plan.</strong> No seeds, private keys, passwords, or PINs — even in notes. Keep them on hardware, paper, or a password manager and point to them.</p>
-      <p><strong>A lost passphrase is unrecoverable.</strong> No reset, no backdoor — that's the point. Keep your durable encrypted export somewhere safe.</p>
-      <p style="margin-bottom:0"><strong>Discovery and delivery are yours.</strong> OpenFirst can't make your heir find the plan or receive the password. That's a human, out-of-band step — a sealed letter, a lawyer, split among relatives.</p>
+      <div class="g-card">
+        <div class="g-kind">Coming</div>
+        <h3>The Money Runway</h3>
+        <p>Cash, accounts, bills, insurance — and how long the family can run before anything must be decided. In the works.</p>
+      </div>
     </div>
-
-    <h2>Verify it yourself</h2>
-    <ol class="steps">
-      <li><strong>Read the source.</strong> It's small and dependency-light — one runtime dependency for zip, everything else native Web Crypto.</li>
-      <li><strong>Reproduce the build</strong> and open <code>dist/build/index.html</code> from disk with your network set to offline. It works, because it never needed the network.</li>
-      <li><strong>Inspect an encrypted export.</strong> It's JSON — you can see the algorithm, KDF, iterations, salt, and IV, and decrypt it with the standalone recipe using only Node.js or Web Crypto.</li>
-      <li><strong>Watch the network</strong> with devtools open: loading a heir reader makes zero requests.</li>
-    </ol>
-
-    <h2>Report a vulnerability</h2>
-    <p>Found something? Email <a href="mailto:security@openfirst.io">security@openfirst.io</a> with steps to reproduce, and please give us time to fix it before disclosing publicly. We'll credit you unless you'd rather we didn't.</p>
   </main>
 
   <footer class="screen">
     <div class="container row wrap">
       <span class="footer-tag">openfirst.io · your plan, in safe hands</span>
       <span class="spacer"></span>
-      <span class="tiny">Open source (AGPL) · MIT format · works offline</span>
+      <nav class="row wrap" style="gap:16px">
+        <a class="tiny" href="/guides/" style="color:var(--screen-px)">Guides</a>
+        <a class="tiny" href="/security/" style="color:var(--screen-px)">Security</a>
+        <a class="tiny" href="/pricing/" style="color:var(--screen-px)">Pricing</a>
+        <span class="tiny">Open source (AGPL) · MIT format · works offline</span>
+      </nav>
     </div>
   </footer>
 </body>

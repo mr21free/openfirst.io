@@ -7,6 +7,7 @@ import { loadDraft, loadAllDrafts, clearDraft } from './lib/persist.js';
 import { decryptAndLoad, loadSample } from './lib/load.js';
 import { PACKAGE_SCHEMA } from './lib/format.js';
 import { deriveDraftKey, decryptString, decryptToBlob } from './lib/draftcrypto.js';
+import { templateSeed } from './lib/templates.js';
 
   const store = new Store();
 
@@ -110,8 +111,9 @@ import { deriveDraftKey, decryptString, decryptToBlob } from './lib/draftcrypto.
     if (!booted && bootMode === 'build') {
       // /build with nothing loaded = start building. (An untouched new plan is
       // never auto-saved, so stray visits don't leave draft clutter.)
+      // /build/?template=<id> seeds the new plan from a free template.
       booted = true;
-      newPlan();
+      newPlan(templateSeed(new URLSearchParams(location.search).get('template')));
       return;
     }
     booted = true;
@@ -149,15 +151,15 @@ import { deriveDraftKey, decryptString, decryptToBlob } from './lib/draftcrypto.
 
   // Start a brand-new plan and drop straight into edit mode with a "Start here"
   // guide in a "General" group so the user knows where to begin.
-  function newPlan() {
+  function newPlan(seed = null) {
     const id = crypto?.randomUUID?.() || 'plan_' + Math.random().toString(36).slice(2);
     const today = new Date().toISOString().slice(0, 10);
     // Unique default name, same pattern as guides/groups: "My life package",
     // "My life package (1)"… when earlier plans already use the name.
     const taken = new Set(drafts.map((d) => d.title));
-    let title = 'My life package';
+    let title = seed?.title ? `My ${seed.title}` : 'My life package';
     let n = 1;
-    while (taken.has(title)) title = `My life package (${n++})`;
+    while (taken.has(title)) title = `${seed?.title ? 'My ' + seed.title : 'My life package'} (${n++})`;
     const startHereContent = `## Welcome to your life package
 
 This is your **Start here** guide. Edit it to write instructions for the people who will receive this plan.
@@ -185,8 +187,11 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
       ],
       locations: [],
       items: [],
-      guide_groups: [{ id: 'grp_general', name: 'General', order: 0 }],
-      guides: [{ id: 'guide_start', title: 'Start here', group: 'grp_general', order: 0, content: { en: startHereContent }, updated: today }],
+      guide_groups: [{ id: 'grp_general', name: 'General', order: 0 }, ...(seed?.guide_groups || []).map((g, i) => ({ ...g, order: i + 1 }))],
+      guides: [
+        { id: 'guide_start', title: 'Start here', group: 'grp_general', order: 0, content: { en: startHereContent }, updated: today },
+        ...(seed?.guides || []).map((g) => ({ ...g, updated: today }))
+      ],
       folders: [],
       attachments: []
     };

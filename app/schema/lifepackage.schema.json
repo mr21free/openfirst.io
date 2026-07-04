@@ -133,6 +133,25 @@
             "answer_hint": { "type": "string" }
           }
         },
+        "access_path": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "id": { "$ref": "#/$defs/id" },
+                  "text": { "type": "string" },
+                  "ref_id": { "$ref": "#/$defs/id" },
+                  "photo_id": { "$ref": "#/$defs/id" }
+                }
+              }
+            }
+          }
+        },
         "importance": { "$ref": "#/$defs/importance" },
         "notes": { "type": "string" },
         "sensitive": { "type": "boolean" }

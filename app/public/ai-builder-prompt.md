@@ -44,7 +44,11 @@ SCHEMA SUMMARY
 - roles[]: { id, name }
   Examples: owner, primary_heir, beneficiary, professional, friend.
 - people[]: { id, name, nickname?, roles: [roleId],
-  importance?: high|medium|low, notes?, sensitive?: bool }
+  importance?: high|medium|low, notes?, sensitive?: bool,
+  access_path?: { steps: [{ id, text, ref_id? (location/item id),
+  photo_id? (attachment id) }] } }
+  (access_path = the person's PHYSICAL journey to the plan — "open the safe",
+  "take the envelope" — their first screen; pointers only, never secrets)
 - locations[]: { id, name, parent_id?, order?, notes?, access_person_ids?,
   depends_on_ids? }
   Nest with parent_id, for example: Country > City > Home > Safe. Use order only

@@ -42,8 +42,12 @@ try {
   ok('who-are-you gate shows owner (John James)', gateText.includes('John James'));
   ok('gate lists an audience (Amanda)', gateText.includes('Amanda'));
 
-  // Choose the primary heir
+  // Choose the primary heir — she has an access path, so that's her first
+  // screen; check it, then continue on to the guides.
   await clickByText('Amanda');
+  await page.waitForFunction(() => !!document.querySelector('.access'), { timeout: 8000 });
+  ok('heir lands on her access path first', await page.evaluate(() => /Start here, Amanda/i.test(document.querySelector('.access-h')?.textContent || '')));
+  await page.evaluate(() => [...document.querySelectorAll('.access-next button')].find((b) => /continue/i.test(b.textContent))?.click());
   await page.waitForFunction(() => /Message for Amanda/.test(document.querySelector('main h2')?.textContent || ''), { timeout: 8000 });
   const startText = await page.evaluate(() => document.querySelector('main article')?.innerText || '');
   ok('reader shows Amanda her personal message first', startText.includes('Amanda,') && startText.includes('I trust you'));

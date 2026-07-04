@@ -73,9 +73,7 @@
         <a href="/demo/">Demo</a>
         <a href="/guides/">Guides</a>
         <a href="/how-to-use/">How to use</a>
-        <a href="/security/">Security</a>
         <a href="/pricing/">Pricing</a>
-        <a href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener">The story</a>
       </nav>
     </div>
   </header>
@@ -155,6 +153,7 @@
       <nav class="row wrap footer-nav">
         <a class="tiny" href="/how-to-use/">How to use</a>
         <a class="tiny" href="/security/">Security</a>
+        <a class="tiny" href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener">The story</a>
         <span class="tiny">Open source (AGPL) · MIT format · works offline</span>
       </nav>
     </div>

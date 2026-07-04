@@ -50,7 +50,10 @@ SCHEMA SUMMARY
   languages: ["en"], default_language: "en" }
 - roles[]: { id, name }  // e.g. owner, primary_heir, beneficiary, professional, friend
 - people[]: { id, name, nickname?, roles: [roleId], importance?: high|medium|low,
-  notes?, sensitive?: bool }
+  notes?, sensitive?: bool, access_path?: { steps: [{ id, text,
+  ref_id? (a location/item id), photo_id? (an attachment id) }] } }
+  (access_path = the person's PHYSICAL journey to the plan — "open the safe",
+  "take the envelope" — their first screen; pointers only, never secrets)
 - locations[]: { id, name, parent_id?, order?, notes?, access_person_ids?,
   importance? }   // nest with parent_id: Country > City > Home > Safe
 - items[]: { id, name, description?, notes?, price?, importance?, location_ids?,

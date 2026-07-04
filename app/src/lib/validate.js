@@ -51,6 +51,16 @@ export function validatePackage(data) {
     errors.push(`package.owner_id "${data.package.owner_id}" is not a known person.`);
   }
   ref('package.primary_person_ids', 'people', data.package?.primary_person_ids);
+  for (const p of data.people || []) {
+    (p.access_path?.steps || []).forEach((st, i) => {
+      if (st.ref_id && !has('locations', st.ref_id) && !has('items', st.ref_id)) {
+        errors.push(`Person "${p.id}" access path step ${i + 1} links a missing location/item: "${st.ref_id}".`);
+      }
+      if (st.photo_id && !has('attachments', st.photo_id)) {
+        errors.push(`Person "${p.id}" access path step ${i + 1} links a missing attachment: "${st.photo_id}".`);
+      }
+    });
+  }
   for (const l of data.locations || []) {
     if (l.parent_id && !has('locations', l.parent_id)) errors.push(`Location "${l.id}" parent_id "${l.parent_id}" is not a known location.`);
     ref(`Location "${l.id}"`, 'people', l.access_person_ids);

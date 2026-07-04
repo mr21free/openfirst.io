@@ -94,6 +94,46 @@
         return String(b.run.date || '').localeCompare(String(a.run.date || ''));
       });
   });
+  const pathSteps = $derived(e?.kind === 'person' ? (obj?.access_path?.steps || []) : []);
+
+  // The envelope insert: a printable one-pager of this person's access path.
+  function printAccessPath() {
+    const w = window.open('', '_blank', 'width=820,height=900');
+    if (!w) return;
+    const name = escapeHtml(obj.name || 'you');
+    const owner = escapeHtml(pkg.owner?.name || 'the owner');
+    const updated = escapeHtml(pkg.meta?.updated || '');
+    const stepsHtml = pathSteps.map((st, i) => {
+      const ref = st.ref_id && pkg.entity(st.ref_id) ? `<div class="ref">→ ${escapeHtml(pkg.name(st.ref_id))}</div>` : '';
+      const photo = st.photo_id && pkg.attachmentUrls[st.photo_id]
+        ? `<img src="${escapeHtml(pkg.attachmentUrls[st.photo_id])}" alt="" />` : '';
+      return `<li><span class="n">${i + 1}</span><div class="b"><div class="t">${escapeHtml(st.text || '')}</div>${ref}${photo}</div></li>`;
+    }).join('');
+    w.document.write(`<!doctype html>
+      <html><head><title>For ${name}</title>
+      <style>
+        body { font-family: ui-monospace, Menlo, monospace; color: #222; max-width: 660px; margin: 40px auto; padding: 0 24px; line-height: 1.55; }
+        .eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #666; }
+        h1 { font-weight: 300; font-size: 30px; margin: 8px 0 4px; }
+        .calm { color: #555; margin: 10px 0 26px; }
+        ol { list-style: none; padding: 0; margin: 0; }
+        li { display: flex; gap: 14px; padding: 14px 0; border-top: 1px solid #ddd; page-break-inside: avoid; }
+        .n { flex: none; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid #3C6FB2; color: #3C6FB2; font-weight: 600; font-size: 13px; }
+        .t { font-size: 15px; }
+        .ref { color: #3C6FB2; font-size: 13px; margin-top: 4px; }
+        img { max-width: 320px; max-height: 220px; display: block; margin-top: 8px; border: 1px solid #ddd; }
+        .foot { margin-top: 28px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 12px; color: #777; }
+      </style></head>
+      <body onload="setTimeout(() => { window.focus(); window.print(); }, 150)">
+        <div class="eyebrow">Open only if something has happened to ${owner}</div>
+        <h1>For ${name}</h1>
+        <p class="calm">Take your time. There is no rush. Everything important is designed to wait. When you are ready, follow these steps in order — and if you are unsure at any point, stop and call the person this plan names first.</p>
+        <ol>${stepsHtml}</ol>
+        <div class="foot">Last updated: ${updated} · Always use the copy with the newest date.</div>
+      </body></html>`);
+    w.document.close();
+  }
+
   const testerName = (run) => run.person_id ? pkg.name(run.person_id) : 'Admin';
   const durationLabel = (ms) => {
     if (!ms) return 'Not recorded';
@@ -445,6 +485,35 @@
             {#if obj.verification.answer_hint}<div class="small muted" style="margin-top:4px">Expected: {obj.verification.answer_hint}</div>{/if}
           </div>
         {/if}
+        {#if pathSteps.length}
+          <div class="field">
+            {@render fieldHead(`person-path:${id}`, 'Access path', pathSteps.length)}
+            {#if sectionOpen(`person-path:${id}`, pathSteps.length)}
+              <ol class="path">
+                {#each pathSteps as st, i (st.id || i)}
+                  <li class="path-step">
+                    <span class="path-num">{i + 1}</span>
+                    <div class="path-body">
+                      {#if st.text}<div class="path-text">{st.text}</div>{/if}
+                      {#if st.ref_id && pkg.entity(st.ref_id)}
+                        <button class="path-ref" onclick={() => onOpen?.(st.ref_id)}>{pkg.name(st.ref_id)}</button>
+                      {/if}
+                      {#if st.photo_id && pkg.attachmentUrls[st.photo_id]}
+                        <button class="att-figure path-photo" onclick={() => onOpen?.(st.photo_id)} title="Open photo">
+                          <img class="att-img" src={pkg.attachmentUrls[st.photo_id]} alt={pkg.name(st.photo_id)} loading="lazy" />
+                        </button>
+                      {/if}
+                    </div>
+                  </li>
+                {/each}
+              </ol>
+              <button class="btn btn-small path-print no-print" onclick={printAccessPath}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
+                Print the envelope insert
+              </button>
+            {/if}
+          </div>
+        {/if}
         {#if itemsAccess.length}
           <div class="field">
             {@render fieldHead(`person-access:${id}`, 'Can access', itemsAccess.length)}
@@ -674,6 +743,15 @@
   .run-title { display: inline-flex; align-items: center; gap: 8px; }
   .mini-danger { width: 24px; height: 24px; align-self: center; }
   .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 2px; }
+  .path { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+  .path-step { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--rule-soft); }
+  .path-step:first-child { border-top: none; padding-top: 2px; }
+  .path-num { flex: none; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; background: var(--accent-wash); color: var(--accent-deep); font-size: 12px; font-weight: 600; }
+  .path-body { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .path-text { font-size: 13px; }
+  .path-ref { align-self: flex-start; font-size: 12.5px; color: var(--accent-deep); text-decoration: underline; text-underline-offset: 3px; padding: 0; }
+  .path-photo { max-width: 260px; }
+  .path-print { align-self: flex-start; margin-top: 10px; }
   .crumb { font-size: 13px; color: var(--accent-deep); padding: 1px 2px; border-radius: 4px; }
   .crumb:hover { text-decoration: underline; text-underline-offset: 3px; }
   .crumb-sep { color: var(--ink-mute); margin: 0 4px; }

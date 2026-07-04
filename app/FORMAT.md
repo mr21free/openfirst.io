@@ -83,7 +83,21 @@ normal role ids in the current model.
 Simple person records:
 
 `id`, `name`, `nickname`, `display_as`, `roles[]`, `readiness_score`,
-`contacts[]`, `verification{question, answer_hint}`, `importance`, and `notes`.
+`contacts[]`, `verification{question, answer_hint}`, `access_path`,
+`importance`, and `notes`.
+
+`access_path` is the person's physical journey to the plan — their first
+screen in the reader, and printable as the envelope insert:
+
+```json
+{ "access_path": { "steps": [
+  { "id": "st_1", "text": "Open the home safe — the PIN is with your mother.",
+    "ref_id": "loc_home_safe", "photo_id": "att_safe_photo" }
+] } }
+```
+
+Each step's `text` is required in practice; `ref_id` (a location or item) and
+`photo_id` (an attachment) are optional. Pointers only — never a secret.
 
 People do not carry language, country, based-at location, role boundaries, or
 manual order in the current product.

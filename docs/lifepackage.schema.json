@@ -49,7 +49,8 @@
           "roles": { "type": "array", "items": { "type": "string" }, "description": "role ids from `roles`." },
           "importance": { "type": "string", "enum": ["high", "medium", "low"] },
           "notes": { "type": "string" },
-          "sensitive": { "type": "boolean", "description": "Marks an entry that may hold something sensitive." }
+          "sensitive": { "type": "boolean", "description": "Marks an entry that may hold something sensitive." },
+          "access_path": { "type": "object", "description": "The person's physical journey to the plan: { steps: [{ id, text, ref_id (location/item), photo_id (attachment) }] }. Their first screen in the reader; printable envelope insert. Pointers only, never secrets." }
         }
       }
     },

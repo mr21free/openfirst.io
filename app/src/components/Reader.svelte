@@ -330,7 +330,12 @@
   }
   const canSeeMap = $derived(mapVisibleFor(audience));
   const noGuidesForAudience = $derived(!editing && !!audience && guides.length === 0);
+  // The physical steps to reach the plan — the heir's very first screen.
+  function pathFor(personId) {
+    return (personId && pkg.entity(personId)?.obj?.access_path?.steps) || [];
+  }
   function defaultViewFor(personId) {
+    if (pathFor(personId).length) return 'access';
     return pkg.guidesFor(personId).length ? 'start' : (mapVisibleFor(personId) ? 'map' : 'start');
   }
 
@@ -656,6 +661,7 @@
   $effect(() => {
     if (showGate || editing) return;
     if (view === 'map' && !canSeeMap) view = 'start';
+    if (view === 'access' && (editing || !pathFor(audience).length)) view = 'start';
     if (view === 'start' && !homeGuide && canSeeMap) view = 'map';
   });
   $effect(() => {
@@ -860,6 +866,12 @@
             </svg>
           </span>
         {/snippet}
+        {#if !editing && audience && pathFor(audience).length}
+          <button class="navlink navlink-access" class:active={view === 'access'} onclick={() => go('access')}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+            Your access path
+          </button>
+        {/if}
         {#each navGroups as entry (entry.kind + ':' + entry.id)}
           {#if entry.kind === 'group'}
             {#if editing}
@@ -1023,6 +1035,35 @@
             <span class="eyebrow">New plan</span>
             <h3 style="margin-top:6px">Start building</h3>
             <p class="soft small">Use the sections on the left to add <strong>People</strong>, <strong>Locations</strong> (countries, homes, safes…), <strong>Items</strong> (accounts, keys, documents), <strong>Files</strong>, and <strong>Guides</strong>. Everything auto-saves to this device — use <strong>Export</strong> for a copy on disk.</p>
+          </div>
+
+        {:else if view === 'access'}
+          {@const steps = pathFor(audience)}
+          <div class="access card">
+            <span class="eyebrow">Your access path</span>
+            <h1 class="access-h">Start here, {pkg.name(audience)}.</h1>
+            <p class="soft">Take your time — there is no rush. When you're ready, follow these steps in order. If you're unsure at any point, stop and ask the person named in this plan.</p>
+            <ol class="access-steps">
+              {#each steps as st, i (st.id || i)}
+                <li class="access-step">
+                  <span class="access-num">{i + 1}</span>
+                  <div class="access-body">
+                    {#if st.text}<div class="access-text">{st.text}</div>{/if}
+                    {#if st.ref_id && pkg.entity(st.ref_id)}
+                      <button class="access-ref" onclick={() => openEntity(st.ref_id)}>{pkg.name(st.ref_id)} →</button>
+                    {/if}
+                    {#if st.photo_id && pkg.attachmentUrls[st.photo_id]}
+                      <button class="access-photo" onclick={() => openEntity(st.photo_id)} title="Open photo">
+                        <img src={pkg.attachmentUrls[st.photo_id]} alt={pkg.name(st.photo_id)} loading="lazy" />
+                      </button>
+                    {/if}
+                  </div>
+                </li>
+              {/each}
+            </ol>
+            <div class="access-next">
+              <button class="btn btn-primary" onclick={() => go('start')}>Continue to the guides →</button>
+            </div>
           </div>
 
         {:else if view === 'people'}
@@ -1349,6 +1390,24 @@
 
   /* Global search box + dropdown */
   .gs-count { margin-bottom: 12px; }
+
+  /* ---- The heir's access path (their first screen) ---- */
+  .access { border-left: 2px solid var(--accent); padding: 34px 36px; max-width: 720px; }
+  .access-h { font-size: clamp(24px, 3.4vw, 34px); margin: 8px 0 12px; }
+  .access-steps { list-style: none; padding: 0; margin: 24px 0 8px; display: flex; flex-direction: column; }
+  .access-step { display: flex; gap: 16px; padding: 16px 0; border-top: 1px solid var(--rule-soft); }
+  .access-num {
+    flex: none; width: 28px; height: 28px; margin-top: 1px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--accent-wash); color: var(--accent-deep); font-weight: 600; font-size: 14px;
+  }
+  .access-body { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  .access-text { font-size: 15.5px; line-height: 1.6; }
+  .access-ref { align-self: flex-start; font-size: 13.5px; color: var(--accent-deep); text-decoration: underline; text-underline-offset: 3px; padding: 0; }
+  .access-photo { align-self: flex-start; max-width: 340px; padding: 0; border: 1px solid var(--rule-soft); }
+  .access-photo img { width: 100%; display: block; }
+  .access-next { margin-top: 22px; }
+  .navlink-access { display: inline-flex; align-items: center; gap: 8px; color: var(--accent-deep); font-weight: 500; }
   .sel {
     appearance: none; -webkit-appearance: none;
     border: 1px solid var(--rule); border-radius: 0;

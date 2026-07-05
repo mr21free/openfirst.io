@@ -73,7 +73,6 @@
         <a href="/demo/">Demo</a>
         <a href="/guides/">Guides</a>
         <a href="/how-to-use/">How to use</a>
-        <a href="/pricing/">Pricing</a>
       </nav>
     </div>
   </header>
@@ -154,6 +153,7 @@
         <a class="tiny" href="/how-to-use/">How to use</a>
         <a class="tiny" href="/security/">Security</a>
         <a class="tiny" href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener">The story</a>
+        <span class="tiny">© 2026 OpenFirst™ · openfirst.io</span>
         <span class="tiny">Open source (AGPL) · MIT format · works offline</span>
       </nav>
     </div>

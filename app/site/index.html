@@ -89,10 +89,46 @@
     @media (max-width: 640px) { .container, .content { padding-left: 18px; padding-right: 18px; } }
 
     /* ---- home page ---- */
-    .hero { padding: 80px 0 56px; display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: center; }
-    .hero-art { min-width: 0; }
-    .hero-art img { width: 100%; max-width: 560px; height: auto; display: block; margin: 0 auto; }
-    @media (max-width: 940px) { .hero { grid-template-columns: 1fr; } .hero-art { order: -1; } .hero-art img { max-width: 420px; } }
+    .hero { padding: 80px 0 64px; display: grid; grid-template-columns: minmax(0, 6.4fr) minmax(0, 5.6fr); gap: 52px; align-items: center; }
+    .hero-art { min-width: 0; position: relative; }
+    @media (max-width: 940px) { .hero { grid-template-columns: 1fr; } .hero-art { order: -1; } }
+
+    /* Product-window mockup: the OpenFirst reader showing an heir's access path. */
+    .mock {
+      position: relative; z-index: 2;
+      background: var(--paper); border: 1px solid var(--rule-soft);
+      border-radius: 14px; overflow: hidden;
+      box-shadow: 0 40px 80px oklch(0.3 0.05 255 / 0.14), 0 8px 24px oklch(0.3 0.05 255 / 0.08);
+      transform: rotate(-1deg);
+    }
+    .mock-bar { display: flex; align-items: center; gap: 8px; padding: 11px 14px; border-bottom: 1px solid var(--rule-soft); background: color-mix(in oklch, var(--paper) 70%, var(--bg-deep)); }
+    .mock-dot { width: 9px; height: 9px; border-radius: 999px; background: var(--rule); }
+    .mock-title { margin-left: 8px; font-size: 12px; color: var(--ink-mute); display: inline-flex; align-items: center; gap: 7px; }
+    .mock-body { display: grid; grid-template-columns: 92px 1fr; min-height: 300px; }
+    .mock-nav { border-right: 1px solid var(--rule-soft); padding: 14px 10px; display: flex; flex-direction: column; gap: 10px; background: color-mix(in oklch, var(--paper) 85%, var(--bg-deep)); }
+    .mock-nav .n-active { height: 9px; border-radius: 3px; background: var(--accent); width: 78%; }
+    .mock-nav .n { height: 8px; border-radius: 3px; background: var(--rule); }
+    .mock-nav .n.s { width: 60%; } .mock-nav .n.m { width: 82%; } .mock-nav .n.l { width: 70%; }
+    .mock-main { padding: 22px 24px; }
+    .mock-eyebrow { font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-deep); font-weight: 600; }
+    .mock-h { font-size: 20px; font-weight: 300; letter-spacing: -0.01em; margin: 7px 0 4px; color: var(--ink); }
+    .mock-sub { height: 7px; width: 88%; border-radius: 3px; background: var(--rule-soft); margin: 10px 0; }
+    .mock-sub.two { width: 72%; }
+    .mock-step { display: flex; gap: 12px; align-items: flex-start; padding: 13px 0; border-top: 1px solid var(--rule-soft); }
+    .mock-num { flex: none; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; background: var(--accent-wash); color: var(--accent-deep); font-size: 12px; font-weight: 600; }
+    .mock-lines { flex: 1; display: flex; flex-direction: column; gap: 6px; padding-top: 2px; }
+    .mock-lines i { height: 7px; border-radius: 3px; background: var(--rule); display: block; }
+    .mock-lines i.a { width: 96%; } .mock-lines i.b { width: 64%; } .mock-lines i.c { width: 40%; background: var(--accent); opacity: 0.55; }
+
+    /* floating brand shapes, smallpdf-style */
+    .flair { position: absolute; z-index: 1; pointer-events: none; }
+    .flair svg { display: block; }
+    .flair-a { top: -26px; right: 16px; } .flair-b { bottom: -22px; left: -18px; }
+    .flair-c { top: 40%; right: -26px; } .flair-d { bottom: 30%; left: 30px; }
+    .flair-blob { position: absolute; z-index: 0; border-radius: 40% 60% 62% 38% / 46% 42% 58% 54%; background: color-mix(in oklch, var(--accent) 26%, transparent); filter: blur(2px); }
+    .flair-blob.one { width: 190px; height: 190px; top: -40px; right: -30px; }
+    .flair-blob.two { width: 130px; height: 130px; bottom: -30px; left: -20px; opacity: 0.7; }
+    @media (max-width: 940px) { .mock { max-width: 460px; margin: 0 auto; } }
     .hero h1 { font-size: clamp(38px, 5.8vw, 72px); font-weight: 300; letter-spacing: -0.015em; line-height: 1.06; max-width: 22ch; margin: 14px 0 0; }
     .hero .lede { margin-top: 26px; max-width: 58ch; font-size: 17.5px; line-height: 1.7; }
     .method { margin-top: 28px; display: flex; align-items: center; gap: 14px; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); }
@@ -124,7 +160,6 @@
         <a href="/demo/">Demo</a>
         <a href="/guides/">Guides</a>
         <a href="/how-to-use/">How to use</a>
-        <a href="/pricing/">Pricing</a>
         <a class="btn" style="min-height:38px;padding:8px 16px" href="/open/">Open the app</a>
       </nav>
     </div>
@@ -147,8 +182,37 @@
         </div>
         <p class="trust">FREE &amp; OPEN SOURCE · WORKS OFFLINE · NO ACCOUNT · ONE FILE YOUR HEIRS DOUBLE-CLICK</p>
       </div>
-      <div class="hero-art" aria-hidden="false">
-        <img src="/map-hero.svg" alt="A hand-drawn map: the home, the safe, the bank, the cabin — one calm route between them, starting at an envelope." width="640" height="520" />
+      <div class="hero-art">
+        <span class="flair-blob one"></span>
+        <span class="flair-blob two"></span>
+        <div class="mock" role="img" aria-label="The OpenFirst reader showing an heir's step-by-step access path: “Start here, Amanda.”">
+          <div class="mock-bar">
+            <span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span>
+            <span class="mock-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3C6FB2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6 H14 M4 6 V19 H20 V13" /><path d="M16 6 H20 V10" /><path d="M4 6 L11 12 L18 7" /></svg>
+              start-here.html
+            </span>
+          </div>
+          <div class="mock-body">
+            <div class="mock-nav">
+              <span class="n-active"></span>
+              <span class="n s"></span><span class="n m"></span><span class="n l"></span>
+              <span class="n m"></span><span class="n s"></span>
+            </div>
+            <div class="mock-main">
+              <div class="mock-eyebrow">Your access path</div>
+              <div class="mock-h">Start here, Amanda.</div>
+              <div class="mock-sub"></div><div class="mock-sub two"></div>
+              <div class="mock-step"><span class="mock-num">1</span><div class="mock-lines"><i class="a"></i><i class="c"></i></div></div>
+              <div class="mock-step"><span class="mock-num">2</span><div class="mock-lines"><i class="a"></i><i class="b"></i><i class="c"></i></div></div>
+              <div class="mock-step"><span class="mock-num">3</span><div class="mock-lines"><i class="b"></i></div></div>
+            </div>
+          </div>
+        </div>
+        <span class="flair flair-a"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3C6FB2" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+        <span class="flair flair-b"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="oklch(0.72 0.13 200)" stroke-width="3" stroke-linecap="round"><circle cx="12" cy="12" r="7"/></svg></span>
+        <span class="flair flair-c"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="oklch(0.72 0.12 30)" stroke-width="3" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></span>
+        <span class="flair flair-d"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3C6FB2" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
       </div>
     </section>
 
@@ -215,6 +279,7 @@
         <a class="tiny" href="/how-to-use/" style="color:var(--screen-px)">How to use</a>
         <a class="tiny" href="/security/" style="color:var(--screen-px)">Security</a>
         <a class="tiny" href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener" style="color:var(--screen-px)">The story</a>
+        <span class="tiny">© 2026 OpenFirst™ · openfirst.io</span>
         <span class="tiny">Open source (AGPL) · MIT format · works offline</span>
       </nav>
     </div>

@@ -96,28 +96,24 @@
         <a href="/demo/">Demo</a>
         <a href="/guides/">Guides</a>
         <a href="/how-to-use/">How to use</a>
-        <a href="/pricing/">Pricing</a>
       </nav>
     </div>
   </header>
 
   <main class="content">
     <span class="eyebrow">How to use</span>
-    <h1>Put your affairs in order — calmly.</h1>
-    <p class="lede">Build a plan of where everything lives and who should receive it, then hand your loved ones a single file they open offline. No app, no account, nothing leaves your device.</p>
+    <h1>Three steps.</h1>
 
-    <h2>The picture in 60 seconds</h2>
     <ol class="steps">
-      <li><strong>Build</strong> your plan — people, the places things live, items (accounts, wallets, keys, documents), files, and plain-language guides.</li>
-      <li><strong>Export</strong> a self-contained <code>start-here.html</code> — optionally password-protected.</li>
-      <li><strong>Give it</strong> to your heirs (a USB stick or drive; share the password separately). They double-click it; it opens offline, no app needed.</li>
+      <li><strong>Build</strong> your plan — the people, the places things live, the accounts and keys, and short guides. By hand, or let your own AI scaffold it (below).</li>
+      <li><strong>Export</strong> one file — <code>start-here.html</code>. Password-protect it if you like.</li>
+      <li><strong>Give it</strong> to your family on a USB or drive; share the password separately. They double-click it — it opens offline, no app needed.</li>
     </ol>
 
-    <h2>Option A — let AI do the heavy lifting</h2>
-    <p>Defining every person, place and item by hand is the slow part. Your own AI can scaffold it. Copy the prompt below into any capable AI — Claude, ChatGPT, Gemini, or a local model for maximum privacy — answer its questions in plain words, and it returns a <code>.json</code> plan you import with <strong>Open existing plan</strong>.</p>
-    <p><a href="/ai-builder-prompt.md">Open the prompt as a plain Markdown file</a>.</p>
+    <div class="card warn"><strong>Never put secrets in the plan.</strong> No PINs, seed phrases, passwords, or keys — describe <em>where</em> to find them. The plan is a map, not a vault.</div>
 
-    <div class="card warn"><strong>Describe structure, not secrets.</strong> The AI runs on <em>your</em> side — this project never sees your data — but still never paste real PINs, seed phrases, passwords, keys or account numbers. Say “a Trezor at home, a backup at a bank abroad,” then add the real values yourself, locally, in the app. Structure alone can be sensitive, so keep it general.</div>
+    <h2>Build with AI (optional)</h2>
+    <p>Paste this prompt into any AI (Claude, ChatGPT, a local model), answer in plain words, and import the <code>.json</code> it returns with <strong>Open existing plan</strong>. It runs on your side — we never see it.</p>
 
     <div class="promptbox">
       <button class="copy-icon" type="button" onclick="copyPrompt(this)" aria-label="Copy prompt" title="Copy prompt">
@@ -218,28 +214,8 @@ devices), who can access what, and what guidance each heir needs. Ask only for
 non-sensitive structure. When I say "generate", validate that every reference
 resolves and every id is unique, then output the final JSON only.</code></pre>
     </div>
-    <p>If the file is malformed, the app lists exactly what to fix on import — paste that back to the AI and ask it to correct it.</p>
 
-    <h2>Option B — build by hand</h2>
-    <p>Click <strong>Create new plan</strong> and work down the left nav: People → Roles → Locations → Map → Items → Files → Guides. Try the in-app <strong>Demo</strong> first to see a finished example.</p>
-
-    <h2>Finish locally (always in the app)</h2>
-    <ul>
-      <li><strong>Fill in real values</strong> the AI deliberately left out.</li>
-      <li><strong>Write guides.</strong> Plain Markdown; cross-link anything, and link a set of files with a tag. Mark unfinished ones <span class="pill">Draft</span> — drafts stay in your copy but are left out of the heir’s reader.</li>
-      <li><strong>Add &amp; tag files.</strong> Upload scans/photos/PDFs and tag them (<code>tax</code>, <code>will</code>, <code>bitcoin</code>) to group and search. PDFs preview inline.</li>
-      <li><strong>Filter &amp; sort any list.</strong> People, Items, Locations and Files each have a Filter (by role, importance, location, contents, tag…) and a Sort. It only changes the view.</li>
-      <li><strong>Check the Map.</strong> A “where is what” view — each place with its items nested inside.</li>
-    </ul>
-
-    <h2>Export for your heirs</h2>
-    <ul>
-      <li><strong>Self-contained reader</strong> (<code>start-here.html</code>) — the one file they open. Drafts are excluded automatically.</li>
-      <li><strong>Password-protect it.</strong> Prefer the suggested <strong>6-word passphrase</strong> over a PIN — a 6-digit PIN can be cracked in under a minute; a 6-word passphrase is effectively uncrackable. Store the password separately from the file.</li>
-      <li>The plain <code>.zip</code> / encrypted exports keep <em>everything</em> as your own durable backup.</li>
-    </ul>
-
-    <div class="card warn"><strong>Keep it current.</strong> Revisit every 6–12 months, update what changed, re-export, and replace the copy you gave your heirs. The format is plain JSON + Markdown, so your plan stays readable far into the future — with or without this app.</div>
+    <p class="tiny muted">Prefer to build by hand? Open the app, click <strong>Create new plan</strong>, and try the <a href="/demo/">Demo</a> to see a finished one.</p>
   </main>
 
   <footer class="screen">
@@ -250,6 +226,7 @@ resolves and every id is unique, then output the final JSON only.</code></pre>
         <a class="tiny" href="/how-to-use/" style="color:var(--screen-px)">How to use</a>
         <a class="tiny" href="/security/" style="color:var(--screen-px)">Security</a>
         <a class="tiny" href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener" style="color:var(--screen-px)">The story</a>
+        <span class="tiny">© 2026 OpenFirst™ · openfirst.io</span>
         <span class="tiny">Open source (AGPL) · MIT format · works offline</span>
       </nav>
     </div>

@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# The app itself is not content — keep it out of the index.
+Disallow: /build/
+Disallow: /open/
+Disallow: /demo/
+
+Sitemap: https://openfirst.io/sitemap.xml

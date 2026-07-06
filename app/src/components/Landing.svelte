@@ -146,7 +146,7 @@
 
   <footer class="screen no-print">
     <div class="container row wrap">
-      <span class="footer-tag">openfirst.io · your plan, in safe hands</span>
+      <span class="footer-tag">your plan, in safe hands</span>
       <span class="spacer"></span>
       <nav class="row wrap footer-nav">
         <a class="tiny" href="/how-to-use/">How to use</a>
@@ -154,7 +154,7 @@
         <a class="tiny" href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener">The story</a>
         <span class="tiny">Open source (AGPL) · MIT format · works offline</span>
       </nav>
-      <div class="footer-copy tiny">© 2026 OpenFirst™ · openfirst.io</div>
+      <div class="footer-copy tiny">© 2026 OpenFirst™</div>
     </div>
   </footer>
 

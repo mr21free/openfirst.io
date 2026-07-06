@@ -152,8 +152,16 @@
     .problem p { color: var(--ink-soft); font-size: 14.5px; margin: 0; }
     .sec-eyebrow { display: flex; align-items: center; gap: 14px; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 72px 0 18px; }
     .sec-eyebrow::before { content: ''; display: inline-block; width: 34px; height: 1px; background: var(--accent); flex: none; }
-    .quiet-strip { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: center; color: var(--ink-soft); font-size: 14px; margin-top: 8px; }
-    .promise-line { margin-top: 30px; font-size: 15px; color: var(--ink); font-weight: 500; }
+    /* Three-step row — the whole "how it works", visual not text-heavy. */
+    .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin: 96px 0 0; }
+    @media (max-width: 760px) { .three { grid-template-columns: 1fr; gap: 18px; } }
+    .three-card { border-top: 2px solid var(--accent); padding-top: 20px; }
+    .three-num { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--accent-wash); color: var(--accent-deep); font-weight: 600; font-size: 15px; }
+    .three-card h3 { font-size: 20px; font-weight: 500; margin: 14px 0 8px; letter-spacing: -0.01em; }
+    .three-card p { color: var(--ink-soft); font-size: 15px; line-height: 1.6; margin: 0; }
+    .closing { margin-top: 100px; padding-top: 34px; border-top: 1px solid var(--rule-soft); text-align: center; }
+    .promise-line { font-size: 17px; color: var(--ink); font-weight: 500; }
+    .closing-links { margin-top: 12px; font-size: 14px; color: var(--ink-mute); }
     .home-main { max-width: var(--maxw); margin: 0 auto; padding: 0 28px 72px; width: 100%; }
   </style>
 </head>
@@ -166,7 +174,7 @@
         <a href="/demo/">Demo</a>
         <a href="/guides/">Guides</a>
         <a href="/how-to-use/">How to use</a>
-        <a class="btn" style="min-height:38px;padding:8px 16px" href="/open/">Open the app</a>
+        <a class="btn btn-primary" style="min-height:38px;padding:8px 18px" href="/open/">Open the app</a>
       </nav>
     </div>
   </header>
@@ -176,17 +184,14 @@
         <span class="eyebrow">OPENFIRST · A PRIVATE LIFE PACKAGE, BUILT ON YOUR DEVICE</span>
         <h1>Nothing breaks<br />if you're gone tomorrow.</h1>
         <p class="lede">
-          That's the promise — to each other. Build a calm map of everything that
-          matters: the people, the places, the accounts, the keys, the instructions.
-          It stays on your device. Your family opens one file, whenever the time
-          comes — no app, no account, no cloud.
+          Build a private map of everything that matters — accounts, keys,
+          documents, people. Your family opens one file when the time comes.
         </p>
-        <p class="method">Start with the map · Build the system together · Test it before it matters</p>
         <div class="cta-row">
           <a class="btn btn-primary" href="/build/">Start your plan</a>
-          <a class="btn" href="/demo/">See it as your heir would</a>
+          <a class="btn" href="/demo/">See the demo</a>
         </div>
-        <p class="trust">FREE &amp; OPEN SOURCE · WORKS OFFLINE · NO ACCOUNT · ONE FILE YOUR HEIRS DOUBLE-CLICK</p>
+        <p class="trust">Free &amp; open source · Works offline · No account</p>
       </div>
       <div class="hero-art">
         <span class="flair-blob one"></span>
@@ -222,73 +227,40 @@
       </div>
     </section>
 
-    <div class="sec-eyebrow">Why this exists</div>
-    <div class="problems">
-      <div class="problem">
-        <h3>She shouldn't have to solve your life like a puzzle.</h3>
-        <p>When something happens, your partner becomes detective, accountant, and IT admin overnight — while grieving. OpenFirst turns what's in your head into a runbook: what exists, where it is, who helps, what to do first.</p>
+    <div class="three">
+      <div class="three-card">
+        <span class="three-num">1</span>
+        <h3>Build</h3>
+        <p>The people, places, accounts and keys — in plain words. Your own AI can scaffold it in minutes.</p>
       </div>
-      <div class="problem">
-        <h3>A plan you never tested is a hope, not a plan.</h3>
-        <p>You told her the password. She still couldn't open it — true story, ours. OpenFirst has dry runs: sit together, let her actually find, open, and follow the plan, and record what broke.</p>
+      <div class="three-card">
+        <span class="three-num">2</span>
+        <h3>Test</h3>
+        <p>A dry run with the person who'll use it. A plan you never tested is only a hope.</p>
       </div>
-      <div class="problem">
-        <h3>Made to outlive us. Even the company.</h3>
-        <p>One open file: plain text and files inside, strong encryption if you want it, provably offline — the reader physically cannot phone home. If OpenFirst disappears tomorrow, your plan still opens in 2046.</p>
+      <div class="three-card">
+        <span class="three-num">3</span>
+        <h3>Hand over</h3>
+        <p>One file they double-click. It opens offline — and still works in twenty years.</p>
       </div>
     </div>
 
-    <div class="sec-eyebrow">How it works</div>
-    <ol class="steps">
-      <li><strong>Build the map</strong> — people, the places things live, items (accounts, wallets, keys, documents), files, and calm plain-language guides. Your own AI can scaffold it in minutes.</li>
-      <li><strong>Test it before it matters</strong> — run a dry run with the person who'd use it. Watch where they hesitate. Fix that.</li>
-      <li><strong>Hand over one file</strong> — export a self-contained <code>start-here.html</code> (optionally encrypted), put it where they'd look, and tell them it exists.</li>
-    </ol>
-
-    <div class="sec-eyebrow">Free guides &amp; templates</div>
-    <div class="problems">
-      <div class="problem">
-        <h3>The First 72 Hours</h3>
-        <p>What to do — and what not to touch — in the first three days. Calm, in order, panic-proof.</p>
-        <p style="margin-top:12px"><a href="/guides/first-72-hours/">Read the guide →</a></p>
-      </div>
-      <div class="problem">
-        <h3>The Bitcoin Inheritance Runbook</h3>
-        <p>Self-custody that outlives you: what your heir needs to know, whom to trust, and the mistakes that can't be undone.</p>
-        <p style="margin-top:12px"><a href="/guides/bitcoin-inheritance-runbook/">Read the guide →</a></p>
-      </div>
-      <div class="problem">
-        <h3>How to Run a Dry Run</h3>
-        <p>The test most plans never get: hand it to the person who'd use it, watch where they hesitate, fix that.</p>
-        <p style="margin-top:12px"><a href="/guides/dry-run/">Read the guide →</a></p>
-      </div>
+    <div class="closing">
+      <p class="promise-line">Free and open source. The individual tier will always be free.</p>
+      <p class="closing-links"><a href="/guides/">Free guides &amp; templates</a> · <a href="/security/">How your privacy is protected</a></p>
     </div>
-    <p style="margin-top:14px"><a href="/guides/">All guides &amp; templates →</a> — free to read, free to copy, and each one opens in the app as a ready-made template.</p>
-
-    <div class="sec-eyebrow">Private by design</div>
-    <div class="quiet-strip">
-      <span>No servers, no telemetry — nothing to leak</span>
-      <span>·</span>
-      <span>AES-256-GCM encryption, decryptable without us</span>
-      <span>·</span>
-      <span>Open source (AGPL) · open MIT format</span>
-      <span>·</span>
-      <a href="/security/">Read the full security model →</a>
-    </div>
-    <p class="promise-line">Free and open source. The individual tier will always be free.</p>
   </main>
 
   <footer class="screen">
     <div class="container row wrap">
-      <span class="footer-tag">openfirst.io · your plan, in safe hands</span>
+      <span class="footer-tag">your plan, in safe hands</span>
       <span class="spacer"></span>
       <nav class="row wrap" style="gap:16px">
         <a class="tiny" href="/how-to-use/" style="color:var(--screen-px)">How to use</a>
         <a class="tiny" href="/security/" style="color:var(--screen-px)">Security</a>
         <a class="tiny" href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener" style="color:var(--screen-px)">The story</a>
-        <span class="tiny">Open source (AGPL) · MIT format · works offline</span>
       </nav>
-      <div style="flex-basis:100%; margin-top:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.08); font-size:11px; letter-spacing:0.04em; color:var(--screen-px)">© 2026 OpenFirst™ · openfirst.io</div>
+      <div style="flex-basis:100%; display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.08); font-size:11px; letter-spacing:0.04em; color:var(--screen-px)"><span>© 2026 OpenFirst™</span><span style="flex:1"></span><span>Open source · works offline</span></div>
     </div>
   </footer>
 </body>

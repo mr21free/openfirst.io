@@ -91,6 +91,10 @@
     .screen .tiny { color: var(--screen-px); font-size: 11px; letter-spacing: 0.04em; }
 
     @media (max-width: 640px) { .container, .content { padding-left: 18px; padding-right: 18px; } }
+    .topnav .btn { display:inline-flex; align-items:center; min-height:38px; padding:8px 18px; border-radius:999px; border:1px solid var(--rule); background:var(--paper); font-size:14px; font-weight:500; color:var(--ink); }
+    .topnav .btn:hover { text-decoration:none; border-color:var(--accent-deep); }
+    .topnav .btn-primary { background:var(--accent-deep); border-color:var(--accent-deep); color:#fff; }
+    .topnav .btn-primary:hover { background:oklch(0.5 0.13 250); }
   </style>
 </head>
 <body>
@@ -99,7 +103,7 @@
       <a class="brand row" href="/"><img class="logo" src="/logo.svg" alt="" /><span>OpenFirst</span></a>
       <span class="spacer"></span>
       <nav class="topnav">
-        <a href="/open/">Open the app</a>
+        <a class="btn btn-primary" href="/open/">Open the app</a>
         <a href="/demo/">Demo</a>
         <a href="/guides/">Guides</a>
         <a href="/how-to-use/">How to use</a>
@@ -159,15 +163,14 @@
 
   <footer class="screen">
     <div class="container row wrap">
-      <span class="footer-tag">openfirst.io · your plan, in safe hands</span>
+      <span class="footer-tag">your plan, in safe hands</span>
       <span class="spacer"></span>
       <nav class="row wrap" style="gap:16px">
         <a class="tiny" href="/how-to-use/" style="color:var(--screen-px)">How to use</a>
         <a class="tiny" href="/security/" style="color:var(--screen-px)">Security</a>
         <a class="tiny" href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener" style="color:var(--screen-px)">The story</a>
-        <span class="tiny">Open source (AGPL) · MIT format · works offline</span>
       </nav>
-      <div style="flex-basis:100%; margin-top:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.08); font-size:11px; letter-spacing:0.04em; color:var(--screen-px)">© 2026 OpenFirst™ · openfirst.io</div>
+      <div style="flex-basis:100%; display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.08); font-size:11px; letter-spacing:0.04em; color:var(--screen-px)"><span>© 2026 OpenFirst™</span><span style="flex:1"></span><span>Open source · works offline</span></div>
     </div>
   </footer>
 </body>

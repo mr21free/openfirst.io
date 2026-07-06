@@ -68,9 +68,9 @@ STROKE = 8.0          # 8% of the design space ≈ freedomclock ring thickness
 L, R, T, B = 14.0, 86.0, 26.0, 78.0   # envelope rectangle
 TOP_END_X = 50.0      # top edge stops here (start of the cut)
 RIGHT_START_Y = 60.0  # right edge resumes here (end of the cut)
-CORNER_ARM = 22.0     # length of the detached corner piece's two arms
+CORNER_ARM = 15.0     # length of the detached corner piece's two arms (shorter arrowhead)
 V = (50.0, 52.0)      # flap vertex (mid-width, mid-height)
-SHAFT_STOP = 15.0     # shaft stops this far short of the corner (white notch)
+SHAFT_STOP = 1.0      # shaft reaches the corner so it touches the arrowhead
 
 
 def _unit(dx, dy):

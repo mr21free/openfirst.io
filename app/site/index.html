@@ -153,6 +153,7 @@
     .sec-eyebrow { display: flex; align-items: center; gap: 14px; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 72px 0 18px; }
     .sec-eyebrow::before { content: ''; display: inline-block; width: 34px; height: 1px; background: var(--accent); flex: none; }
     .quiet-strip { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: center; color: var(--ink-soft); font-size: 14px; margin-top: 8px; }
+    .promise-line { margin-top: 30px; font-size: 15px; color: var(--ink); font-weight: 500; }
     .home-main { max-width: var(--maxw); margin: 0 auto; padding: 0 28px 72px; width: 100%; }
   </style>
 </head>
@@ -162,8 +163,6 @@
       <a class="brand row" href="/"><img class="logo" src="/logo.svg" alt="" /><span>OpenFirst</span></a>
       <span class="spacer"></span>
       <nav class="topnav">
-        <a href="/build/">Build</a>
-        <a href="/open/">Open</a>
         <a href="/demo/">Demo</a>
         <a href="/guides/">Guides</a>
         <a href="/how-to-use/">How to use</a>
@@ -276,6 +275,7 @@
       <span>·</span>
       <a href="/security/">Read the full security model →</a>
     </div>
+    <p class="promise-line">Free and open source. The individual tier will always be free.</p>
   </main>
 
   <footer class="screen">
@@ -286,9 +286,9 @@
         <a class="tiny" href="/how-to-use/" style="color:var(--screen-px)">How to use</a>
         <a class="tiny" href="/security/" style="color:var(--screen-px)">Security</a>
         <a class="tiny" href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener" style="color:var(--screen-px)">The story</a>
-        <span class="tiny">© 2026 OpenFirst™ · openfirst.io</span>
         <span class="tiny">Open source (AGPL) · MIT format · works offline</span>
       </nav>
+      <div style="flex-basis:100%; margin-top:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.08); font-size:11px; letter-spacing:0.04em; color:var(--screen-px)">© 2026 OpenFirst™ · openfirst.io</div>
     </div>
   </footer>
 </body>

@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Not found · OpenFirst</title>
+  <meta name="description" content="Build a life package your loved ones can open offline, with no app or account — optionally scaffolded by your own AI." />
   <meta name="robots" content="noindex" />
   <link rel="icon" href="/logo.svg" />
   <link rel="canonical" href="https://openfirst.io/how-to-use/" />
@@ -98,25 +99,50 @@
       <a class="brand row" href="/"><img class="logo" src="/logo.svg" alt="" /><span>OpenFirst</span></a>
       <span class="spacer"></span>
       <nav class="topnav">
-        <a href="/build/">Build</a>
-        <a href="/open/">Open</a>
+        <a href="/open/">Open the app</a>
         <a href="/demo/">Demo</a>
         <a href="/guides/">Guides</a>
         <a href="/how-to-use/">How to use</a>
       </nav>
     </div>
   </header>
-  <main class="content" style="text-align:center; padding-top:100px">
-    <span class="eyebrow">404</span>
-    <h1>Nothing here.</h1>
-    <p class="lede">That page moved or never existed. Everything important is designed to wait — take your time.</p>
-    <p style="margin-top:26px"><a href="/">← Back to OpenFirst</a> &nbsp;·&nbsp; <a href="/open/">Open the app</a> &nbsp;·&nbsp; <a href="/guides/">Guides</a></p>
+  <main class="content" style="text-align:center; padding-top:70px; padding-bottom:80px">
+    <svg viewBox="0 0 440 320" width="440" height="320" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="max-width:100%;height:auto">
+    <ellipse cx="230" cy="170" rx="180" ry="150" fill="#3C6FB2" opacity="0.06"/>
+    <g transform="rotate(-2 220 160)">
+      <rect x="70" y="52" width="300" height="210" rx="10" fill="#fbfcfe" stroke="#c9d6e6" stroke-width="2"/>
+      <path d="M170 52 V262 M270 52 V262" stroke="#dbe4f0" stroke-width="2"/>
+      <path d="M100 210 q50 -22 100 -6 q46 14 90 -6" stroke="#e4ebf5" stroke-width="2" stroke-linecap="round"/>
+      <path d="M110 232 q54 -18 108 -2 q40 12 84 -6" stroke="#e4ebf5" stroke-width="2" stroke-linecap="round"/>
+      <!-- compass -->
+      <g transform="translate(112 92)">
+        <circle r="17" stroke="#c9d6e6" stroke-width="2.2"/>
+        <path d="M0 -11 L3.6 0 L0 11 L-3.6 0 Z" fill="#3C6FB2" opacity="0.7"/>
+      </g>
+      <!-- the route: starts confidently, then trails off into dashes and stops -->
+      <path d="M120 205 C 150 180, 165 158, 200 150" stroke="#3C6FB2" stroke-width="3" stroke-linecap="round"/>
+      <path d="M200 150 C 232 143, 244 120, 276 112" stroke="#3C6FB2" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 11"/>
+      <circle cx="200" cy="150" r="3.6" fill="#3C6FB2" opacity="0.6"/>
+      <!-- lost pin with a question mark, at the end of the fading route -->
+      <g transform="translate(286 96)">
+        <path d="M0 34 C -12 16, -14 12, -14 4 A 14 14 0 1 1 14 4 C 14 12, 12 16, 0 34 Z" fill="#3C6FB2"/>
+        <text x="0" y="9" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700" fill="#fbfcfe">?</text>
+      </g>
+    </g>
+    <!-- floating brand shapes, like the hero -->
+    <line x1="392" y1="60" x2="392" y2="76" stroke="#3C6FB2" stroke-width="3" stroke-linecap="round"/><line x1="384" y1="68" x2="400" y2="68" stroke="#3C6FB2" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="52" cy="250" r="7" stroke="oklch(0.72 0.13 200)" stroke-width="3"/>
+  </svg>
+    <span class="eyebrow" style="display:block; margin-top:30px">404</span>
+    <h1 style="margin-top:8px">You've wandered off the map.</h1>
+    <p class="lede" style="margin:12px auto 0; max-width:44ch">This page isn't part of the plan. Take your time — the way back is in the menu above.</p>
   </main>
   <footer class="screen">
     <div class="container row wrap">
       <span class="footer-tag">openfirst.io · your plan, in safe hands</span>
       <span class="spacer"></span>
-      <span class="tiny">© 2026 OpenFirst™ · openfirst.io</span>
+      <span class="tiny">Open source (AGPL) · MIT format · works offline</span>
+      <div style="flex-basis:100%; margin-top:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.08); font-size:11px; letter-spacing:0.04em; color:var(--screen-px)">© 2026 OpenFirst™ · openfirst.io</div>
     </div>
   </footer>
 </body>

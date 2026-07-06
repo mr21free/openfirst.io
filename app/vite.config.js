@@ -1,5 +1,6 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { viteSingleFile } from 'vite-plugin-singlefile';
@@ -25,8 +26,19 @@ function injectCspOnBuild() {
 }
 
 const MARKETING_HOME = fileURLToPath(new URL('./site/index.html', import.meta.url));
+const NOT_FOUND = fileURLToPath(new URL('./public/404.html', import.meta.url));
 const APP_ROUTES = ['build', 'open', 'demo'];
 const STATIC_PAGES = ['how-to-use', 'security', 'pricing', 'guides'];
+
+// A request for a page (not an asset or a Vite internal) that matched no route.
+// On a static host an unknown path serves 404.html; mirror that locally so the
+// app's SPA fallback never masks a real 404 (e.g. /whatever showing the launcher).
+function isUnknownPageRequest(path, accept) {
+  if (!(accept || '').includes('text/html')) return false;
+  if (path.startsWith('/@') || path.startsWith('/src/') || path.startsWith('/node_modules') || path.startsWith('/.')) return false;
+  const last = path.split('/').pop();
+  return !last.includes('.'); // no file extension → a page path, not an asset
+}
 
 function matchesDir(path, dir) {
   return path === `/${dir}` || path === `/${dir}/` || path === `/${dir}/index.html`;
@@ -86,6 +98,37 @@ function localSiteRoutes() {
           }
         }
 
+        if (isUnknownPageRequest(path, req.headers.accept)) {
+          try {
+            const html = readFileSync(NOT_FOUND, 'utf8');
+            res.statusCode = 404;
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.end(await server.transformIndexHtml(path, html));
+            return;
+          } catch { /* fall through */ }
+        }
+
+        next();
+      });
+    },
+    // `npm run preview` serves the built dist/. Mirror the host's behaviour:
+    // an unknown page path that has no matching file returns dist/404.html.
+    configurePreviewServer(server) {
+      const dist = fileURLToPath(new URL('./dist', import.meta.url));
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url || '').split('?')[0];
+        if (isUnknownPageRequest(path, req.headers.accept)) {
+          const asFile = resolve(dist, '.' + path);
+          const asIndex = resolve(dist, '.' + path.replace(/\/?$/, '/') + 'index.html');
+          if (!existsSync(asFile) && !existsSync(asIndex)) {
+            try {
+              res.statusCode = 404;
+              res.setHeader('Content-Type', 'text/html; charset=utf-8');
+              res.end(readFileSync(resolve(dist, '404.html'), 'utf8'));
+              return;
+            } catch { /* fall through */ }
+          }
+        }
         next();
       });
     }

@@ -69,7 +69,6 @@
       </a>
       <span class="spacer"></span>
       <nav class="topnav">
-        <a href="/build/">Build</a>
         <a href="/demo/">Demo</a>
         <a href="/guides/">Guides</a>
         <a href="/how-to-use/">How to use</a>
@@ -153,9 +152,9 @@
         <a class="tiny" href="/how-to-use/">How to use</a>
         <a class="tiny" href="/security/">Security</a>
         <a class="tiny" href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener">The story</a>
-        <span class="tiny">© 2026 OpenFirst™ · openfirst.io</span>
         <span class="tiny">Open source (AGPL) · MIT format · works offline</span>
       </nav>
+      <div class="footer-copy tiny">© 2026 OpenFirst™ · openfirst.io</div>
     </div>
   </footer>
 
@@ -244,6 +243,7 @@
   footer .tiny { color: var(--screen-px); }
   .footer-nav { gap: 16px; }
   .footer-nav a:hover { color: var(--accent); text-decoration: none; }
+  .footer-copy { flex-basis: 100%; margin-top: 16px; padding-top: 14px; border-top: 1px solid oklch(1 0 0 / 0.08); color: var(--screen-px); }
   .draft-lock { display: inline-flex; margin-right: 7px; color: var(--ink-soft); vertical-align: -1px; }
 
   .unlock h3 { font-size: 19px; }

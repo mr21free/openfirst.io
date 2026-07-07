@@ -113,18 +113,20 @@
     .guides-head { max-width: 640px; margin: 8px 0 0; }
     .guides-head h1 { font-size: clamp(30px, 4vw, 46px); font-weight: 300; letter-spacing: -0.012em; margin: 12px 0 0; }
     .guides-head .lede { margin-top: 16px; }
-    .g-list { display: grid; gap: 30px 28px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-top: 52px; }
-    .g-card { border-top: 2px solid var(--accent); padding-top: 18px; display: flex; flex-direction: column; }
-    .g-kind { margin-top: 2px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); font-weight: 600; }
-    .g-card h3 { font-size: 19px; font-weight: 500; margin: 4px 0 8px; letter-spacing: -0.01em; }
-    .g-card p { color: var(--ink-soft); font-size: 14.5px; line-height: 1.55; margin: 0 0 18px; flex: 1; }
-    .g-actions { display: flex; gap: 18px; align-items: center; }
+    .g-list { display: flex; flex-direction: column; max-width: 720px; margin-top: 48px; }
+    .g-card { border-top: 1px solid var(--rule); padding: 30px 0; display: grid; grid-template-columns: 1fr auto; column-gap: 32px; align-items: start; }
+    .g-card:first-of-type { border-top: none; padding-top: 8px; }
+    .g-kind { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-deep); font-weight: 600; }
+    .g-card h3 { font-size: 20px; font-weight: 500; margin: 6px 0 8px; letter-spacing: -0.01em; }
+    .g-card p { color: var(--ink-soft); font-size: 14.5px; line-height: 1.55; margin: 0; max-width: 56ch; }
+    .g-actions { grid-row: 1 / span 3; grid-column: 2; display: flex; gap: 10px; align-items: center; }
+    @media (max-width: 620px) { .g-card { grid-template-columns: 1fr; } .g-actions { grid-row: auto; grid-column: 1; margin-top: 16px; } }
     .g-actions .btn { min-height: 40px; padding: 9px 16px; font-size: 14px; }
     .read-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex: none; color: var(--ink-soft); border: 1px solid var(--rule); border-radius: 999px; }
     .read-btn:hover { color: var(--accent-deep); border-color: var(--accent-deep); text-decoration: none; }
     .g-coming { opacity: 0.6; }
     .g-coming .g-card, .g-coming { border-top-color: var(--rule); }
-    .g-soon { font-size: 13px; color: var(--ink-mute); }
+    .g-soon { grid-row: 1 / span 3; grid-column: 2; align-self: center; font-size: 12px; color: var(--ink-mute); white-space: nowrap; }
   </style>
 </head>
 <body>

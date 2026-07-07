@@ -117,6 +117,11 @@
     .three-card p { color: var(--ink-soft); font-size: 15px; line-height: 1.6; margin: 0; }
     .sec-eyebrow { display: flex; align-items: center; gap: 14px; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 46px 0 12px; }
     .sec-eyebrow::before { content: ''; display: inline-block; width: 34px; height: 1px; background: var(--accent); flex: none; }
+    .ai-section { max-width: 760px; margin: 8px auto 0; text-align: center; }
+    .ai-section .sec-eyebrow { justify-content: center; margin: 40px 0 12px; }
+    .ai-section p { margin: 10px auto; }
+    .ai-section .promptbox { text-align: left; }
+    .ai-section .tiny { text-align: center; }
   </style>
 </head>
 <body>
@@ -163,6 +168,9 @@
     <div class="home-main-narrow">
       <div class="card warn"><strong>Never put secrets in the plan.</strong> No PINs, seed phrases, passwords, or keys — describe <em>where</em> to find them. The plan is a map, not a vault.</div>
 
+    </div>
+
+    <div class="ai-section">
       <div class="sec-eyebrow">Build with AI (optional)</div>
       <p>Paste this prompt into any AI (Claude, ChatGPT, a local model), answer in plain words, and import the <code>.json</code> it returns with <strong>Open existing plan</strong>. It runs on your side — we never see it.</p>
 

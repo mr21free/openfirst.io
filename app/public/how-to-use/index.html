@@ -102,6 +102,21 @@
     .btn-lg { min-height: 46px; padding: 12px 22px; }
     .topnav .btn { min-height: 38px; padding: 8px 18px; font-size: 14px; }
     .topnav a.btn-primary { color: #fff; }
+    .topbar .container { max-width: 1160px; padding-left: 40px; padding-right: 40px; }
+    @media (max-width: 640px) { .topbar .container { padding-left: 22px; padding-right: 22px; } }
+    .home-main { max-width: 1160px; margin: 0 auto; padding: 40px 40px 80px; width: 100%; }
+    @media (max-width: 640px) { .home-main { padding: 28px 22px 64px; } }
+    .home-main-narrow { max-width: 680px; }
+    .home-main-narrow h1 { font-size: clamp(30px, 4vw, 46px); font-weight: 300; letter-spacing: -0.012em; margin: 12px 0 0; }
+    .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin: 44px 0; }
+    @media (max-width: 760px) { .three { grid-template-columns: 1fr; gap: 20px; } }
+    .three-card { border-top: 2px solid var(--accent); padding-top: 20px; }
+    .three-ico { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: var(--accent-wash); color: var(--accent-deep); }
+    .three-label { display: block; margin-top: 14px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); font-weight: 600; }
+    .three-card h3 { font-size: 20px; font-weight: 500; margin: 4px 0 8px; letter-spacing: -0.01em; }
+    .three-card p { color: var(--ink-soft); font-size: 15px; line-height: 1.6; margin: 0; }
+    .sec-eyebrow { display: flex; align-items: center; gap: 14px; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 46px 0 12px; }
+    .sec-eyebrow::before { content: ''; display: inline-block; width: 34px; height: 1px; background: var(--accent); flex: none; }
   </style>
 </head>
 <body>
@@ -118,20 +133,38 @@
     </div>
   </header>
 
-  <main class="content">
-    <span class="eyebrow">How to use</span>
-    <h1>Three steps.</h1>
+  <main class="home-main">
+    <div class="home-main-narrow">
+      <span class="eyebrow">How to use</span>
+      <h1>Three steps.</h1>
+    </div>
 
-    <ol class="steps">
-      <li><strong>Build</strong> your plan — the people, the places things live, the accounts and keys, and short guides. By hand, or let your own AI scaffold it (below).</li>
-      <li><strong>Export</strong> one file — <code>start-here.html</code>. Password-protect it if you like.</li>
-      <li><strong>Give it</strong> to your family on a USB or drive; share the password separately. They double-click it — it opens offline, no app needed.</li>
-    </ol>
+    <div class="three">
+      <div class="three-card">
+        <span class="three-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span>
+        <span class="three-label">Step 1</span>
+        <h3>Build</h3>
+        <p>The people, the places things live, the accounts and keys, and short guides. By hand, or let your own AI scaffold it — below.</p>
+      </div>
+      <div class="three-card">
+        <span class="three-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+        <span class="three-label">Step 2</span>
+        <h3>Export</h3>
+        <p>One file — <code>start-here.html</code>. Password-protect it if you like; the plain <code>.zip</code> keeps everything as your own backup.</p>
+      </div>
+      <div class="three-card">
+        <span class="three-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        <span class="three-label">Step 3</span>
+        <h3>Give it</h3>
+        <p>To your family on a USB or drive; share the password separately. They double-click it — it opens offline, no app needed.</p>
+      </div>
+    </div>
 
-    <div class="card warn"><strong>Never put secrets in the plan.</strong> No PINs, seed phrases, passwords, or keys — describe <em>where</em> to find them. The plan is a map, not a vault.</div>
+    <div class="home-main-narrow">
+      <div class="card warn"><strong>Never put secrets in the plan.</strong> No PINs, seed phrases, passwords, or keys — describe <em>where</em> to find them. The plan is a map, not a vault.</div>
 
-    <h2>Build with AI (optional)</h2>
-    <p>Paste this prompt into any AI (Claude, ChatGPT, a local model), answer in plain words, and import the <code>.json</code> it returns with <strong>Open existing plan</strong>. It runs on your side — we never see it.</p>
+      <div class="sec-eyebrow">Build with AI (optional)</div>
+      <p>Paste this prompt into any AI (Claude, ChatGPT, a local model), answer in plain words, and import the <code>.json</code> it returns with <strong>Open existing plan</strong>. It runs on your side — we never see it.</p>
 
     <div class="promptbox">
       <button class="copy-icon" type="button" onclick="copyPrompt(this)" aria-label="Copy prompt" title="Copy prompt">
@@ -233,7 +266,8 @@ non-sensitive structure. When I say "generate", validate that every reference
 resolves and every id is unique, then output the final JSON only.</code></pre>
     </div>
 
-    <p class="tiny muted">Prefer to build by hand? Open the app, click <strong>Create new plan</strong>, and try the <a href="/demo/">Demo</a> to see a finished one.</p>
+      <p class="tiny muted">Prefer to build by hand? Open the app, click <strong>Create new plan</strong>, and try the <a href="/demo/">Demo</a> to see a finished one.</p>
+    </div>
   </main>
 
   <footer class="screen">

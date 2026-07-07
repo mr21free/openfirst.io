@@ -92,16 +92,6 @@
     @media (max-width: 640px) { .container, .content { padding-left: 18px; padding-right: 18px; } }
 
     /* ---- guides ---- */
-    .g-list { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-top: 26px; }
-    .g-card { background: var(--paper); border: 1px solid var(--rule-soft); border-left: 2px solid var(--accent); padding: 24px 26px; display: flex; flex-direction: column; }
-    .g-card h3 { font-size: 18px; font-weight: 500; margin-bottom: 8px; }
-    .g-card p { color: var(--ink-soft); font-size: 14.5px; margin: 0 0 14px; flex: 1; }
-    .g-kind { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-deep); margin-bottom: 8px; }
-    .open-tpl { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 42px; padding: 10px 18px; border-radius: 999px; border: 1px solid var(--accent-deep); background: var(--accent-deep); color: #fff; font-size: 14px; font-weight: 500; }
-    .open-tpl:hover { text-decoration: none; background: oklch(0.5 0.13 250); }
-    .open-tpl.quiet { background: var(--paper); color: var(--ink); border-color: var(--rule); }
-    .open-tpl.quiet:hover { border-color: var(--accent-deep); }
-    .g-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 26px 0 8px; }
     ol li, ul li { margin: 8px 0; }
     h3 { font-size: 17px; font-weight: 600; margin: 28px 0 6px; }
     .topnav .btn { display:inline-flex; align-items:center; min-height:38px; padding:8px 18px; border-radius:999px; border:1px solid var(--rule); background:var(--paper); font-size:14px; font-weight:500; color:var(--ink); }
@@ -116,6 +106,27 @@
     .btn-lg { min-height: 46px; padding: 12px 22px; }
     .topnav .btn { min-height: 38px; padding: 8px 18px; font-size: 14px; }
     .topnav a.btn-primary { color: #fff; }
+    .topbar .container { max-width: 1160px; padding-left: 40px; padding-right: 40px; }
+    @media (max-width: 640px) { .topbar .container { padding-left: 22px; padding-right: 22px; } }
+    .home-main { max-width: 1160px; margin: 0 auto; padding: 0 40px 80px; width: 100%; }
+    @media (max-width: 640px) { .home-main { padding: 0 22px 64px; } }
+    .guides-head { max-width: 640px; margin: 8px 0 0; }
+    .guides-head h1 { font-size: clamp(30px, 4vw, 46px); font-weight: 300; letter-spacing: -0.012em; margin: 12px 0 0; }
+    .guides-head .lede { margin-top: 16px; }
+    .g-list { display: grid; gap: 30px 28px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-top: 52px; }
+    .g-card { border-top: 2px solid var(--accent); padding-top: 20px; display: flex; flex-direction: column; }
+    .g-ico { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: var(--accent-wash); color: var(--accent-deep); }
+    .g-kind { margin-top: 14px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); font-weight: 600; }
+    .g-card h3 { font-size: 19px; font-weight: 500; margin: 4px 0 8px; letter-spacing: -0.01em; }
+    .g-card p { color: var(--ink-soft); font-size: 14.5px; line-height: 1.55; margin: 0 0 18px; flex: 1; }
+    .g-actions { display: flex; gap: 18px; align-items: center; }
+    .g-actions .btn { min-height: 40px; padding: 9px 16px; font-size: 14px; }
+    .read-link { display: inline-flex; align-items: center; gap: 7px; color: var(--ink-soft); font-size: 14px; font-weight: 500; }
+    .read-link:hover { color: var(--accent-deep); text-decoration: none; }
+    .g-coming { opacity: 0.6; }
+    .g-coming .g-ico { background: var(--rule-soft); color: var(--ink-mute); }
+    .g-coming .g-card, .g-coming { border-top-color: var(--rule); }
+    .g-soon { font-size: 13px; color: var(--ink-mute); }
   </style>
 </head>
 <body>
@@ -131,56 +142,63 @@
       </nav>
     </div>
   </header>
-  <main class="content" style="max-width: 1060px">
-    <span class="eyebrow">Guides &amp; templates</span>
-    <h1>Borrow our homework.</h1>
-    <p class="lede">Everything here is free: read it, copy it, print it. And every template opens directly in the app as a ready-made plan you fill in — no account, nothing leaves your device.</p>
-
+  <main class="home-main">
+    <div class="guides-head">
+      <span class="eyebrow">Guides &amp; templates</span>
+      <h1>Borrow our homework.</h1>
+      <p class="lede">Free to read, free to copy, free to print. Every template opens straight in the app as a ready-made plan you fill in — no account, nothing leaves your device.</p>
+    </div>
     <div class="g-list">
       <div class="g-card">
-        <div class="g-kind">Template · for your heir</div>
+        <span class="g-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-5"/></svg></span>
+        <span class="g-kind">Template · for your heir</span>
         <h3>The First 72 Hours</h3>
         <p>What to do — and what not to touch — in the first three days. Separates the truly urgent from everything that can wait, so grief doesn't have to make decisions.</p>
-        <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
-          <a class="btn" href="/guides/first-72-hours/">Read</a>
+        <div class="g-actions">
+          <a class="read-link" href="/guides/first-72-hours/"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Read</a>
           <a class="btn btn-primary" href="/build/?template=first-72-hours">Open in the app</a>
         </div>
       </div>
 
       <div class="g-card">
-        <div class="g-kind">Template · Bitcoin</div>
+        <span class="g-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>
+        <span class="g-kind">Template · Bitcoin</span>
         <h3>The Bitcoin Inheritance Runbook</h3>
         <p>Self-custody that outlives you. What to document (and what never to write down), whom to involve, and the irreversible mistakes to design out.</p>
-        <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
-          <a class="btn" href="/guides/bitcoin-inheritance-runbook/">Read</a>
+        <div class="g-actions">
+          <a class="read-link" href="/guides/bitcoin-inheritance-runbook/"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Read</a>
           <a class="btn btn-primary" href="/build/?template=bitcoin-inheritance-runbook">Open in the app</a>
         </div>
       </div>
 
       <div class="g-card">
-        <div class="g-kind">Method · for you</div>
+        <span class="g-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        <span class="g-kind">Method · for you</span>
         <h3>How to Run a Dry Run</h3>
         <p>A plan you never tested is a hope. The 45-minute test that shows whether the person you love can actually use what you built — before it matters.</p>
-        <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
-          <a class="btn" href="/guides/dry-run/">Read</a>
+        <div class="g-actions">
+          <a class="read-link" href="/guides/dry-run/"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Read</a>
           <a class="btn btn-primary" href="/build/?template=dry-run">Open in the app</a>
         </div>
       </div>
 
       <div class="g-card">
-        <div class="g-kind">Template · anti-scam</div>
+        <span class="g-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg></span>
+        <span class="g-kind">Template · anti-scam</span>
         <h3>The Trusted-Helper Protocol</h3>
         <p>Grief attracts predators. How your heir verifies that a helper is really who they say they are — and the one rule that stops nearly every crypto scam.</p>
-        <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
-          <a class="btn" href="/guides/trusted-helper-protocol/">Read</a>
+        <div class="g-actions">
+          <a class="read-link" href="/guides/trusted-helper-protocol/"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Read</a>
           <a class="btn btn-primary" href="/build/?template=trusted-helper-protocol">Open in the app</a>
         </div>
       </div>
 
-      <div class="g-card">
-        <div class="g-kind">Coming</div>
+      <div class="g-card g-coming">
+        <span class="g-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+        <span class="g-kind">Template</span>
         <h3>The Money Runway</h3>
-        <p>Cash, accounts, bills, insurance — and how long the family can run before anything must be decided. In the works.</p>
+        <p>Cash, accounts, bills, insurance — and how long the family can run before anything must be decided.</p>
+        <span class="g-soon">Coming soon</span>
       </div>
     </div>
   </main>

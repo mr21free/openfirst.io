@@ -96,7 +96,10 @@
     @media (max-width: 640px) { .container, .content { padding-left: 18px; padding-right: 18px; } }
 
     /* ---- home page ---- */
-    .hero { padding: 80px 0 64px; display: grid; grid-template-columns: minmax(0, 6.4fr) minmax(0, 5.6fr); gap: 52px; align-items: center; }
+    /* Header aligns to the same narrower column as the content. */
+    body.home .topbar .container { max-width: 1160px; padding-left: 40px; padding-right: 40px; }
+    @media (max-width: 640px) { body.home .topbar .container { padding-left: 22px; padding-right: 22px; } }
+    .hero { padding: 72px 0 60px; display: grid; grid-template-columns: minmax(0, 6.2fr) minmax(0, 5.8fr); gap: 56px; align-items: center; }
     .hero-art { min-width: 0; position: relative; }
     @media (max-width: 940px) { .hero { grid-template-columns: 1fr; } .hero-art { order: -1; } }
 
@@ -136,7 +139,7 @@
     .flair-blob.one { width: 190px; height: 190px; top: -40px; right: -30px; }
     .flair-blob.two { width: 130px; height: 130px; bottom: -30px; left: -20px; opacity: 0.7; }
     @media (max-width: 940px) { .mock { max-width: 460px; margin: 0 auto; } }
-    .hero h1 { font-size: clamp(38px, 5.8vw, 72px); font-weight: 300; letter-spacing: -0.015em; line-height: 1.06; max-width: 22ch; margin: 14px 0 0; }
+    .hero h1 { font-size: clamp(34px, 4.4vw, 58px); font-weight: 300; letter-spacing: -0.015em; line-height: 1.08; max-width: 20ch; margin: 14px 0 0; }
     .hero .lede { margin-top: 26px; max-width: 58ch; font-size: 17.5px; line-height: 1.7; }
     .method { margin-top: 28px; display: flex; align-items: center; gap: 14px; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); }
     .method::before { content: ''; display: inline-block; width: 34px; height: 1px; background: var(--accent); flex: none; }
@@ -155,8 +158,9 @@
     .problem-h { font-size: clamp(24px, 3.2vw, 34px); font-weight: 300; letter-spacing: -0.01em; line-height: 1.2; max-width: 22ch; margin: 0 auto; }
     .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin: 48px 0 0; text-align: left; }
     @media (max-width: 760px) { .facts { grid-template-columns: 1fr; gap: 22px; } }
-    .fact { border-top: 2px solid var(--warn); padding-top: 18px; }
-    .fact-big { display: block; font-size: 24px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+    .fact { border-top: 2px solid var(--warn); padding-top: 20px; }
+    .fact-ico { display: inline-flex; color: var(--warn); margin-bottom: 12px; }
+    .fact-big { display: block; font-size: 22px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
     .fact p { color: var(--ink-soft); font-size: 15px; line-height: 1.55; margin: 8px 0 0; }
     .problem-note { margin: 40px auto 0; font-size: 17px; color: var(--ink); font-weight: 500; }
 
@@ -174,10 +178,21 @@
     .founder { font-size: 15px; color: var(--ink-soft); font-style: italic; max-width: 42ch; margin: 0 auto 18px; }
     .promise-line { font-size: 17px; color: var(--ink); font-weight: 500; }
     .closing-links { margin-top: 12px; font-size: 14px; color: var(--ink-mute); }
-    .home-main { max-width: var(--maxw); margin: 0 auto; padding: 0 28px 72px; width: 100%; }
+    /* Narrower content column with generous side gutters — calmer on 13–14"
+       laptops than edge-to-edge (the smallpdf feel). */
+    .home-main { max-width: 1160px; margin: 0 auto; padding: 0 40px 80px; width: 100%; }
+    @media (max-width: 640px) { .home-main { padding: 0 22px 64px; } }
+    /* unified-buttons — one system across the whole site (mirrors the app). */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 11px 20px; border-radius: 999px; border: 1px solid var(--rule); background: var(--paper); font-size: 14.5px; font-weight: 500; color: var(--ink); cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
+    .btn:hover { text-decoration: none; border-color: var(--accent-deep); }
+    .btn-primary, a.btn-primary { background: var(--accent-deep); border-color: var(--accent-deep); color: #fff; }
+    .btn-primary:hover, a.btn-primary:hover { background: oklch(0.5 0.13 250); border-color: oklch(0.5 0.13 250); color: #fff; }
+    .btn-lg { min-height: 46px; padding: 12px 22px; }
+    .topnav .btn { min-height: 38px; padding: 8px 18px; font-size: 14px; }
+    .topnav a.btn-primary { color: #fff; }
   </style>
 </head>
-<body>
+<body class="home">
   <header class="topbar">
     <div class="container row">
       <a class="brand row" href="/"><img class="logo" src="/logo.svg" alt="" /><span>OpenFirst</span></a>
@@ -245,16 +260,19 @@
       <h2 class="problem-h">If you were gone tomorrow, could the people you love actually reach what you left them?</h2>
       <div class="facts">
         <div class="fact">
-          <span class="fact-big">~20%</span>
-          <p>of all Bitcoin is already lost forever — most of it to death and forgotten keys.</p>
+          <span class="fact-ico"><svg width="30" height="30" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="currentColor" stroke-width="2"/><text x="14" y="19.5" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="15" font-weight="700" fill="currentColor">&#8383;</text></svg></span>
+          <span class="fact-big">~20% lost</span>
+          <p>of all Bitcoin is already gone forever — most of it to death and forgotten keys.</p>
         </div>
         <div class="fact">
+          <span class="fact-ico"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><rect x="9.3" y="10.5" width="5.4" height="4.6" rx="1"/><path d="M10.2 10.5V9a1.8 1.8 0 0 1 3.6 0v1.5"/></svg></span>
           <span class="fact-big">A locked phone</span>
           <p>is a dead end. Your family can't unlock it, and a dead SIM blocks every 2FA code.</p>
         </div>
         <div class="fact">
+          <span class="fact-ico"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 15.5h5"/><circle cx="16.5" cy="18" r="2.3"/></svg></span>
           <span class="fact-big">A will isn't enough</span>
-          <p>— it names who inherits, but it can't hand over a password, a seed phrase, or a login.</p>
+          <p>— it names who inherits, but can't hand over a password, a seed phrase, or a login.</p>
         </div>
       </div>
       <p class="problem-note">You've planned for everything but this. OpenFirst is the plan for this.</p>
@@ -280,8 +298,7 @@
     </div>
 
     <div class="closing">
-      <p class="founder">Built by a Bitcoiner for his own family — and open-sourced, so it outlives even us.</p>
-      <p class="promise-line">Free and open source. The individual tier will always be free.</p>
+      <p class="founder">Built by a Bitcoiner for his own family — free and open-sourced, so it outlives even us.</p>
       <p class="closing-links"><a href="/guides/">Free guides &amp; templates</a> · <a href="/security/">How your privacy is protected</a></p>
     </div>
   </main>

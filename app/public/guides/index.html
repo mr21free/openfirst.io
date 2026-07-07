@@ -108,6 +108,14 @@
     .topnav .btn:hover { text-decoration:none; border-color:var(--accent-deep); }
     .topnav .btn-primary { background:var(--accent-deep); border-color:var(--accent-deep); color:#fff; }
     .topnav .btn-primary:hover { background:oklch(0.5 0.13 250); }
+    /* unified-buttons — one system across the whole site (mirrors the app). */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 11px 20px; border-radius: 999px; border: 1px solid var(--rule); background: var(--paper); font-size: 14.5px; font-weight: 500; color: var(--ink); cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
+    .btn:hover { text-decoration: none; border-color: var(--accent-deep); }
+    .btn-primary, a.btn-primary { background: var(--accent-deep); border-color: var(--accent-deep); color: #fff; }
+    .btn-primary:hover, a.btn-primary:hover { background: oklch(0.5 0.13 250); border-color: oklch(0.5 0.13 250); color: #fff; }
+    .btn-lg { min-height: 46px; padding: 12px 22px; }
+    .topnav .btn { min-height: 38px; padding: 8px 18px; font-size: 14px; }
+    .topnav a.btn-primary { color: #fff; }
   </style>
 </head>
 <body>
@@ -134,8 +142,8 @@
         <h3>The First 72 Hours</h3>
         <p>What to do — and what not to touch — in the first three days. Separates the truly urgent from everything that can wait, so grief doesn't have to make decisions.</p>
         <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
-          <a class="open-tpl quiet" href="/guides/first-72-hours/">Read</a>
-          <a class="open-tpl" href="/build/?template=first-72-hours">Open in the app</a>
+          <a class="btn" href="/guides/first-72-hours/">Read</a>
+          <a class="btn btn-primary" href="/build/?template=first-72-hours">Open in the app</a>
         </div>
       </div>
 
@@ -144,8 +152,8 @@
         <h3>The Bitcoin Inheritance Runbook</h3>
         <p>Self-custody that outlives you. What to document (and what never to write down), whom to involve, and the irreversible mistakes to design out.</p>
         <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
-          <a class="open-tpl quiet" href="/guides/bitcoin-inheritance-runbook/">Read</a>
-          <a class="open-tpl" href="/build/?template=bitcoin-inheritance-runbook">Open in the app</a>
+          <a class="btn" href="/guides/bitcoin-inheritance-runbook/">Read</a>
+          <a class="btn btn-primary" href="/build/?template=bitcoin-inheritance-runbook">Open in the app</a>
         </div>
       </div>
 
@@ -154,8 +162,8 @@
         <h3>How to Run a Dry Run</h3>
         <p>A plan you never tested is a hope. The 45-minute test that shows whether the person you love can actually use what you built — before it matters.</p>
         <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
-          <a class="open-tpl quiet" href="/guides/dry-run/">Read</a>
-          <a class="open-tpl" href="/build/?template=dry-run">Open in the app</a>
+          <a class="btn" href="/guides/dry-run/">Read</a>
+          <a class="btn btn-primary" href="/build/?template=dry-run">Open in the app</a>
         </div>
       </div>
 
@@ -164,8 +172,8 @@
         <h3>The Trusted-Helper Protocol</h3>
         <p>Grief attracts predators. How your heir verifies that a helper is really who they say they are — and the one rule that stops nearly every crypto scam.</p>
         <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
-          <a class="open-tpl quiet" href="/guides/trusted-helper-protocol/">Read</a>
-          <a class="open-tpl" href="/build/?template=trusted-helper-protocol">Open in the app</a>
+          <a class="btn" href="/guides/trusted-helper-protocol/">Read</a>
+          <a class="btn btn-primary" href="/build/?template=trusted-helper-protocol">Open in the app</a>
         </div>
       </div>
 

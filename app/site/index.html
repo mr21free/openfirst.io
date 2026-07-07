@@ -150,16 +150,28 @@
     .problem { background: var(--paper); border: 1px solid var(--rule-soft); border-left: 2px solid var(--accent); padding: 26px 28px; }
     .problem h3 { font-size: 18px; font-weight: 500; line-height: 1.35; margin-bottom: 10px; }
     .problem p { color: var(--ink-soft); font-size: 14.5px; margin: 0; }
-    .sec-eyebrow { display: flex; align-items: center; gap: 14px; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 72px 0 18px; }
+    /* Problem section — creates the problem for someone who hasn't felt it. */
+    .problem-sec { margin: 104px 0 0; text-align: center; }
+    .problem-h { font-size: clamp(24px, 3.2vw, 34px); font-weight: 300; letter-spacing: -0.01em; line-height: 1.2; max-width: 22ch; margin: 0 auto; }
+    .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin: 48px 0 0; text-align: left; }
+    @media (max-width: 760px) { .facts { grid-template-columns: 1fr; gap: 22px; } }
+    .fact { border-top: 2px solid var(--warn); padding-top: 18px; }
+    .fact-big { display: block; font-size: 24px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+    .fact p { color: var(--ink-soft); font-size: 15px; line-height: 1.55; margin: 8px 0 0; }
+    .problem-note { margin: 40px auto 0; font-size: 17px; color: var(--ink); font-weight: 500; }
+
+    .sec-eyebrow { display: flex; align-items: center; gap: 14px; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 92px 0 26px; }
     .sec-eyebrow::before { content: ''; display: inline-block; width: 34px; height: 1px; background: var(--accent); flex: none; }
+
     /* Three-step row — the whole "how it works", visual not text-heavy. */
-    .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin: 96px 0 0; }
+    .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin: 0; }
     @media (max-width: 760px) { .three { grid-template-columns: 1fr; gap: 18px; } }
     .three-card { border-top: 2px solid var(--accent); padding-top: 20px; }
     .three-num { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--accent-wash); color: var(--accent-deep); font-weight: 600; font-size: 15px; }
     .three-card h3 { font-size: 20px; font-weight: 500; margin: 14px 0 8px; letter-spacing: -0.01em; }
     .three-card p { color: var(--ink-soft); font-size: 15px; line-height: 1.6; margin: 0; }
     .closing { margin-top: 100px; padding-top: 34px; border-top: 1px solid var(--rule-soft); text-align: center; }
+    .founder { font-size: 15px; color: var(--ink-soft); font-style: italic; max-width: 42ch; margin: 0 auto 18px; }
     .promise-line { font-size: 17px; color: var(--ink); font-weight: 500; }
     .closing-links { margin-top: 12px; font-size: 14px; color: var(--ink-mute); }
     .home-main { max-width: var(--maxw); margin: 0 auto; padding: 0 28px 72px; width: 100%; }
@@ -184,8 +196,9 @@
         <span class="eyebrow">OPENFIRST · A PRIVATE LIFE PACKAGE, BUILT ON YOUR DEVICE</span>
         <h1>Nothing breaks<br />if you're gone tomorrow.</h1>
         <p class="lede">
-          Build a private map of everything that matters — accounts, keys,
-          documents, people. Your family opens one file when the time comes.
+          Build a private map of everything that matters — bank accounts,
+          Bitcoin wallets, passwords, documents, people. Your family opens one
+          file when the time comes.
         </p>
         <div class="cta-row">
           <a class="btn btn-primary" href="/build/">Start your plan</a>
@@ -200,7 +213,7 @@
           <div class="mock-bar">
             <span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span>
             <span class="mock-title">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3C6FB2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6 H14 M4 6 V19 H20 V13" /><path d="M16 6 H20 V10" /><path d="M4 6 L11 12 L18 7" /></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3C6FB2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.14 L2.5 5.14 L2.5 18.86 L21.5 18.86 L21.5 14.11" /><path d="M17.54 5.14 L21.5 5.14 L21.5 9.1" /><path d="M2.5 5.14 L12 12 L21.29 5.29" /></svg>
               start-here.html
             </span>
           </div>
@@ -227,25 +240,47 @@
       </div>
     </section>
 
+    <!-- The problem — for the person who hasn't realised they have one. -->
+    <section class="problem-sec">
+      <h2 class="problem-h">If you were gone tomorrow, could the people you love actually reach what you left them?</h2>
+      <div class="facts">
+        <div class="fact">
+          <span class="fact-big">~20%</span>
+          <p>of all Bitcoin is already lost forever — most of it to death and forgotten keys.</p>
+        </div>
+        <div class="fact">
+          <span class="fact-big">A locked phone</span>
+          <p>is a dead end. Your family can't unlock it, and a dead SIM blocks every 2FA code.</p>
+        </div>
+        <div class="fact">
+          <span class="fact-big">A will isn't enough</span>
+          <p>— it names who inherits, but it can't hand over a password, a seed phrase, or a login.</p>
+        </div>
+      </div>
+      <p class="problem-note">You've planned for everything but this. OpenFirst is the plan for this.</p>
+    </section>
+
+    <div class="sec-eyebrow">How it works</div>
     <div class="three">
       <div class="three-card">
         <span class="three-num">1</span>
-        <h3>Build</h3>
-        <p>The people, places, accounts and keys — in plain words. Your own AI can scaffold it in minutes.</p>
+        <h3>Build the map</h3>
+        <p>Every account, wallet, key and document — where it lives, who can reach it, what to do first. In plain words; your own AI can scaffold it in minutes.</p>
       </div>
       <div class="three-card">
         <span class="three-num">2</span>
-        <h3>Test</h3>
-        <p>A dry run with the person who'll use it. A plan you never tested is only a hope.</p>
+        <h3>Test it together</h3>
+        <p>A dry run with the person who'll actually use it, so you find what's confusing while you still can. A plan you never tested is only a hope.</p>
       </div>
       <div class="three-card">
         <span class="three-num">3</span>
-        <h3>Hand over</h3>
-        <p>One file they double-click. It opens offline — and still works in twenty years.</p>
+        <h3>Leave them one file</h3>
+        <p>They double-click it — it opens offline, no app, no account. So the person you love isn't left guessing.</p>
       </div>
     </div>
 
     <div class="closing">
+      <p class="founder">Built by a Bitcoiner for his own family — and open-sourced, so it outlives even us.</p>
       <p class="promise-line">Free and open source. The individual tier will always be free.</p>
       <p class="closing-links"><a href="/guides/">Free guides &amp; templates</a> · <a href="/security/">How your privacy is protected</a></p>
     </div>

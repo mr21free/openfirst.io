@@ -1,5 +1,5 @@
 <script>
-  import { loadFromFiles, loadSample, decryptAndLoad } from '../lib/load.js';
+  import { loadFromFiles, decryptAndLoad } from '../lib/load.js';
   import logo from '../assets/logo.svg';
   import ConfirmDialog from './ConfirmDialog.svelte';
   import UnlockGate from './UnlockGate.svelte';
@@ -107,10 +107,6 @@
           <p class="soft small">Open a <code>.json</code> or <code>.zip</code> backup — or recover an editable plan from a heir <code>start-here.html</code>.</p>
           <button class="btn btn-secondary" onclick={() => fileInput.click()}>Open existing plan</button>
         </div>
-        <div class="action-card">
-          <p class="soft small">Explore a sample plan to see how everything works.</p>
-          <button class="btn btn-secondary" onclick={() => run(loadSample)}>Demo</button>
-        </div>
       </div>
 
       {#if error}
@@ -125,23 +121,6 @@
         onchange={(e) => run(() => loadFromFiles(e.target.files))}
       />
     </section>
-
-    <div class="section-sep"></div>
-
-    <section class="reassure">
-      <div class="panel-card">
-        <h3>Encrypted at rest</h3>
-        <p class="soft small">Lock your plan with AES-256-GCM before exporting. Without the password, the file reveals nothing.</p>
-      </div>
-      <div class="panel-card">
-        <h3>Private by design</h3>
-        <p class="soft small">This page has no servers and no tracking. The plan never leaves your computer.</p>
-      </div>
-      <div class="panel-card">
-        <h3>Built to last</h3>
-        <p class="soft small">The plan is plain, open files. Even without this page, the text inside is readable.</p>
-      </div>
-    </section>
   </main>
 
   <footer class="screen no-print">
@@ -152,9 +131,12 @@
         <a class="tiny" href="/how-to-use/">How to use</a>
         <a class="tiny" href="/security/">Security</a>
         <a class="tiny" href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener">The story</a>
-        <span class="tiny">Open source (AGPL) · MIT format · works offline</span>
       </nav>
-      <div class="footer-copy tiny">© 2026 OpenFirst™</div>
+      <div class="footer-copy tiny row">
+        <span>© 2026 OpenFirst™</span>
+        <span class="spacer"></span>
+        <span>Open source · works offline</span>
+      </div>
     </div>
   </footer>
 
@@ -200,7 +182,7 @@
 
   /* Action cards */
   .action-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px;
     margin-top: 48px;
   }
   .action-card {
@@ -223,21 +205,6 @@
     border-color: var(--accent);
   }
 
-  /* Separator */
-  .section-sep { height: 1px; background: var(--rule-soft); margin: 0 0 0; }
-
-  /* Reassure section */
-  .reassure {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
-    padding: 48px 0 80px;
-  }
-  .panel-card {
-    border-left: 2px solid var(--accent);
-    padding: 2px 0 2px 18px;
-    background: none;
-  }
-  .panel-card h3 { margin-bottom: 10px; }
-
   footer { padding: 30px 0; }
   .footer-tag { color: var(--accent); font-size: 13px; }
   footer .tiny { color: var(--screen-px); }
@@ -250,7 +217,6 @@
 
   @media (max-width: 760px) {
     .action-grid { grid-template-columns: 1fr; }
-    .reassure { grid-template-columns: 1fr; }
     .hero { padding-top: 48px; }
   }
 </style>

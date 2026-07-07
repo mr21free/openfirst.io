@@ -219,7 +219,12 @@
     .closing { margin-top: 100px; padding-top: 34px; border-top: 1px solid var(--rule-soft); text-align: center; }
     .founder { font-size: 15px; color: var(--ink-soft); font-style: italic; max-width: 42ch; margin: 0 auto 18px; }
     .promise-line { font-size: 17px; color: var(--ink); font-weight: 500; }
-    .closing-links { margin-top: 12px; font-size: 14px; color: var(--ink-mute); }
+    .assure { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; max-width: 860px; margin: 40px auto 8px; text-align: left; }
+    .assure-item { border-top: 2px solid var(--accent); padding-top: 14px; }
+    .assure-item h4 { font-size: 14.5px; font-weight: 600; margin: 0 0 7px; letter-spacing: -0.005em; }
+    .assure-item p { font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); margin: 0; }
+    @media (max-width: 720px) { .assure { grid-template-columns: 1fr; gap: 20px; max-width: 420px; } }
+    .closing-links { margin-top: 24px; font-size: 14px; color: var(--ink-mute); }
     /* Narrower content column with generous side gutters — calmer on 13–14"
        laptops than edge-to-edge (the smallpdf feel). */
     .home-main { max-width: 1160px; margin: 0 auto; padding: 0 40px 80px; width: 100%; }
@@ -382,6 +387,20 @@
 
     <div class="closing">
       <p class="founder">Built by a Bitcoiner for his own family — free and open-sourced, so it outlives even us.</p>
+      <div class="assure">
+        <div class="assure-item">
+          <h4>Private by design</h4>
+          <p>No servers, no tracking, no account. The plan never leaves your device.</p>
+        </div>
+        <div class="assure-item">
+          <h4>Encrypted at rest</h4>
+          <p>Locked with AES-256-GCM before it leaves your hands. Without the password, the file reveals nothing.</p>
+        </div>
+        <div class="assure-item">
+          <h4>Built to last</h4>
+          <p>Plain, open files in a documented format — readable in twenty years, with or without us.</p>
+        </div>
+      </div>
       <p class="closing-links"><a href="/guides/">Free guides &amp; templates</a> · <a href="/security/">How your privacy is protected</a></p>
     </div>
   </main>

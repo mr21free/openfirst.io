@@ -18,7 +18,7 @@
   import ReadinessView from './ReadinessView.svelte';
   import { langValue } from '../lib/package.js';
 
-  let { store, onClose, readOnly = false, initialAudience = null } = $props();
+  let { store, onClose, readOnly = false, initialAudience = null, initialView = null } = $props();
 
   const pkg = $derived(store.pkg);
   const editing = $derived(!readOnly && store.mode === 'edit');
@@ -234,7 +234,7 @@
 
   let audience = $state(null);
   let chosen = $state(false);
-  let view = $state('start');
+  let view = $state(initialView || 'start');
   let drawerId = $state(null);
   let dryRun = $state(false);
   let dryRunId = $state(null);

@@ -111,9 +111,16 @@ import { templateSeed } from './lib/templates.js';
     if (!booted && bootMode === 'build') {
       // /build with nothing loaded = start building. (An untouched new plan is
       // never auto-saved, so stray visits don't leave draft clutter.)
-      // /build/?template=<id> seeds the new plan from a free template.
+      // /build/?template=<id> seeds the new plan from a free template and
+      // opens the template's own guide read-first, not the editor — the link
+      // on /guides/ promises "read this template", editing is one click away.
       booted = true;
-      newPlan(templateSeed(new URLSearchParams(location.search).get('template')));
+      const seed = templateSeed(new URLSearchParams(location.search).get('template'));
+      newPlan(seed);
+      if (seed?.guides?.[0]) {
+        store.stopEditing();
+        templateView = seed.guides[0].id;
+      }
       return;
     }
     booted = true;
@@ -138,6 +145,7 @@ import { templateSeed } from './lib/templates.js';
   }
 
   let demoAudience = $state(null);
+  let templateView = $state(null); // guide id a /build/?template= link opens on
 
   function onLoaded(loaded) { store.load(loaded); showEditorUrl(); window.scrollTo({ top: 0 }); }
   function close() {
@@ -270,7 +278,7 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
     <UnlockGate hint={gateEnvelope.hint} onUnlock={unlockEmbedded} />
   {/if}
 {:else if store.pkg}
-  <Reader {store} onClose={close} initialAudience={demoAudience} />
+  <Reader {store} onClose={close} initialAudience={demoAudience} initialView={templateView} />
 {:else if draftGate}
   <UnlockGate hint="Your draft passphrase (not the export password)." onUnlock={unlockDraft} onCancel={() => (draftGate = null)} />
 {:else}

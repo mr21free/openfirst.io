@@ -127,7 +127,7 @@
 
   <footer class="screen no-print">
     <div class="container row wrap">
-      <span class="footer-tag">your plan, in safe hands</span>
+      <span class="tiny">© 2026 OpenFirst™</span>
       <span class="spacer"></span>
       <nav class="row wrap footer-nav">
         <a class="tiny" href="/how-to-use/">How to use</a>
@@ -135,11 +135,6 @@
         <a class="tiny" href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener">The story</a>
         <a class="tiny" href="mailto:info@openfirst.io">Contact</a>
       </nav>
-      <div class="footer-copy tiny row">
-        <span>© 2026 OpenFirst™</span>
-        <span class="spacer"></span>
-        <span>Open source · works offline</span>
-      </div>
     </div>
   </footer>
 
@@ -175,7 +170,7 @@
   .brand:hover { text-decoration: none; }
   .logo { width: 24px; height: 24px; display: block; }
   .topnav { display: flex; align-items: center; gap: 24px; }
-  .topnav a { color: var(--ink-soft); font-size: 14px; }
+  .topnav a { color: var(--ink-soft); font-size: 14px; font-weight: 500; }
   .topnav a:hover { color: var(--ink); text-decoration: none; }
   main { flex: 1; width: 100%; }
   .hero { padding: 64px 0 48px; }
@@ -224,7 +219,6 @@
   footer .tiny { color: var(--screen-px); }
   .footer-nav { gap: 16px; }
   .footer-nav a:hover { color: var(--accent); text-decoration: none; }
-  .footer-copy { flex-basis: 100%; margin-top: 16px; padding-top: 14px; border-top: 1px solid oklch(1 0 0 / 0.08); color: var(--screen-px); }
   .draft-lock { display: inline-flex; margin-right: 7px; color: var(--ink-soft); vertical-align: -1px; }
 
   .unlock h3 { font-size: 19px; }

@@ -109,6 +109,32 @@
     .btn-lg { min-height: 46px; padding: 12px 22px; }
     .topnav .btn { min-height: 38px; padding: 8px 18px; font-size: 14px; }
     .topnav a.btn-primary { color: #fff; }
+
+    /* --- security page layout: home-page grammar --- */
+    .home-main { max-width: 1160px; margin: 0 auto; padding: 40px 40px 80px; width: 100%; }
+    @media (max-width: 640px) { .home-main { padding: 28px 22px 64px; } }
+    .sec-eyebrow { display: flex; align-items: center; gap: 14px; font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); margin: 0 0 20px; }
+    .sec-eyebrow::before { content: ''; display: inline-block; width: 34px; height: 1px; background: var(--accent); flex: none; }
+    .sec-eyebrow.warn { color: var(--warn); }
+    .sec-eyebrow.warn::before { background: var(--warn); }
+    .sec-h { font-size: clamp(28px, 3.4vw, 40px); font-weight: 650; letter-spacing: -0.022em; line-height: 1.12; max-width: 24ch; margin: 0; }
+    .sec-sub { margin: 14px 0 0; max-width: 62ch; font-size: 17px; color: var(--ink-soft); }
+    .sec-band { background: var(--paper); border-top: 1px solid var(--rule-soft); border-bottom: 1px solid var(--rule-soft); margin-top: 56px; }
+    .sec-band .home-main { padding-top: 0; padding-bottom: 0; }
+    .sec-band section { padding: 64px 0 68px; }
+    .pgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px; margin: 44px 0 0; }
+    .pgrid.four { grid-template-columns: repeat(4, 1fr); }
+    @media (max-width: 980px) { .pgrid, .pgrid.four { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px) { .pgrid, .pgrid.four { grid-template-columns: 1fr; gap: 22px; } }
+    .pcard { border-left: 2px solid var(--accent); padding-left: 18px; }
+    .pcard.w { border-left-color: var(--warn); }
+    .pcard .ico { display: inline-flex; color: var(--accent-deep); margin-bottom: 12px; }
+    .pcard.w .ico { color: var(--warn); }
+    .pcard h3 { font-size: 20px; font-weight: 600; margin: 0 0 8px; letter-spacing: -0.015em; }
+    .pcard p { font-size: 15px; line-height: 1.55; color: var(--ink-soft); margin: 0; }
+    .spec-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 26px 0 0; }
+    .spec-chips .chip { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-weight: 500; border: 1px solid var(--rule); background: var(--paper); color: var(--ink-soft); padding: 5px 12px; }
+    .verify-note { margin: 44px 0 0; }
   </style>
 </head>
 <body>
@@ -126,53 +152,63 @@
   </header>
 
 
-  <main class="content">
+  <main class="home-main">
     <span class="eyebrow">Security</span>
-    <h1>Built to be trusted — and honest about the limits.</h1>
-    <p class="lede">OpenFirst runs entirely on your device and hands your loved ones a single file they open offline. Here's what that protects, what it deliberately doesn't, and how you can check every claim yourself. The full threat model lives in <a href="https://github.com/mr21free/inheritance/blob/main/docs/SECURITY.md">SECURITY.md</a>.</p>
+    <h1>Built to be trusted —<br>and honest about the limits.</h1>
+    <p class="lede" style="max-width:62ch">OpenFirst runs entirely on your device and hands your loved ones a single file they open offline. Here's what that protects, what it deliberately doesn't, and how to check every claim yourself. The full threat model lives in <a href="https://github.com/mr21free/inheritance/blob/main/docs/SECURITY.md">SECURITY.md</a>.</p>
 
-    <h2>The four principles</h2>
-    <ul>
-      <li><strong>Local-first, no server.</strong> There is no backend. The app is static files. Nothing you type is uploaded, because there is nowhere to upload it to.</li>
-      <li><strong>A map, not a vault.</strong> The plan records <em>where</em> secrets live and how to find them — never the seeds, passwords, or PINs themselves. The app won't even let you store a raw secret, and strips any an older file tries to carry.</li>
-      <li><strong>Outlives the company.</strong> Every export is an open, documented format — plain JSON + Markdown + files, or one self-contained HTML — readable and decryptable with standard tools in 20 years, with no OpenFirst in the loop.</li>
-      <li><strong>Verifiable.</strong> The whole app is open source and builds to one auditable file.</li>
-    </ul>
-
-    <h2>What is protected</h2>
-
-    <h3>Provably offline</h3>
-    <p>The built app ships a strict Content-Security-Policy with <code>connect-src 'none'</code>. Even a maliciously crafted package cannot make the reader phone home — the browser forbids every network connection. All code, fonts, and styles are inlined; nothing is ever fetched.</p>
-
-    <h3>Strong, standard encryption</h3>
-    <p>Password-protected exports use <strong>AES-256-GCM</strong> with a key derived by <strong>PBKDF2-HMAC-SHA256 at 600,000 iterations</strong> (OWASP 2023 guidance), random salt and IV per file. Every parameter is stored in the file, so it can be decrypted <em>without OpenFirst</em> — the recipe is public.</p>
-    <div class="card"><strong>Entropy is the real lever.</strong> The app generates and nudges you toward a 6-word passphrase (~77 bits), which makes brute force infeasible. A short PIN does not — treat it as friction, not protection.</div>
-    <p>The visible password <strong>hint is tamper-evident</strong>: it's cryptographically bound to the file, so nobody can rewrite it (say, into a phishing instruction for a grieving heir) without breaking decryption.</p>
-
-    <h3>Encrypt the draft too</h3>
-    <p>While you build, the auto-saved draft can be encrypted at rest with a passphrase (Settings → Draft protection) — the plan and its files — with the key held in memory only. This protects a copied disk, profile, or backup.</p>
-
-    <h3>Safe rendering</h3>
-    <p>Guide text is rendered by a small, hand-written Markdown renderer that escapes all HTML and emits only a fixed set of safe tags. A tampered package cannot inject scripts or dangerous links.</p>
-
-    <h2>What is <em>not</em> protected — please read</h2>
-    <div class="card warn">
-      <p style="margin-top:0"><strong>Your unlocked device.</strong> OpenFirst can't protect you from malware, a malicious browser extension, or someone at your unlocked screen while you edit. Draft encryption protects copies <em>at rest</em>, not a live-compromised browser.</p>
-      <p><strong>Don't store secrets in the plan.</strong> No seeds, private keys, passwords, or PINs — even in notes. Keep them on hardware, paper, or a password manager and point to them.</p>
-      <p><strong>A lost passphrase is unrecoverable.</strong> No reset, no backdoor — that's the point. Keep your durable encrypted export somewhere safe.</p>
-      <p style="margin-bottom:0"><strong>Discovery and delivery are yours.</strong> OpenFirst can't make your heir find the plan or receive the password. That's a human, out-of-band step — a sealed letter, a lawyer, split among relatives.</p>
+    <div class="pgrid four" style="margin-top:52px">
+      <div class="pcard"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></span><h3>No server</h3><p>The app is static files. Nothing you type is uploaded — there is nowhere to upload it to.</p></div>
+      <div class="pcard"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span><h3>A map, not a vault</h3><p>The plan records <em>where</em> secrets live — never the secrets. The app refuses to store a raw one.</p></div>
+      <div class="pcard"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></span><h3>Outlives the company</h3><p>Open, documented formats — plain JSON, Markdown, one HTML file — readable in 20 years without us.</p></div>
+      <div class="pcard"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span><h3>Verifiable</h3><p>Open source, and the whole app builds to one auditable file.</p></div>
     </div>
+  </main>
 
-    <h2>Verify it yourself</h2>
-    <ol class="steps">
-      <li><strong>Read the source.</strong> It's small and dependency-light — one runtime dependency for zip, everything else native Web Crypto.</li>
-      <li><strong>Reproduce the build</strong> and open <code>dist/build/index.html</code> from disk with your network set to offline. It works, because it never needed the network.</li>
-      <li><strong>Inspect an encrypted export.</strong> It's JSON — you can see the algorithm, KDF, iterations, salt, and IV, and decrypt it with the standalone recipe using only Node.js or Web Crypto.</li>
-      <li><strong>Watch the network</strong> with devtools open: loading a heir reader makes zero requests.</li>
-    </ol>
+  <div class="sec-band">
+    <div class="home-main">
+    <section>
+      <div class="sec-eyebrow">What is protected</div>
+      <h2 class="sec-h">Locked with the same recipe banks use — and the recipe is public.</h2>
+      <div class="pgrid">
+        <div class="pcard"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg></span><h3>Provably offline</h3><p>A strict Content-Security-Policy forbids every network connection — even a maliciously crafted plan can't phone home. Everything is inlined; nothing is fetched.</p></div>
+        <div class="pcard"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><h3>Strong, standard encryption</h3><p>Every parameter is stored in the file, so it decrypts with standard tools — no OpenFirst needed. The password hint is tamper-evident: it can't be rewritten without breaking decryption.</p></div>
+        <div class="pcard"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span><h3>The draft is encrypted too</h3><p>While you build, the auto-saved draft can be locked with a passphrase (Settings → Draft protection). A copied disk or backup reveals nothing.</p></div>
+        <div class="pcard"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><h3>Safe rendering</h3><p>Guide text goes through a small hand-written renderer that escapes all HTML. A tampered plan can't inject scripts or dangerous links.</p></div>
+      </div>
+      <div class="spec-chips">
+        <span class="chip">AES-256-GCM</span>
+        <span class="chip">PBKDF2-SHA256 · 600,000 iterations</span>
+        <span class="chip">connect-src 'none'</span>
+        <span class="chip">6-word passphrase ≈ 77 bits</span>
+      </div>
+      <div class="card" style="margin-top:22px; max-width:64ch"><strong>Entropy is the real lever.</strong> The app nudges you toward a 6-word passphrase — that makes brute force infeasible. A short PIN doesn't; treat it as friction, not protection.</div>
+    </section>
+    </div>
+  </div>
 
-    <h2>Report a vulnerability</h2>
-    <p>Found something? Email <a href="mailto:security@openfirst.io">security@openfirst.io</a> with steps to reproduce, and please give us time to fix it before disclosing publicly. We'll credit you unless you'd rather we didn't.</p>
+  <main class="home-main" style="padding-top:0; padding-bottom:0">
+    <section style="padding:64px 0 0">
+      <div class="sec-eyebrow warn">What is not protected</div>
+      <h2 class="sec-h">Four things stay your job.</h2>
+      <div class="pgrid">
+        <div class="pcard w"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span><h3>Your unlocked device</h3><p>Malware, a rogue extension, or someone at your unlocked screen while you edit — no app can protect against that.</p></div>
+        <div class="pcard w"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="12" x2="15" y2="18"/><line x1="15" y1="12" x2="9" y2="18"/></svg></span><h3>Secrets don't belong here</h3><p>No seeds, keys, passwords or PINs — even in notes. Keep them on hardware, paper or a password manager, and point to them.</p></div>
+        <div class="pcard w"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></span><h3>A lost passphrase is gone</h3><p>No reset, no backdoor — that's the point. Keep your encrypted export somewhere safe.</p></div>
+        <div class="pcard w"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></span><h3>Delivery is human</h3><p>Your heir has to find the plan and receive the password — a sealed letter, a lawyer, family. Test it with a dry run.</p></div>
+      </div>
+    </section>
+
+    <section class="verify-note" style="padding-bottom:80px">
+      <div class="sec-eyebrow">Verify it yourself</div>
+      <ol class="steps" style="max-width:66ch">
+        <li><strong>Read the source</strong> — small and dependency-light: one runtime dependency for zip, everything else native Web Crypto.</li>
+        <li><strong>Reproduce the build</strong>, go offline, open <code>dist/build/index.html</code> from disk. It works — it never needed the network.</li>
+        <li><strong>Inspect an encrypted export</strong> — plain JSON showing algorithm, KDF, iterations, salt and IV; decrypt it with Node.js alone.</li>
+        <li><strong>Watch the network tab</strong> while a reader loads: zero requests.</li>
+      </ol>
+      <p style="margin-top:28px; color:var(--ink-soft)">Found a vulnerability? Email <a href="mailto:security@openfirst.io">security@openfirst.io</a> with steps to reproduce — we'll credit you unless you'd rather we didn't.</p>
+    </section>
   </main>
 
   <footer class="screen">

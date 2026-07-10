@@ -27,6 +27,12 @@
   /* Square corners throughout — the calm "paper document" look. */
   --radius: 0px;
 
+  /* One family, two voices (see DESIGN.md): Sans is the human voice —
+     headings, body, buttons, dialogs. Mono is the machine voice — eyebrows,
+     field labels, values, file names, numbers, badges. */
+  --sans: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
   /* Layer scale (see DESIGN.md) — don't invent new z-indexes. */
   --z-popover: 40;   /* dropdowns, search results, filter panels */
   --z-topbar: 50;
@@ -67,7 +73,7 @@ html, body {
     radial-gradient(1200px 600px at 50% -10%, var(--paper), transparent 70%),
     var(--bg);
   color: var(--ink);
-  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--sans);
   font-weight: 400;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -86,14 +92,15 @@ button {
   border: none;
 }
 
-h1, h2, h3, h4 { font-weight: 300; line-height: 1.1; letter-spacing: -0.01em; }
-h3 { font-weight: 500; }
+h1, h2 { font-weight: 650; line-height: 1.1; letter-spacing: -0.022em; }
+h3, h4 { font-weight: 600; line-height: 1.2; letter-spacing: -0.015em; }
 strong { font-weight: 600; }
 
 .container { max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
 
 .eyebrow {
   color: var(--ink-mute);
+  font-family: var(--mono);
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.18em;
@@ -332,9 +339,9 @@ strong { font-weight: 600; }
 .frm { display: flex; flex-direction: column; gap: 16px; margin-top: 4px; }
 .frm .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .frm .f { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.frm .lbl { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-mute); }
+.frm .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-mute); }
 .frm input, .frm textarea, .frm select {
-  font: inherit; font-size: 14px; color: var(--ink);
+  font: inherit; font-family: var(--mono); font-size: 14px; color: var(--ink);
   border: 1px solid var(--rule); border-radius: 0; padding: 9px 11px;
   background: var(--paper); width: 100%;
 }
@@ -376,7 +383,7 @@ strong { font-weight: 600; }
 .muted { color: var(--ink-mute); }
 .soft { color: var(--ink-soft); }
 .small { font-size: 13px; }
-.tiny { font-size: 11px; letter-spacing: 0.04em; }
+.tiny { font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; }
 .row { display: flex; align-items: center; gap: 10px; }
 .wrap { flex-wrap: wrap; }
 .stack { display: flex; flex-direction: column; gap: 10px; }

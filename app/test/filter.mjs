@@ -31,8 +31,8 @@ const facetCount = (facet, opt) => page.evaluate(({ facet, opt }) => {
 
 try {
   await page.goto(FILE, { waitUntil: 'load' });
-  await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Demo'), { timeout: 8000 });
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Demo')?.click());
+  await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Create new plan'), { timeout: 8000 });
+  await (await page.$('input[type="file"]')).uploadFile(resolve(__dirname, '../src/sample/lifepackage.json'));
   // The sample opens on the "who are you?" gate — step past it into the plan.
   await page.waitForFunction(() => /who are you/i.test(document.body.innerText) || !!document.querySelector('nav .navlink-section'), { timeout: 8000 });
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything|admin/i.test(b.textContent))?.click());

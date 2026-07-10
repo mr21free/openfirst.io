@@ -38,7 +38,7 @@ const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new'
 const page = await browser.newPage();
 const pause = (ms = 500) => new Promise((r) => setTimeout(r, ms));
 const upload = async (f) => { const i = await page.$('input[type=file]:not([webkitdirectory])'); await i.uploadFile(resolve(dir, f)); await pause(700); };
-const fresh = async () => { await page.goto(FILE, { waitUntil: 'load' }); await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Demo'), { timeout: 8000 }); };
+const fresh = async () => { await page.goto(FILE, { waitUntil: 'load' }); await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Create new plan'), { timeout: 8000 }); };
 
 try {
   await fresh();

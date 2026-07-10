@@ -16,7 +16,10 @@ microcopy ("Take your time. There is no rush."), never in visuals.
 
 - Colors, spacing and type come from [src/styles/app.css](src/styles/app.css)
   (heaven-blue system). Never hard-code a color a token exists for.
-- Type: IBM Plex Mono for UI. Guide text uses the plan's chosen reading font.
+- Type — one family, two voices: **IBM Plex Sans** is the human voice
+  (headings at 600–650, body, buttons, dialogs); **IBM Plex Mono** is the
+  machine voice (eyebrows, field labels, input values, file names, numbers,
+  `.tiny` metadata). Guide text uses the plan's chosen reading font.
 - Motion: 120–150ms ease, opacity/background/color only. Nothing bounces.
 
 ## Radius language

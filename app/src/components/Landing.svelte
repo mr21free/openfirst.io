@@ -171,7 +171,7 @@
     border-bottom: 1px solid var(--rule-soft);
   }
   .topbar .row { height: 60px; }
-  .brand { font-weight: 500; gap: 10px; color: var(--ink); }
+  .brand { font-family: var(--mono); font-weight: 500; gap: 10px; color: var(--ink); }
   .brand:hover { text-decoration: none; }
   .logo { width: 24px; height: 24px; display: block; }
   .topnav { display: flex; align-items: center; gap: 24px; }
@@ -181,7 +181,7 @@
   .hero { padding: 64px 0 48px; }
   h1 {
     margin-top: 14px; font-size: clamp(30px, 4.2vw, 46px);
-    font-weight: 300; letter-spacing: -0.012em; line-height: 1.08; max-width: 24ch;
+    font-weight: 650; letter-spacing: -0.025em; line-height: 1.08; max-width: 24ch;
   }
   .lede { margin-top: 18px; max-width: 58ch; font-size: 16.5px; line-height: 1.7; }
   .error { color: var(--warn); margin-top: 14px; white-space: pre-line; text-align: left; }

@@ -32,11 +32,14 @@ const clickByText = (text) =>
 
 try {
   await page.goto(FILE, { waitUntil: 'load' });
-  await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Demo'), { timeout: 8000 });
+  await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Create new plan'), { timeout: 8000 });
   ok('landing renders', true);
 
-  // Load the bundled sample
-  await clickByText('Demo');
+  // Load the bundled sample through the real "Open existing plan" input —
+  // the launcher has no Demo card anymore (demo lives at /demo/, which is
+  // path-routed and can't be exercised over file://).
+  const sampleInput = await page.$('input[type="file"]');
+  await sampleInput.uploadFile(resolve(__dirname, '../src/sample/lifepackage.json'));
   await page.waitForFunction(() => document.body.innerText.includes('who are you'), { timeout: 8000 });
   const gateText = await page.evaluate(() => document.body.innerText);
   ok('who-are-you gate shows owner (John James)', gateText.includes('John James'));
@@ -118,7 +121,7 @@ try {
 
   // --- Encrypted package flow ---  (brand = home)
   await page.click('.brand-home');
-  await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Demo'), { timeout: 6000 });
+  await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Create new plan'), { timeout: 6000 });
 
   const fileInput = await page.$('input[type=file]:not([webkitdirectory])');
   await fileInput.uploadFile(resolve(__dirname, '../public/sample-package.encrypted.json'));

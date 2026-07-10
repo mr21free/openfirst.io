@@ -150,10 +150,10 @@
   /* The dashed frame is a screen-only "draft" cue — never print it. */
   @media print { .is-draft.guide { border: none; } }
   .ghead { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 22px; }
-  .ghead h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 300; }
+  .ghead h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 650; letter-spacing: -0.022em; }
   .gtitle-input {
     display: block; width: 100%;
-    font: inherit; font-size: clamp(28px, 4vw, 40px); font-weight: 300; letter-spacing: -0.01em; line-height: 1.3;
+    font: inherit; font-size: clamp(28px, 4vw, 40px); font-weight: 650; letter-spacing: -0.022em; line-height: 1.3;
     color: var(--ink); background: transparent;
     border: 1px solid transparent; border-radius: 8px; padding: 6px 8px; margin: -6px -8px 20px;
   }

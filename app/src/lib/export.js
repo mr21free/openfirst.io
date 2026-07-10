@@ -141,17 +141,17 @@ async function blobToB64(blob, att = null) {
   return { mime: blob.type || mimeForAttachment(att) || '', b64: b64FromBytes(bytes) };
 }
 
-// reading_font choice → bundled @font-face family name. Mono is also the app's
-// UI face, so it is always kept.
+// reading_font choice → bundled @font-face family name. Plex Sans (the UI's
+// human voice) and Plex Mono (its machine voice) are always kept.
 const READING_FONT_FAMILY = {
   mono: 'IBM Plex Mono', sans: 'IBM Plex Sans', inter: 'Inter',
   atkinson: 'Atkinson Hyperlegible', serif: 'Source Serif 4', literata: 'Literata', lora: 'Lora'
 };
 
-/** Which font families the heir reader actually needs: the UI mono face, plus
+/** Which font families the heir reader actually needs: the two UI faces, plus
  *  the plan's chosen guide font. Everything else can be dropped from the export. */
 function fontsToKeep(data) {
-  const keep = new Set(['IBM Plex Mono']); // app/UI font — always present
+  const keep = new Set(['IBM Plex Mono', 'IBM Plex Sans']); // UI voices — always present
   const fam = READING_FONT_FAMILY[data?.package?.reading_font];
   if (fam) keep.add(fam);
   return keep;

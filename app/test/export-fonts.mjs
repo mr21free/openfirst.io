@@ -63,19 +63,20 @@ try {
     const html = readFileSync(litPath, 'utf8');
     const fams = familiesIn(html);
     ok('keeps the UI mono font', fams.has('IBM Plex Mono'));
+    ok('keeps the UI sans font', fams.has('IBM Plex Sans'));
     ok('keeps the chosen guide font (Literata)', fams.has('Literata'));
     ok('drops the other serif (Lora)', !fams.has('Lora'));
-    ok('drops the unused sans (Inter / Atkinson / Plex Sans)', !fams.has('Inter') && !fams.has('Atkinson Hyperlegible') && !fams.has('IBM Plex Sans'));
+    ok('drops the unused sans (Inter / Atkinson)', !fams.has('Inter') && !fams.has('Atkinson Hyperlegible'));
     ok('drops the unused Source Serif', !fams.has('Source Serif 4'));
-    ok('exactly two families remain', fams.size === 2);
+    ok('exactly three families remain', fams.size === 3);
     ok('export is meaningfully smaller than the full app', statSync(litPath).size < distSize - 200_000);
   }
 
-  // Mono (default UI face): no extra guide font, so only Plex Mono remains.
+  // Mono guide font: no extra reading face, so only the two UI voices remain.
   const monoPath = await exportReader(browser, dir, plan('mono'));
   if (monoPath) {
     const fams = familiesIn(readFileSync(monoPath, 'utf8'));
-    ok('mono plan keeps only IBM Plex Mono', fams.size === 1 && fams.has('IBM Plex Mono'));
+    ok('mono plan keeps only the UI voices', fams.size === 2 && fams.has('IBM Plex Mono') && fams.has('IBM Plex Sans'));
     ok('mono export is the smallest', statSync(monoPath).size < statSync(litPath).size);
   }
 } catch (e) { ok('flow threw: ' + e.message, false); }

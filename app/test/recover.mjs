@@ -23,8 +23,8 @@ await client.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPa
 try {
   // Produce a heir reader from the Demo.
   await page.goto(FILE, { waitUntil: 'load' });
-  await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Demo'), { timeout: 8000 });
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Demo')?.click());
+  await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Create new plan'), { timeout: 8000 });
+  await (await page.$('input[type="file"]')).uploadFile(resolve(__dirname, '../src/sample/lifepackage.json'));
   await page.waitForFunction(() => /who are you/i.test(document.body.innerText), { timeout: 8000 });
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything|admin/i.test(b.textContent))?.click());
   await page.waitForFunction(() => !!document.querySelector('.plan-edit'), { timeout: 8000 });

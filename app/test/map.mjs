@@ -18,8 +18,8 @@ const pause = (ms = 400) => new Promise((r) => setTimeout(r, ms));
 
 try {
   await page.goto(FILE, { waitUntil: 'load' });
-  await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Demo'), { timeout: 8000 });
-  await click('Demo'); await pause();
+  await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Create new plan'), { timeout: 8000 });
+  await (await page.$('input[type="file"]')).uploadFile(resolve(__dirname, '../src/sample/lifepackage.json')); await pause();
   await page.waitForFunction(() => /who are you/i.test(document.body.innerText), { timeout: 8000 });
   await click('Admin'); await pause();
 

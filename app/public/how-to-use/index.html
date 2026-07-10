@@ -124,7 +124,7 @@
     .sec-eyebrow { display: flex; align-items: center; gap: 14px; font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); margin: 46px 0 12px; }
     .sec-eyebrow::before { content: ''; display: inline-block; width: 34px; height: 1px; background: var(--accent); flex: none; }
     /* Build with AI — same band grammar as the home page's problem section. */
-    .ai-band { background: var(--paper); border-top: 1px solid var(--rule-soft); border-bottom: 1px solid var(--rule-soft); margin-top: 56px; }
+    .ai-band { background: var(--paper); border-top: 1px solid var(--rule-soft); border-bottom: 1px solid var(--rule-soft); margin-top: 40px; }
     .ai-section { padding: 64px 0 68px; }
     .ai-section .sec-eyebrow { margin: 0 0 20px; }
     .ai-h { font-size: clamp(28px, 3.4vw, 40px); font-weight: 650; letter-spacing: -0.022em; line-height: 1.12; max-width: 24ch; margin: 0; }
@@ -147,7 +147,7 @@
     </div>
   </header>
 
-  <main class="home-main">
+  <main class="home-main" style="padding-bottom: 0">
     <div class="home-main-narrow">
       <span class="eyebrow">How to use</span>
       <h1>Three steps.</h1>
@@ -174,12 +174,11 @@
       </div>
     </div>
 
-    <div class="card warn"><strong>Never put secrets in the plan.</strong> No PINs, seed phrases, passwords, or keys — describe <em>where</em> to find them. The plan is a map, not a vault.</div>
-
+    <div class="card warn" style="margin-bottom: 0"><strong>Never put secrets in the plan.</strong> No PINs, seed phrases, passwords, or keys — describe <em>where</em> to find them. The plan is a map, not a vault.</div>
   </main>
 
   <div class="ai-band">
-    <div class="home-main" style="padding-bottom: 0">
+    <div class="home-main" style="padding-top: 0; padding-bottom: 0">
     <section class="ai-section">
       <div class="sec-eyebrow">Build with AI</div>
       <h2 class="ai-h">Let your own AI do the typing.</h2>

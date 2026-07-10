@@ -154,13 +154,13 @@
   /* Match the marketing site's calmer content column (1160/40) instead of the
      app's wide 1480/28 — same menu, footer and side margins as the home page. */
   .topbar :global(.container),
-  main :global(.container),
+  main.container,
   footer :global(.container) {
     max-width: 1160px; padding-left: 40px; padding-right: 40px;
   }
   @media (max-width: 640px) {
     .topbar :global(.container),
-    main :global(.container),
+    main.container,
     footer :global(.container) { padding-left: 22px; padding-right: 22px; }
   }
   .topbar {

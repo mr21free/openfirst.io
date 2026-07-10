@@ -133,6 +133,7 @@
         <a class="tiny" href="/how-to-use/">How to use</a>
         <a class="tiny" href="/security/">Security</a>
         <a class="tiny" href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener">The story</a>
+        <a class="tiny" href="mailto:info@openfirst.io">Contact</a>
       </nav>
       <div class="footer-copy tiny row">
         <span>© 2026 OpenFirst™</span>

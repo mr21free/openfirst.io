@@ -229,10 +229,9 @@
     .smk-file svg { width: 24px; height: 24px; }
     .smk-fname { font-size: 12px; color: var(--ink); font-weight: 500; }
     .smk-lock { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-mute); }
-    .closing { margin-top: 100px; padding-top: 34px; border-top: 1px solid var(--rule-soft); text-align: center; }
-    .founder { font-size: 15px; color: var(--ink-soft); font-style: italic; max-width: 42ch; margin: 0 auto 18px; }
-    .promise-line { font-size: 17px; color: var(--ink); font-weight: 500; }
-    .assure { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; max-width: 860px; margin: 40px auto 8px; text-align: left; }
+    .closing { margin: 0 0 8px; }
+    .closing-h { font-size: clamp(24px, 3vw, 34px); font-weight: 650; letter-spacing: -0.022em; line-height: 1.16; max-width: 30ch; margin: 0; }
+    .assure { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin: 40px 0 0; text-align: left; }
     .assure-item { border-left: 2px solid var(--accent); padding-left: 16px; }
     .assure-item h4 { font-size: 14.5px; font-weight: 600; margin: 0 0 7px; letter-spacing: -0.005em; }
     .assure-item p { font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); margin: 0; }
@@ -409,7 +408,8 @@
     </div>
 
     <div class="closing">
-      <p class="founder">Built by a Bitcoiner for his own family — free and open-sourced, so it outlives even us.</p>
+      <div class="sec-eyebrow">Why this exists</div>
+      <h2 class="closing-h">Built for my own family — free and open-sourced, so it outlives even us.</h2>
       <div class="assure">
         <div class="assure-item">
           <h4>Private by design</h4>

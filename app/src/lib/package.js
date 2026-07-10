@@ -64,7 +64,7 @@ const IMP_ORDER = { high: 0, medium: 1, low: 2, undefined: 3 };
 export class InheritancePackage {
   constructor(data, attachmentUrls = {}) {
     if (!data || !isPackageSchema(data.schema)) {
-      throw new Error(`Not a life package (expected schema "${PACKAGE_SCHEMA}"; legacy ${PACKAGE_SCHEMAS.slice(1).join(', ')} is also supported).`);
+      throw new Error(`Not a plan file (expected schema "${PACKAGE_SCHEMA}"; legacy ${PACKAGE_SCHEMAS.slice(1).join(', ')} is also supported).`);
     }
     this.raw = data;
     this.meta = data.package || {};

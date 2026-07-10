@@ -86,7 +86,7 @@ export async function encryptToEnvelope(plainBytes, password, { iterations = DEF
 
 /** Decrypt an envelope back to the raw bytes (the package .zip). Throws on wrong password. */
 export async function decryptEnvelope(env, password) {
-  if (!isEncryptedEnvelope(env)) throw new Error('This file is not an encrypted life package.');
+  if (!isEncryptedEnvelope(env)) throw new Error('This file is not an encrypted plan.');
   const salt = b64decode(env.salt);
   const iv = b64decode(env.iv);
   const ct = b64decode(env.ciphertext);

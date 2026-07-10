@@ -102,7 +102,7 @@
 
       <div class="action-grid no-print">
         <div class="action-card">
-          <p class="soft small">Start building your life package. Everything stays on this device.</p>
+          <p class="soft small">Start building your plan. Everything stays on this device.</p>
           <button class="btn btn-primary" onclick={() => newPlan?.()}>Create new plan</button>
         </div>
         <div class="action-card">

@@ -40,7 +40,7 @@ function packageFolderName(data, name) {
 }
 
 function startHereText(data) {
-  const title = data.package?.title || 'a life package';
+  const title = data.package?.title || 'a plan';
   return [
     'START HERE',
     '==========',

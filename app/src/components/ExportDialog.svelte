@@ -7,7 +7,7 @@
 
   let { data, blobs, onClose } = $props();
 
-  let name = $state(untrack(() => data.package?.title) || 'My life package');
+  let name = $state(untrack(() => data.package?.title) || 'My plan');
   let asReader = $state(true);
   let protect = $state(false);
   let password = $state('');
@@ -100,7 +100,7 @@
 
   <div class="f namefield">
     <span class="lbl">Plan name</span>
-    <input class="inp" bind:value={name} placeholder="My life package" />
+    <input class="inp" bind:value={name} placeholder="My plan" />
     <span class="tiny muted">Saves as <code>{fileName}</code></span>
   </div>
 

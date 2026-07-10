@@ -162,13 +162,13 @@ import { templateSeed } from './lib/templates.js';
   function newPlan(seed = null) {
     const id = crypto?.randomUUID?.() || 'plan_' + Math.random().toString(36).slice(2);
     const today = new Date().toISOString().slice(0, 10);
-    // Unique default name, same pattern as guides/groups: "My life package",
-    // "My life package (1)"… when earlier plans already use the name.
+    // Unique default name, same pattern as guides/groups: "My plan",
+    // "My plan (1)"… when earlier plans already use the name.
     const taken = new Set(drafts.map((d) => d.title));
-    let title = seed?.title ? `My ${seed.title}` : 'My life package';
+    let title = seed?.title ? `My ${seed.title}` : 'My plan';
     let n = 1;
-    while (taken.has(title)) title = `${seed?.title ? 'My ' + seed.title : 'My life package'} (${n++})`;
-    const startHereContent = `## Welcome to your life package
+    while (taken.has(title)) title = `${seed?.title ? 'My ' + seed.title : 'My plan'} (${n++})`;
+    const startHereContent = `## Welcome to your plan
 
 This is your **Start here** guide. Edit it to write instructions for the people who will receive this plan.
 

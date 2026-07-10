@@ -749,7 +749,7 @@
         {:else}
           <button class="brand-home" onclick={onClose} title="Back to start" aria-label="Back to start"><img class="logo" src={logo} alt="" aria-hidden="true" /></button>
           {#if editing && store.data?.package}
-            <input class="plan-title-input" bind:value={store.data.package.title} placeholder="My life package" aria-label="Plan title" />
+            <input class="plan-title-input" bind:value={store.data.package.title} placeholder="My plan" aria-label="Plan title" />
           {:else}
             <span class="plan-title" title={planTitle}>{planTitle}</span>
           {/if}

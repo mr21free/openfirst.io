@@ -225,17 +225,20 @@
     .smk-st.q { background: color-mix(in oklch, var(--warn) 16%, transparent); color: var(--warn); }
     .smk-q .smk-ln { flex: 1; }
 
-    /* step 3 — hand over */
-    .smk3 { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 12px; padding: 16px; }
-    .smk-file { width: 62px; height: 78px; border: 2px solid var(--accent-deep); border-radius: 6px; position: relative; display: flex; align-items: center; justify-content: center; color: var(--accent-deep); }
-    .smk-file::before { content: ""; position: absolute; top: -1px; right: -1px; width: 18px; height: 18px; background: var(--paper); border-left: 2px solid var(--accent-deep); border-bottom: 2px solid var(--accent-deep); }
-    .smk-file svg { width: 24px; height: 24px; }
-    .smk-fname { font-size: 12px; color: var(--ink); font-weight: 500; }
-    .smk-lock { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-mute); }
+    /* step 3 — the handover: one file, down to the family */
+    .smk3 { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 9px; padding: 14px; }
+    .smk-filecard { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--rule); background: var(--paper); padding: 8px 12px; font-size: 12px; font-weight: 500; color: var(--ink); }
+    .smk-filecard svg { color: var(--accent-deep); flex: none; }
+    .smk-give { color: var(--accent-deep); display: flex; }
+    .smk-heirs { display: flex; gap: 8px; }
+    .smk-heir { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--rule-soft); background: color-mix(in oklch, var(--paper) 80%, var(--bg-deep)); padding: 5px 10px 5px 6px; font-size: 11px; color: var(--ink-soft); }
+    .smk-ava { width: 18px; height: 18px; flex: none; background: var(--accent-wash); color: var(--accent-deep); display: inline-flex; align-items: center; justify-content: center; }
+    .smk-lock { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; color: var(--ink-mute); }
     .closing { padding: 64px 0 68px; }
     .closing-h { font-size: clamp(28px, 3.4vw, 40px); font-weight: 650; letter-spacing: -0.022em; line-height: 1.12; max-width: 32ch; margin: 0; text-wrap: balance; }
     .assure { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin: 44px 0 0; text-align: left; }
     .assure-item { border-left: 2px solid var(--accent); padding-left: 18px; }
+    .assure-ico { display: inline-flex; color: var(--accent-deep); margin-bottom: 12px; }
     .assure-item h4 { font-size: 20px; font-weight: 600; margin: 0 0 8px; letter-spacing: -0.015em; }
     .assure-item p { font-size: 15px; line-height: 1.55; color: var(--ink-soft); margin: 0; }
     @media (max-width: 720px) { .assure { grid-template-columns: 1fr; gap: 20px; } }
@@ -356,7 +359,7 @@
         <div class="smk">
           <span class="smk-blob"></span>
           <div class="smk-win">
-            <div class="smk-bar"><span class="smk-dot"></span><span class="smk-dot"></span><span class="smk-dot"></span><span class="smk-title">My life package</span></div>
+            <div class="smk-bar"><span class="smk-dot"></span><span class="smk-dot"></span><span class="smk-dot"></span><span class="smk-title">My plan</span></div>
             <div class="smk-body smk1">
               <div class="smk-nav"><i class="on"></i><i class="a"></i><i class="b"></i><i class="c"></i><i class="a"></i></div>
               <div class="smk-list">
@@ -380,7 +383,7 @@
             <div class="smk-bar"><span class="smk-dot"></span><span class="smk-dot"></span><span class="smk-dot"></span><span class="smk-title">Dry run · Amanda</span></div>
             <div class="smk-body smk2">
               <span class="smk-eye">Readiness</span>
-              <div class="smk-q4">Can she do it?</div>
+              <div class="smk-q4">Can she open everything?</div>
               <div class="smk-q"><span class="smk-st ok"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span class="smk-ln" style="max-width:72%"></span></div>
               <div class="smk-q"><span class="smk-st ok"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span class="smk-ln" style="max-width:86%"></span></div>
               <div class="smk-q"><span class="smk-st q"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="17.5"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .9-1 1.7"/></svg></span><span class="smk-ln" style="max-width:60%"></span></div>
@@ -398,9 +401,17 @@
           <div class="smk-win">
             <div class="smk-bar"><span class="smk-dot"></span><span class="smk-dot"></span><span class="smk-dot"></span><span class="smk-title">Export</span></div>
             <div class="smk-body smk3">
-              <div class="smk-file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="10" width="12" height="8" rx="1.5"/><path d="M8.5 10V8.5a3.5 3.5 0 0 1 7 0V10"/></svg></div>
-              <div class="smk-fname">start-here.html</div>
-              <div class="smk-lock"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> encrypted · opens offline</div>
+              <div class="smk-filecard">
+                <svg width="15" height="15" viewBox="0 0 100 100" aria-hidden="true"><path d="M16 20 L16 82 L78 82 Z" fill="currentColor"/><path d="M28 8 L90 8 L90 70 Z" fill="currentColor"/></svg>
+                <span>start-here.html</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+              <div class="smk-give"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="4" x2="12" y2="18"/><polyline points="6 12 12 18 18 12"/></svg></div>
+              <div class="smk-heirs">
+                <div class="smk-heir"><span class="smk-ava"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Amanda</div>
+                <div class="smk-heir"><span class="smk-ava"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Josh</div>
+              </div>
+              <div class="smk-lock">opens offline · no account</div>
             </div>
           </div>
         </div>
@@ -420,14 +431,17 @@
       <h2 class="closing-h">Built for my own family — free and open-sourced, so it outlives even us.</h2>
       <div class="assure">
         <div class="assure-item">
+          <span class="assure-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></span>
           <h4>Private by design</h4>
           <p>No servers, no tracking, no account. The plan never leaves your device.</p>
         </div>
         <div class="assure-item">
+          <span class="assure-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
           <h4>Encrypted at rest</h4>
           <p>Locked with AES-256-GCM before it leaves your hands. Without the password, the file reveals nothing.</p>
         </div>
         <div class="assure-item">
+          <span class="assure-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></span>
           <h4>Built to last</h4>
           <p>Plain, open files in a documented format — readable in twenty years, with or without us.</p>
         </div>

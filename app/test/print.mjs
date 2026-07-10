@@ -76,6 +76,23 @@ try {
   await page.emulateMediaType('print');
   ok('fallback notice is hidden when printing', (await noticeDisplay()) === 'none');
 
+  // --- PRINT DISABLED WHILE EDITING ---
+  // Printing an edit surface produces a broken page; the button must be a
+  // dead end in edit mode and come back in view mode. (Regression guard.)
+  const printState = () => page.evaluate(() => {
+    const b = [...document.querySelectorAll('button')].find((x) => (x.getAttribute('aria-label') || '') === 'Print');
+    return b ? { disabled: b.disabled, tip: b.getAttribute('data-tip') } : null;
+  });
+  ok('print button enabled in view mode', (await printState())?.disabled === false);
+  await page.evaluate(() => [...document.querySelectorAll('button')].find((x) => (x.getAttribute('aria-label') || '') === 'Edit')?.click());
+  await pause(300);
+  const inEdit = await printState();
+  ok('print button disabled in edit mode', inEdit?.disabled === true);
+  ok('disabled print explains itself', /view mode/i.test(inEdit?.tip || ''));
+  await page.evaluate(() => [...document.querySelectorAll('button')].find((x) => (x.getAttribute('aria-label') || '') === 'Done editing')?.click());
+  await pause(300);
+  ok('print button re-enabled after editing', (await printState())?.disabled === false);
+
   ok('no runtime errors', errs.length === 0);
 } catch (e) { ok('flow threw: ' + e.message, false); }
 finally { await browser.close(); rmSync(dir, { recursive: true, force: true }); }

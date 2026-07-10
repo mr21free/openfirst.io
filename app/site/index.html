@@ -165,10 +165,12 @@
        hero (half the old dead air). Same section grammar as everywhere else:
        eyebrow → bold statement → support line. */
     .problem-band { background: var(--paper); border-top: 1px solid var(--rule-soft); border-bottom: 1px solid var(--rule-soft); margin-top: 56px; }
-    .problem-sec { padding: 64px 0 68px; text-align: center; }
-    .sec-eye { font-family: var(--mono); font-size: 11.5px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: var(--warn); }
-    .problem-h { font-size: clamp(28px, 3.4vw, 40px); font-weight: 650; letter-spacing: -0.022em; line-height: 1.12; max-width: 20ch; margin: 12px auto 0; }
-    .problem-sub { margin: 16px auto 0; max-width: 52ch; font-size: 17px; color: var(--ink-soft); }
+    .problem-sec { padding: 64px 0 68px; }
+    .problem-band .sec-eyebrow { margin: 0 0 20px; }
+    .sec-eyebrow.warn { color: var(--warn); }
+    .sec-eyebrow.warn::before { background: var(--warn); }
+    .problem-h { font-size: clamp(28px, 3.4vw, 40px); font-weight: 650; letter-spacing: -0.022em; line-height: 1.12; max-width: 24ch; margin: 0; }
+    .problem-sub { margin: 14px 0 0; max-width: 58ch; font-size: 17px; color: var(--ink-soft); }
     .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin: 44px 0 0; text-align: left; }
     @media (max-width: 760px) { .facts { grid-template-columns: 1fr; gap: 22px; } }
     .fact { border-left: 2px solid var(--warn); padding-left: 18px; }
@@ -229,13 +231,13 @@
     .smk-file svg { width: 24px; height: 24px; }
     .smk-fname { font-size: 12px; color: var(--ink); font-weight: 500; }
     .smk-lock { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-mute); }
-    .closing { margin: 0 0 8px; }
-    .closing-h { font-size: clamp(24px, 3vw, 34px); font-weight: 650; letter-spacing: -0.022em; line-height: 1.16; max-width: 30ch; margin: 0; }
-    .assure { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin: 40px 0 0; text-align: left; }
-    .assure-item { border-left: 2px solid var(--accent); padding-left: 16px; }
-    .assure-item h4 { font-size: 14.5px; font-weight: 600; margin: 0 0 7px; letter-spacing: -0.005em; }
-    .assure-item p { font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); margin: 0; }
-    @media (max-width: 720px) { .assure { grid-template-columns: 1fr; gap: 20px; max-width: 420px; } }
+    .closing { padding: 64px 0 68px; }
+    .closing-h { font-size: clamp(28px, 3.4vw, 40px); font-weight: 650; letter-spacing: -0.022em; line-height: 1.12; max-width: 32ch; margin: 0; text-wrap: balance; }
+    .assure { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin: 44px 0 0; text-align: left; }
+    .assure-item { border-left: 2px solid var(--accent); padding-left: 18px; }
+    .assure-item h4 { font-size: 20px; font-weight: 600; margin: 0 0 8px; letter-spacing: -0.015em; }
+    .assure-item p { font-size: 15px; line-height: 1.55; color: var(--ink-soft); margin: 0; }
+    @media (max-width: 720px) { .assure { grid-template-columns: 1fr; gap: 20px; } }
     .closing-links { margin-top: 24px; font-size: 14px; color: var(--ink-mute); }
     /* Narrower content column with generous side gutters — calmer on 13–14"
        laptops than edge-to-edge (the smallpdf feel). */
@@ -322,7 +324,7 @@
   <div class="problem-band">
     <div class="home-main" style="padding-bottom: 0">
     <section class="problem-sec">
-      <span class="sec-eye">The problem</span>
+      <div class="sec-eyebrow warn">The problem</div>
       <h2 class="problem-h">You've planned for everything but this.</h2>
       <p class="problem-sub">If you were gone tomorrow, could the people you love actually reach what you left them?</p>
       <div class="facts">
@@ -407,7 +409,12 @@
       </div>
     </div>
 
-    <div class="closing">
+  </main>
+
+  <!-- Why this exists — the trust band, same treatment as the problem band. -->
+  <div class="problem-band">
+    <div class="home-main" style="padding-bottom: 0">
+    <section class="closing">
       <div class="sec-eyebrow">Why this exists</div>
       <h2 class="closing-h">Built for my own family — free and open-sourced, so it outlives even us.</h2>
       <div class="assure">
@@ -424,8 +431,9 @@
           <p>Plain, open files in a documented format — readable in twenty years, with or without us.</p>
         </div>
       </div>
+    </section>
     </div>
-  </main>
+  </div>
 
   <footer class="screen">
     <div class="container row wrap">

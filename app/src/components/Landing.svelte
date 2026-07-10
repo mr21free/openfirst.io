@@ -65,7 +65,7 @@
     <div class="container row">
       <a class="brand row" href="/">
         <img class="logo" src={logo} alt="" aria-hidden="true" />
-        <span>OpenFirst</span>
+        <span class="brand-name"><b>open</b>first</span>
       </a>
       <span class="spacer"></span>
       <nav class="topnav">
@@ -167,6 +167,7 @@
   }
   .topbar .row { height: 60px; }
   .brand { font-family: var(--mono); font-weight: 500; gap: 10px; color: var(--ink); }
+  .brand-name b { color: var(--accent-deep); font-weight: 500; }
   .brand:hover { text-decoration: none; }
   .logo { width: 24px; height: 24px; display: block; }
   .topnav { display: flex; align-items: center; gap: 24px; }

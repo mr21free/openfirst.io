@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 """
-OpenFirst logo — described mathematically and rendered to SVG or PNG.
+OpenFirst logo — "the split", described mathematically, rendered to SVG or PNG.
 
-The mark is an ENVELOPE whose top-right corner is "cut open", the way the
-"open in external" icon cuts its box: the top and right edges stop short, a
-detached L-shaped corner piece becomes the arrowhead, and the right line of
-the flap's V continues as a diagonal shaft pointing into it — the digital
-"open" gesture. An envelope you open first.
+The mark is a SQUARE OPENED ALONG ITS DIAGONAL: two solid right triangles,
+the top half lifted away toward the top-right. Something sealed, opening —
+pure geometry, no outline, reads at 16px. (Chosen by Miro 2026-07-10 from
+the triangle series, V5.)
 
-Stroke thickness matches the freedomclock.io mark (ring width 80/1024 ≈ 7.8%
-of the canvas). Round caps/joins, like the marker sketch it comes from.
-
-Same spirit as freedomclock.io/internal/freedom_clock_icon.py.
+Sharp edges, solid fills. Same spirit as freedomclock.io's generated mark.
 
 Examples:
   python3 scripts/logo.py --format svg --size 1024 --out logo.svg
@@ -20,7 +16,6 @@ Examples:
 """
 
 import argparse
-import math
 
 
 # ---------- colour helpers (as in freedom_clock_icon.py) ----------
@@ -54,51 +49,29 @@ def rgba_to_hex(rgba):
 # Built in a 100-unit design space, then fitted to the canvas. All numbers are
 # ratios of that space.
 #
-#   L,T ────────────╌╌  gap  ╌╌   ↗ tip
-#    │ ╲          ╱  (shaft through the cut corner)
-#    │   ╲      ╱ V
-#    │     ╲  ╱                 ╎ gap
-#    │      V                   │ R (edge resumes lower)
-#    └──────────────────────────┘
+#        ┌──────────╱ upper  (a square's top-right triangle,
+#        │        ╱╱          displaced toward the top-right)
+#        │      ╱╱
+#   lower│    ╱╱  ← the open diagonal gap
+#        │  ╱
+#        └──────────
 #
-# The flap's right line and the arrow shaft are ONE stroke: from the V vertex,
-# through where the corner would be, out to the arrowhead.
+# Two solid right triangles from one square, split along the diagonal; the
+# upper half is shifted (+SHIFT, -SHIFT) so a parallel gap opens between them.
 
-STROKE = 8.0          # 8% of the design space ≈ freedomclock ring thickness
-L, R, T, B = 14.0, 86.0, 26.0, 78.0   # envelope rectangle
-TOP_END_X = 50.0      # top edge stops here (start of the cut)
-RIGHT_START_Y = 60.0  # right edge resumes here (end of the cut)
-CORNER_ARM = 15.0     # length of the detached corner piece's two arms (shorter arrowhead)
-V = (50.0, 52.0)      # flap vertex (mid-width, mid-height)
-SHAFT_STOP = 1.0      # shaft reaches the corner so it touches the arrowhead
-
-
-def _unit(dx, dy):
-    n = math.hypot(dx, dy)
-    return dx / n, dy / n
+STROKE = 0.0                     # solid mark — no strokes
+SQ_L, SQ_T, SQ_R, SQ_B = 16.0, 20.0, 78.0, 82.0   # the source square
+SHIFT = 12.0                     # how far the top half has lifted away
 
 
 def build_mark():
-    """Return (polylines, polygons): [(name, [(x, y), ...])] each. Polylines are
-    stroked; there are no filled polygons.
-
-    Like the "open in external" icon, the arrowhead IS the envelope's own
-    top-right corner: a detached L-shaped corner piece, with the flap's right
-    line continuing as a diagonal shaft that points into it."""
-    corner = (R, T)
-    # Shaft direction: from the flap vertex toward the corner, stopping short.
-    d = _unit(corner[0] - V[0], corner[1] - V[1])
-    tip = (corner[0] - SHAFT_STOP * d[0], corner[1] - SHAFT_STOP * d[1])
-
-    polylines = [
-        # Body: one open path — top edge (cut short), left, bottom, right (cut short).
-        ("body", [(TOP_END_X, T), (L, T), (L, B), (R, B), (R, RIGHT_START_Y)]),
-        # The detached corner piece — the arrowhead.
-        ("corner", [(R - CORNER_ARM, T), corner, (R, T + CORNER_ARM)]),
-        # Flap left line + flap right line continuing into the arrow shaft.
-        ("flap", [(L, T), V, tip]),
-    ]
-    return polylines, []
+    """Return (polylines, polygons): [(name, [(x, y), ...])] each.
+    The split mark is two filled triangles, no strokes."""
+    # Lower-left half of the square, staying put.
+    lower = [(SQ_L, SQ_T), (SQ_L, SQ_B), (SQ_R, SQ_B)]
+    # Upper-right half, lifted toward the top-right.
+    upper = [(SQ_L + SHIFT, SQ_T - SHIFT), (SQ_R + SHIFT, SQ_T - SHIFT), (SQ_R + SHIFT, SQ_B - SHIFT)]
+    return [], [("lower", lower), ("upper", upper)]
 
 
 def fit(polylines, polygons, size, padding):

@@ -18,11 +18,18 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://openfirst.io/og.png" />
   <style>
-    /* IBM Plex Mono — the same family as the app. */
+    /* IBM Plex — one family, two voices. Sans is the human voice (headlines,
+       body, buttons); Mono is the machine voice (eyebrows, labels, file names,
+       numbers, product windows). Same split as the app. */
     @font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 300; font-display: swap; src: url("/fonts/ibm-plex-mono-300-latin.woff2") format("woff2"); }
     @font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/ibm-plex-mono-400-latin.woff2") format("woff2"); }
     @font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/ibm-plex-mono-500-latin.woff2") format("woff2"); }
     @font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 600; font-display: swap; src: url("/fonts/ibm-plex-mono-600-latin.woff2") format("woff2"); }
+    @font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/ibm-plex-sans-400-latin.woff2") format("woff2"); }
+    @font-face { font-family: "IBM Plex Sans"; font-style: italic; font-weight: 400; font-display: swap; src: url("/fonts/ibm-plex-sans-400italic-latin.woff2") format("woff2"); }
+    @font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/ibm-plex-sans-500-latin.woff2") format("woff2"); }
+    @font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 600; font-display: swap; src: url("/fonts/ibm-plex-sans-600-latin.woff2") format("woff2"); }
+    @font-face { font-family: "IBM Plex Sans"; font-style: normal; font-weight: 700; font-display: swap; src: url("/fonts/ibm-plex-sans-700-latin.woff2") format("woff2"); }
 
     /* The app's heaven-blue tokens, light theme (kept in sync with src/styles/app.css).
        The app's marketing pages are always light, so this page is too — no dark variant. */
@@ -34,12 +41,15 @@
       --warn: oklch(0.62 0.15 35); --warn-wash: oklch(0.95 0.04 50);
       --screen: oklch(0.22 0.03 255); --screen-px: oklch(0.86 0.03 245);
       --maxw: 1480px; --radius: 0px;
+      --accent-cta: oklch(0.49 0.13 250);
+      --sans: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       background: radial-gradient(1200px 600px at 50% -10%, var(--paper), transparent 70%), var(--bg);
-      color: var(--ink); font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: var(--ink); font-family: var(--sans);
       font-weight: 400; line-height: 1.6; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
       min-height: 100vh;
     }
@@ -60,15 +70,15 @@
       backdrop-filter: blur(12px); border-bottom: 1px solid var(--rule-soft);
     }
     .topbar .row { height: 60px; }
-    .brand { font-weight: 500; gap: 10px; color: var(--ink); }
+    .brand { font-family: var(--mono); font-weight: 500; gap: 10px; color: var(--ink); }
     .brand:hover { text-decoration: none; }
     .logo { width: 24px; height: 24px; display: block; }
     .topnav { display: flex; align-items: center; gap: 24px; }
-    .topnav a { color: var(--ink-soft); font-size: 14px; }
+    .topnav a { color: var(--ink-soft); font-size: 14px; font-weight: 500; }
     .topnav a:hover { color: var(--ink); text-decoration: none; }
 
     .content { max-width: 820px; margin: 0 auto; padding: 48px 28px 56px; }
-    .eyebrow { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-deep); font-weight: 600; }
+    .eyebrow { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent-deep); font-weight: 600; }
     h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 300; letter-spacing: -0.01em; line-height: 1.1; margin: 10px 0 12px; }
     .lede { color: var(--ink-soft); font-size: 17px; }
     h2 { font-size: 22px; font-weight: 500; letter-spacing: -0.005em; margin: 46px 0 10px; }
@@ -89,7 +99,7 @@
     pre.prompt { margin: 0; padding: 18px 20px; max-height: 440px; overflow: auto; font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", "Cascadia Code", Consolas, Menlo, monospace; font-size: 12.5px; line-height: 1.7; color: var(--ink); white-space: pre; tab-size: 2; }
     pre.prompt code { background: none; color: inherit; padding: 0; font-size: inherit; }
 
-    .screen { background: var(--screen); color: var(--screen-px); border-radius: var(--radius); padding: 30px 0; }
+    .screen { background: var(--screen); color: var(--screen-px); border-radius: var(--radius); padding: 30px 0; font-family: var(--mono); }
     .footer-tag { color: var(--accent); font-size: 13px; }
     .screen .tiny { color: var(--screen-px); font-size: 11px; letter-spacing: 0.04em; }
 
@@ -110,6 +120,7 @@
       border-radius: 14px; overflow: hidden;
       box-shadow: 0 40px 80px oklch(0.3 0.05 255 / 0.14), 0 8px 24px oklch(0.3 0.05 255 / 0.08);
       transform: rotate(-1deg);
+      font-family: var(--mono); /* the machine speaks mono */
     }
     .mock-bar { display: flex; align-items: center; gap: 8px; padding: 11px 14px; border-bottom: 1px solid var(--rule-soft); background: color-mix(in oklch, var(--paper) 70%, var(--bg-deep)); }
     .mock-dot { width: 9px; height: 9px; border-radius: 999px; background: var(--rule); }
@@ -130,54 +141,56 @@
     .mock-lines i { height: 7px; border-radius: 3px; background: var(--rule); display: block; }
     .mock-lines i.a { width: 96%; } .mock-lines i.b { width: 64%; } .mock-lines i.c { width: 40%; background: var(--accent); opacity: 0.55; }
 
-    /* floating brand shapes, smallpdf-style */
-    .flair { position: absolute; z-index: 1; pointer-events: none; }
-    .flair svg { display: block; }
-    .flair-a { top: -26px; right: 16px; } .flair-b { bottom: -22px; left: -18px; }
-    .flair-c { top: 40%; right: -26px; } .flair-d { bottom: 30%; left: 30px; }
+    /* soft brand blobs behind the mockup */
     .flair-blob { position: absolute; z-index: 0; border-radius: 40% 60% 62% 38% / 46% 42% 58% 54%; background: color-mix(in oklch, var(--accent) 26%, transparent); filter: blur(2px); }
     .flair-blob.one { width: 190px; height: 190px; top: -40px; right: -30px; }
     .flair-blob.two { width: 130px; height: 130px; bottom: -30px; left: -20px; opacity: 0.7; }
     @media (max-width: 940px) { .mock { max-width: 460px; margin: 0 auto; } }
-    .hero h1 { font-size: clamp(34px, 4.4vw, 58px); font-weight: 300; letter-spacing: -0.015em; line-height: 1.08; max-width: 20ch; margin: 14px 0 0; }
-    .hero .lede { margin-top: 26px; max-width: 58ch; font-size: 17.5px; line-height: 1.7; }
+    .hero h1 { font-size: clamp(38px, 4.6vw, 62px); font-weight: 650; letter-spacing: -0.028em; line-height: 1.04; max-width: 18ch; margin: 16px 0 0; }
+    .hero h1 .hl { color: var(--accent-deep); }
+    .hero .lede { margin-top: 24px; max-width: 54ch; font-size: 18px; line-height: 1.65; }
+    .hero .lede .mono-bit { font-family: var(--mono); font-size: 0.9em; color: var(--accent-deep); }
     .method { margin-top: 28px; display: flex; align-items: center; gap: 14px; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); }
     .method::before { content: ''; display: inline-block; width: 34px; height: 1px; background: var(--accent); flex: none; }
-    .cta-row { margin-top: 34px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 46px; padding: 12px 22px; border-radius: 999px; border: 1px solid var(--rule); background: var(--paper); font-size: 14.5px; font-weight: 500; color: var(--ink); }
-    .btn:hover { text-decoration: none; border-color: var(--accent-deep); }
-    .btn-primary { background: var(--accent-deep); border-color: var(--accent-deep); color: #fff; }
-    .btn-primary:hover { background: oklch(0.5 0.13 250); }
-    .trust { margin-top: 26px; font-size: 12px; letter-spacing: 0.05em; color: var(--ink-mute); }
+    .cta-row { margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    /* trust chips — the machine vouches in its own voice */
+    .chips { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { font-family: var(--mono); font-size: 12px; font-weight: 500; border: 1px solid var(--rule); background: var(--paper); color: var(--ink-soft); padding: 5px 12px; }
     .problems { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin: 8px 0 0; }
     .problem { background: var(--paper); border: 1px solid var(--rule-soft); border-left: 2px solid var(--accent); padding: 26px 28px; }
     .problem h3 { font-size: 18px; font-weight: 500; line-height: 1.35; margin-bottom: 10px; }
     .problem p { color: var(--ink-soft); font-size: 14.5px; margin: 0; }
-    /* Problem section — creates the problem for someone who hasn't felt it. */
-    .problem-sec { margin: 104px 0 0; text-align: center; }
-    .problem-h { font-size: clamp(24px, 3.2vw, 34px); font-weight: 300; letter-spacing: -0.01em; line-height: 1.2; max-width: 22ch; margin: 0 auto; }
-    .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin: 48px 0 0; text-align: left; }
+    /* Problem section — creates the problem for someone who hasn't felt it.
+       Sits on a full-bleed paper band so the tone shift separates it from the
+       hero (half the old dead air). Same section grammar as everywhere else:
+       eyebrow → bold statement → support line. */
+    .problem-band { background: var(--paper); border-top: 1px solid var(--rule-soft); border-bottom: 1px solid var(--rule-soft); margin-top: 56px; }
+    .problem-sec { padding: 64px 0 68px; text-align: center; }
+    .sec-eye { font-family: var(--mono); font-size: 11.5px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: var(--warn); }
+    .problem-h { font-size: clamp(28px, 3.4vw, 40px); font-weight: 650; letter-spacing: -0.022em; line-height: 1.12; max-width: 20ch; margin: 12px auto 0; }
+    .problem-sub { margin: 16px auto 0; max-width: 52ch; font-size: 17px; color: var(--ink-soft); }
+    .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin: 44px 0 0; text-align: left; }
     @media (max-width: 760px) { .facts { grid-template-columns: 1fr; gap: 22px; } }
     .fact { border-top: 2px solid var(--warn); padding-top: 20px; }
     .fact-ico { display: inline-flex; color: var(--warn); margin-bottom: 12px; }
-    .fact-big { display: block; font-size: 22px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+    .fact-big { display: block; font-size: 21px; font-weight: 600; color: var(--ink); letter-spacing: -0.015em; }
+    .fact-big .stat { font-family: var(--mono); }
     .fact p { color: var(--ink-soft); font-size: 15px; line-height: 1.55; margin: 8px 0 0; }
-    .problem-note { margin: 40px auto 0; font-size: 17px; color: var(--ink); font-weight: 500; }
 
-    .sec-eyebrow { display: flex; align-items: center; gap: 14px; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); margin: 92px 0 26px; }
+    .sec-eyebrow { display: flex; align-items: center; gap: 14px; font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); margin: 84px 0 26px; }
     .sec-eyebrow::before { content: ''; display: inline-block; width: 34px; height: 1px; background: var(--accent); flex: none; }
 
     /* Three-step row — each step is a mini product window (hero style). */
     .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px; margin: 0; align-items: start; }
     @media (max-width: 820px) { .three { grid-template-columns: 1fr; gap: 40px; max-width: 420px; } }
-    .three-label { display: block; margin-top: 18px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); font-weight: 600; }
-    .three-step h3 { font-size: 20px; font-weight: 500; margin: 4px 0 8px; letter-spacing: -0.01em; }
+    .three-label { display: block; margin-top: 18px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); font-weight: 600; }
+    .three-step h3 { font-size: 20px; font-weight: 600; margin: 4px 0 8px; letter-spacing: -0.015em; }
     .three-step p { color: var(--ink-soft); font-size: 15px; line-height: 1.6; margin: 0; }
 
     /* Mini product window — same chrome + blob as the hero mock, equal size. */
     .smk { position: relative; }
     .smk-blob { position: absolute; z-index: 0; width: 108px; height: 108px; top: -18px; right: -16px; border-radius: 40% 60% 62% 38% / 46% 42% 58% 54%; background: color-mix(in oklch, var(--accent) 22%, transparent); }
-    .smk-win { position: relative; z-index: 1; background: var(--paper); border: 1px solid var(--rule-soft); border-radius: 12px; overflow: hidden; box-shadow: 0 26px 50px oklch(0.3 0.05 255 / 0.11), 0 6px 16px oklch(0.3 0.05 255 / 0.06); }
+    .smk-win { position: relative; z-index: 1; background: var(--paper); border: 1px solid var(--rule-soft); border-radius: 12px; overflow: hidden; box-shadow: 0 26px 50px oklch(0.3 0.05 255 / 0.11), 0 6px 16px oklch(0.3 0.05 255 / 0.06); font-family: var(--mono); }
     .smk-bar { display: flex; align-items: center; gap: 6px; padding: 9px 12px; border-bottom: 1px solid var(--rule-soft); background: color-mix(in oklch, var(--paper) 70%, var(--bg-deep)); }
     .smk-dot { width: 7px; height: 7px; border-radius: 9px; background: var(--rule); }
     .smk-title { margin-left: 6px; font-size: 10.5px; color: var(--ink-mute); }
@@ -232,8 +245,8 @@
     /* unified-buttons — one system across the whole site (mirrors the app). */
     .btn { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 11px 20px; border-radius: 999px; border: 1px solid var(--rule); background: var(--paper); font-size: 14.5px; font-weight: 500; color: var(--ink); cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
     .btn:hover { text-decoration: none; border-color: var(--accent-deep); }
-    .btn-primary, a.btn-primary { background: var(--accent-deep); border-color: var(--accent-deep); color: #fff; }
-    .btn-primary:hover, a.btn-primary:hover { background: oklch(0.5 0.13 250); border-color: oklch(0.5 0.13 250); color: #fff; }
+    .btn-primary, a.btn-primary { background: var(--accent-cta); border-color: var(--accent-cta); color: #fff; }
+    .btn-primary:hover, a.btn-primary:hover { background: oklch(0.44 0.13 250); border-color: oklch(0.44 0.13 250); color: #fff; }
     .btn-lg { min-height: 46px; padding: 12px 22px; }
     .topnav .btn { min-height: 38px; padding: 8px 18px; font-size: 14px; }
     .topnav a.btn-primary { color: #fff; }
@@ -256,17 +269,22 @@
     <section class="hero">
       <div class="hero-copy">
         <span class="eyebrow">A private inheritance plan your family can actually open</span>
-        <h1>Nothing breaks<br />if you're gone tomorrow.</h1>
+        <h1>Nothing breaks if you're <span class="hl">gone tomorrow.</span></h1>
         <p class="lede">
           Build a private map of everything that matters — bank accounts,
-          Bitcoin wallets, passwords, documents, people. Your family opens one
-          file when the time comes.
+          Bitcoin wallets, passwords, documents, people. Your family opens
+          <span class="mono-bit">one file</span> when the time comes.
         </p>
         <div class="cta-row">
           <a class="btn btn-primary" href="/build/">Start your plan</a>
           <a class="btn" href="/demo/">See the demo</a>
         </div>
-        <p class="trust">Free &amp; open source · Works offline · No account</p>
+        <div class="chips">
+          <span class="chip">Free &amp; open source</span>
+          <span class="chip">Works offline</span>
+          <span class="chip">No account</span>
+          <span class="chip">AES-256 encrypted</span>
+        </div>
       </div>
       <div class="hero-art">
         <span class="flair-blob one"></span>
@@ -295,21 +313,24 @@
             </div>
           </div>
         </div>
-        <span class="flair flair-a"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3C6FB2" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
-        <span class="flair flair-b"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="oklch(0.72 0.13 200)" stroke-width="3" stroke-linecap="round"><circle cx="12" cy="12" r="7"/></svg></span>
-        <span class="flair flair-c"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="oklch(0.72 0.12 30)" stroke-width="3" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></span>
-        <span class="flair flair-d"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3C6FB2" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
       </div>
     </section>
 
-    <!-- The problem — for the person who hasn't realised they have one. -->
+  </main>
+
+  <!-- The problem — for the person who hasn't realised they have one.
+       Full-bleed paper band; its content re-enters the home column. -->
+  <div class="problem-band">
+    <div class="home-main" style="padding-bottom: 0">
     <section class="problem-sec">
-      <h2 class="problem-h">If you were gone tomorrow, could the people you love actually reach what you left them?</h2>
+      <span class="sec-eye">The problem</span>
+      <h2 class="problem-h">You've planned for everything but this.</h2>
+      <p class="problem-sub">If you were gone tomorrow, could the people you love actually reach what you left them?</p>
       <div class="facts">
         <div class="fact">
           <span class="fact-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>
-          <span class="fact-big">~20% lost</span>
-          <p>of all Bitcoin is already gone forever — most of it to death and forgotten keys.</p>
+          <span class="fact-big"><span class="stat">~20%</span> lost forever</span>
+          <p>of all Bitcoin is already gone — most of it to death and forgotten keys.</p>
         </div>
         <div class="fact">
           <span class="fact-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
@@ -322,9 +343,11 @@
           <p>— it names who inherits, but can't hand over a password, a seed phrase, or a login.</p>
         </div>
       </div>
-      <p class="problem-note">You've planned for everything but this.</p>
     </section>
+    </div>
+  </div>
 
+  <main class="home-main" style="padding-top: 0">
     <div class="sec-eyebrow">How it works</div>
     <div class="three">
       <div class="three-step">

@@ -173,6 +173,12 @@
   .topnav { display: flex; align-items: center; gap: 24px; }
   .topnav a { color: var(--ink-soft); font-size: 14px; font-weight: 500; }
   .topnav a:hover { color: var(--ink); text-decoration: none; }
+  /* Small screens: nav drops to its own line under the logo (freedomclock-style). */
+  @media (max-width: 760px) {
+    .topbar :global(.row) { height: auto; flex-wrap: wrap; row-gap: 2px; padding-top: 10px; padding-bottom: 12px; }
+    .brand { flex: 1 0 100%; }
+    .topnav { flex: 1 0 100%; gap: 18px; }
+  }
   main { flex: 1; width: 100%; }
   .hero { padding: 64px 0 48px; }
   h1 {

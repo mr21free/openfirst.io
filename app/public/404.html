@@ -69,6 +69,13 @@
     .topnav { display: flex; align-items: center; gap: 24px; }
     .topnav a { color: var(--ink-soft); font-size: 14px; font-weight: 500; }
     .topnav a:hover { color: var(--ink); text-decoration: none; }
+    /* Small screens: nav drops to its own line under the logo (freedomclock-style). */
+    @media (max-width: 760px) {
+      .topbar .row { height: auto; flex-wrap: wrap; row-gap: 2px; padding-top: 10px; padding-bottom: 12px; }
+      .brand { flex: 1 0 100%; }
+      .topnav { flex: 1 0 100%; gap: 18px; }
+      .topnav a.btn-primary { margin-left: auto; min-height: 34px; padding: 6px 14px; font-size: 13px; }
+    }
     /* Header + footer align to the same 1160/40 column as the rest of the site. */
     .topbar .container, .screen .container { max-width: 1160px; padding-left: 40px; padding-right: 40px; }
     @media (max-width: 640px) { .topbar .container, .screen .container { padding-left: 22px; padding-right: 22px; } }

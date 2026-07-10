@@ -96,9 +96,9 @@
     @media (max-width: 640px) { .container, .content { padding-left: 18px; padding-right: 18px; } }
 
     /* ---- home page ---- */
-    /* Header aligns to the same narrower column as the content. */
-    body.home .topbar .container { max-width: 1160px; padding-left: 40px; padding-right: 40px; }
-    @media (max-width: 640px) { body.home .topbar .container { padding-left: 22px; padding-right: 22px; } }
+    /* Header + footer align to the same narrower column as the content. */
+    body.home .topbar .container, body.home .screen .container { max-width: 1160px; padding-left: 40px; padding-right: 40px; }
+    @media (max-width: 640px) { body.home .topbar .container, body.home .screen .container { padding-left: 22px; padding-right: 22px; } }
     .hero { padding: 72px 0 60px; display: grid; grid-template-columns: minmax(0, 6.2fr) minmax(0, 5.8fr); gap: 56px; align-items: center; }
     .hero-art { min-width: 0; position: relative; }
     @media (max-width: 940px) { .hero { grid-template-columns: 1fr; } .hero-art { order: -1; } }

@@ -93,7 +93,9 @@
           </div>
           <div class="row" style="gap:8px">
             <button class="btn btn-primary" onclick={() => resumeDraft?.(draft.key)}>Resume</button>
-            <button class="btn btn-ghost btn-ghost-danger" onclick={() => confirmDelete(draft.key)}>Delete</button>
+            <button class="iconbtn danger" data-tip="Delete draft" aria-label="Delete draft" onclick={() => confirmDelete(draft.key)}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
+            </button>
           </div>
         </div>
       {/each}
@@ -149,6 +151,18 @@
 
 <style>
   .page { display: flex; flex-direction: column; min-height: 100vh; }
+  /* Match the marketing site's calmer content column (1160/40) instead of the
+     app's wide 1480/28 — same menu, footer and side margins as the home page. */
+  .topbar :global(.container),
+  main :global(.container),
+  footer :global(.container) {
+    max-width: 1160px; padding-left: 40px; padding-right: 40px;
+  }
+  @media (max-width: 640px) {
+    .topbar :global(.container),
+    main :global(.container),
+    footer :global(.container) { padding-left: 22px; padding-right: 22px; }
+  }
   .topbar {
     position: sticky; top: 0; z-index: 20;
     background: color-mix(in oklch, var(--paper) 86%, transparent);
@@ -178,7 +192,6 @@
   }
   .draft:first-of-type { margin-top: 28px; }
   .draft-main { display: flex; flex-direction: column; gap: 3px; }
-  .btn-ghost-danger:hover { color: var(--warn); border-color: oklch(0.85 0.06 40); }
 
   /* Action cards */
   .action-grid {

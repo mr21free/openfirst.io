@@ -43,7 +43,7 @@
   });
 </script>
 
-<div class="guide-row">
+<div class="guide-row" class:editing>
   <div class="guide-col">
     {#if !editing && shownLang && shownLang !== lang}
       <p class="notice no-print">
@@ -143,10 +143,16 @@
   .guide { flex: 1; display: flex; flex-direction: column; border-radius: 0; }
   .editor-host :global(.ce) { flex: 1; }
   .guide-side { position: absolute; top: 0; right: -52px; display: flex; flex-direction: column; gap: 8px; }
-  /* The floating rail needs ~52px of real margin beyond the 1480px container
-     (+ its padding) — below that the rail would clip off-screen (overflow-x is
-     hidden), so it folds into a row above the guide instead. */
+  /* The floating rail needs ~52px of real margin beyond the 1480px container.
+     Below that (laptops, tablets) the guide narrows instead and the rail sits
+     INSIDE the reserved right gutter — tools always beside the guide. Only on
+     phone widths does the rail fold into a row above the guide. */
   @media (max-width: 1540px) {
+    .guide-row.editing { padding-right: 50px; }
+    .guide-side { right: 0; }
+  }
+  @media (max-width: 700px) {
+    .guide-row.editing { padding-right: 0; }
     .guide-row { display: flex; flex-direction: column-reverse; }
     .guide-side { position: static; flex-direction: row; justify-content: flex-end; margin-bottom: 6px; }
   }

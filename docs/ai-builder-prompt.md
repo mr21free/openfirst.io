@@ -30,8 +30,10 @@ Follow these rules exactly:
 3. IDs are arbitrary strings but MUST be unique within their array and
    referenced consistently. Use readable ids like "person_jane", "loc_home",
    "item_trezor", "guide_first_steps".
-4. Every reference must resolve: ids in location_ids / access_person_ids /
-   attachment_ids / guide_ids / audience_roles / group / owner_id / parent_id /
+4. Every reference must resolve: ids in owner_id, map_audience_roles,
+   map_audience_person_ids, roles, parent_id, location_ids, container_ids,
+   access_person_ids, depends_on_ids, attachment_ids, guide_ids,
+   audience_roles, audience_person_ids, group, access_path.steps[].ref_id and
    references.* MUST point to an entity that exists in the file.
 5. NEVER invent or include real secrets (PINs, seeds, passwords, keys, account
    numbers). If a value is sensitive, describe where/how to find it instead, and
@@ -40,14 +42,20 @@ Follow these rules exactly:
    spouse). Inside guide content you may cross-link other entities with [[id]]
    tokens (and list those ids in that guide's "references"), and link a group of
    files with [#tag](#tag:slug).
-7. Leave "attachments" empty — I will add real files in the app.
+7. Inline media is supported with [[img:attachment_id]] for images and
+   [[video:attachment_id]] for MP4 video — but leave "attachments" empty unless
+   I explicitly give you existing file metadata. I will add real files in the app.
+8. Do not create country/type fields for locations. A location can be a country,
+   city, home, safe, bank box, etc. Put that meaning in the name and hierarchy.
+9. Keep the plan practical and sparse. Prefer notes and relationships over
+   invented categories.
 
 SCHEMA SUMMARY
 - Top level: { "schema": "lifepackage/v1", "package": {...}, "people":
   [...], "roles": [...], "locations": [...], "items": [...], "guide_groups":
   [...], "guides": [...], "attachments": [] }
 - package: { id, title, owner_id (a people id), created (YYYY-MM-DD), updated,
-  languages: ["en"], default_language: "en" }
+  languages: ["en"], default_language: "en", map_audience_roles?: [roleId] }
 - roles[]: { id, name }  // e.g. owner, primary_heir, beneficiary, professional, friend
 - people[]: { id, name, nickname?, roles: [roleId], importance?: high|medium|low,
   notes?, sensitive?: bool, access_path?: { steps: [{ id, text,
@@ -69,7 +77,7 @@ SCHEMA SUMMARY
 MINIMAL VALID EXAMPLE (shape only):
 {
   "schema": "lifepackage/v1",
-  "package": { "id": "plan-1", "title": "My life package",
+  "package": { "id": "plan-1", "title": "My plan",
     "owner_id": "person_me", "created": "2026-01-01", "updated": "2026-01-01",
     "languages": ["en"], "default_language": "en" },
   "roles": [ { "id": "owner", "name": "Owner" },

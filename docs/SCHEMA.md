@@ -56,6 +56,7 @@ are added automatically.
 | `importance` |  | `high` \| `medium` \| `low` |
 | `notes` |  | |
 | `sensitive` |  | boolean |
+| `access_path` |  | `{ steps: [{ id, text, ref_id?, photo_id? }] }` — the person's physical journey to the plan ("open the safe", "take the envelope"). Their first screen in the reader; printable envelope insert. Pointers only, never secrets. `ref_id` = a location/item id, `photo_id` = an attachment id. |
 
 ## `locations[]` — a tree
 Nest places with `parent_id` (Country → City → Home → Safe).

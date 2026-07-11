@@ -196,34 +196,33 @@
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
       </button>
       <pre class="prompt"><code id="ai-prompt">You are helping me build an inheritance / "in case I die" plan as a single JSON
-file in the format "lifepackage/v1". The plan is a map of where things
-live, who can access them, and what guidance each person should see. It is NOT a
-store of raw secrets.
+file in the format "lifepackage/v1". The plan is a MAP of where things
+live and who should receive them — NOT a store of raw secrets.
 
 Follow these rules exactly:
 
-1. Output one JSON object and nothing else (no prose, no markdown fences) when I
+1. Output ONE JSON object and nothing else (no prose, no markdown fences) when I
    ask for the final file. Until then, interview me.
-2. Conform to the schema summarized below. Unknown/extra fields are allowed, but
+2. Conform to the schema summarized below. Unknown/extra fields are allowed but
    prefer the documented ones.
-3. IDs are arbitrary strings but must be unique within their array and
+3. IDs are arbitrary strings but MUST be unique within their array and
    referenced consistently. Use readable ids like "person_jane", "loc_home",
-   "item_trezor", "role_primary_heir", "guide_first_steps".
+   "item_trezor", "guide_first_steps".
 4. Every reference must resolve: ids in owner_id, map_audience_roles,
    map_audience_person_ids, roles, parent_id, location_ids, container_ids,
    access_person_ids, depends_on_ids, attachment_ids, guide_ids,
-   audience_roles, audience_person_ids, group, and references.* must point to an
-   entity that exists in the file.
-5. Never invent or include real secrets (PINs, seeds, passwords, keys, account
+   audience_roles, audience_person_ids, group, access_path.steps[].ref_id and
+   references.* MUST point to an entity that exists in the file.
+5. NEVER invent or include real secrets (PINs, seeds, passwords, keys, account
    numbers). If a value is sensitive, describe where/how to find it instead, and
    set "sensitive": true on that item.
-6. Write guides as clear, calm Markdown for a non-technical reader. Inside guide
-   content you may cross-link entities with [[id]] tokens and list those ids in
-   that guide's references.
-7. You may mention file groups with [#tag](#tag:slug). Inline media is supported
-   with [[img:attachment_id]] for images and [[video:attachment_id]] for MP4
-   videos, but leave attachments empty unless I explicitly give you existing
-   file metadata. I will add real files in the app.
+6. Write the guides as clear, calm Markdown for a non-technical reader (e.g. my
+   spouse). Inside guide content you may cross-link other entities with [[id]]
+   tokens (and list those ids in that guide's "references"), and link a group of
+   files with [#tag](#tag:slug).
+7. Inline media is supported with [[img:attachment_id]] for images and
+   [[video:attachment_id]] for MP4 video — but leave "attachments" empty unless
+   I explicitly give you existing file metadata. I will add real files in the app.
 8. Do not create country/type fields for locations. A location can be a country,
    city, home, safe, bank box, etc. Put that meaning in the name and hierarchy.
 9. Keep the plan practical and sparse. Prefer notes and relationships over
@@ -234,26 +233,18 @@ SCHEMA SUMMARY
   [...], "roles": [...], "locations": [...], "items": [...], "guide_groups":
   [...], "guides": [...], "attachments": [] }
 - package: { id, title, owner_id (a people id), created (YYYY-MM-DD), updated,
-  languages: ["en"], default_language: "en", map_audience_roles?: [roleId],
-  map_audience_person_ids?: [personId] }
-  If map_audience_roles and map_audience_person_ids are both empty or missing,
-  the map is visible to everyone who can open the plan.
-- roles[]: { id, name }
-  Examples: owner, primary_heir, beneficiary, professional, friend.
+  languages: ["en"], default_language: "en", map_audience_roles?: [roleId] }
+- roles[]: { id, name }  // e.g. owner, primary_heir, beneficiary, professional, friend
 - people[]: { id, name, nickname?, roles: [roleId], importance?: high|medium|low,
-  notes?, sensitive?: bool }
+  notes?, sensitive?: bool, access_path?: { steps: [{ id, text,
+  ref_id? (a location/item id), photo_id? (an attachment id) }] } }
+  (access_path = the person's PHYSICAL journey to the plan — "open the safe",
+  "take the envelope" — their first screen; pointers only, never secrets)
 - locations[]: { id, name, parent_id?, order?, notes?, access_person_ids?,
-  depends_on_ids? }
-  Nest with parent_id, for example: Country &gt; City &gt; Home &gt; Safe. Use order only
-  for manual ordering among siblings.
+  importance? }   // nest with parent_id: Country &gt; City &gt; Home &gt; Safe
 - items[]: { id, name, description?, notes?, price?, importance?, location_ids?,
   container_ids?, access_person_ids?, depends_on_ids?, attachment_ids?, guide_ids?, sensitive? }
-  container_ids are item ids this item is stored inside, for example a recovery
-  code inside a password manager. depends_on_ids are item ids needed to access
-  or use this item.
-- attachments[]: { id, filename, original_filename?, mime?, description?,
-  tags?, item_ids?, guide_ids? }
-  Usually leave attachments empty; real files should be added locally in the app.
+  (container_ids = item ids this is stored INSIDE, e.g. a PIN inside a password manager)
 - guide_groups[]: { id, name, order? }
 - guides[]: { id, title, group?, order?, importance?, draft?: bool,
   content: { "en": "## ...markdown..." },
@@ -266,8 +257,7 @@ MINIMAL VALID EXAMPLE (shape only):
   "schema": "lifepackage/v1",
   "package": { "id": "plan-1", "title": "My plan",
     "owner_id": "person_me", "created": "2026-01-01", "updated": "2026-01-01",
-    "languages": ["en"], "default_language": "en",
-    "map_audience_roles": ["primary_heir"] },
+    "languages": ["en"], "default_language": "en" },
   "roles": [ { "id": "owner", "name": "Owner" },
              { "id": "primary_heir", "name": "Primary heir" } ],
   "people": [ { "id": "person_me", "name": "Me", "roles": ["owner"] },
@@ -286,9 +276,9 @@ MINIMAL VALID EXAMPLE (shape only):
 
 Now interview me: ask short, grouped questions about my people and their roles,
 the places I keep things, the items (accounts, wallets, keys, documents,
-devices), who can access what, and what guidance each heir needs. Ask only for
-non-sensitive structure. When I say "generate", validate that every reference
-resolves and every id is unique, then output the final JSON only.</code></pre>
+devices), and what guidance each heir needs. Ask only for non-sensitive
+structure. When I say "generate", validate that every reference resolves and
+every id is unique, then output the final JSON only.</code></pre>
     </div>
 
       <p class="tiny muted">Prefer to build by hand? Open the app, click <strong>Create new plan</strong>, and try the <a href="/demo/">Demo</a> to see a finished one.</p>

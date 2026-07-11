@@ -7,7 +7,7 @@ and then refine. Everything stays on your device.
 
 1. **Build** your plan in the app (people, places, items, files, guides).
 2. **Export** a single `start-here.html` — optionally password-protected.
-3. **Give it** to your heirs (USB stick, drive, print the password separately).
+3. **Share it** with your heirs (USB stick, drive, print the password separately).
    They double-click it; it opens offline, no app or account needed.
 
 ---
@@ -35,7 +35,7 @@ it for you.
 ## Option B — build by hand
 
 Click **Create new plan** and work through the left nav: **People → Roles →
-Locations → Items → Files → Guides**. Use **Demo** first to see a finished
+Locations → Items → Files → Guides**. Open the [Demo](https://openfirst.io/demo/) first to see a finished
 example.
 
 ---

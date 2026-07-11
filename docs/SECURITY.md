@@ -125,7 +125,6 @@ startup, including this one.
 
 ## Reporting a vulnerability
 
-Email **security@openfirst.io** (or, until that inbox exists,
-**id.miro@foremsec.com**) with steps to reproduce. Please give us reasonable
+Email **security@openfirst.io** with steps to reproduce. Please give us reasonable
 time to fix an issue before disclosing it publicly. We'll credit you unless you
 prefer otherwise.

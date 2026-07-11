@@ -1393,7 +1393,8 @@
   .gs-count { margin-bottom: 12px; }
 
   /* ---- The heir's access path (their first screen) ---- */
-  .access { border-left: 2px solid var(--accent); padding: 34px 36px; max-width: 720px; }
+  /* Stretches like a guide — the accent rule marks it as auto-generated. */
+  .access { border-left: 2px solid var(--accent); padding: 34px 36px; flex: 1; }
   .access-h { font-size: clamp(24px, 3.4vw, 34px); margin: 8px 0 12px; }
   .access-steps { list-style: none; padding: 0; margin: 24px 0 8px; display: flex; flex-direction: column; }
   .access-step { display: flex; gap: 16px; padding: 16px 0; border-top: 1px solid var(--rule-soft); }

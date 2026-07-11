@@ -7,7 +7,18 @@
   */
   let { store, onReview } = $props();
 
+  // Dismissal must survive remounts — this component lives inside
+  // {#if editing}, so every edit/read toggle recreates it. "For the session"
+  // means the browser session, per plan, not the component's lifetime.
+  const dismissKey = $derived(`openfirst.staleness.dismissed.${store.data?.package?.id || 'plan'}`);
   let dismissed = $state(false);
+  $effect(() => {
+    try { dismissed = sessionStorage.getItem(dismissKey) === '1'; } catch { /* private mode */ }
+  });
+  function dismiss() {
+    dismissed = true;
+    try { sessionStorage.setItem(dismissKey, '1'); } catch { /* private mode */ }
+  }
 
   const MONTH = 30 * 24 * 60 * 60 * 1000;
   const monthsSince = (d) => {
@@ -61,7 +72,7 @@
     </span>
     <span class="stale-actions">
       {#if onReview}<button class="btn btn-small" onclick={() => onReview()}>Open readiness</button>{/if}
-      <button class="iconbtn stale-x" data-tip="Dismiss for now" data-tip-pos="left" aria-label="Dismiss" onclick={() => (dismissed = true)}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <button class="iconbtn stale-x" data-tip="Dismiss for now" data-tip-pos="left" aria-label="Dismiss" onclick={dismiss}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </span>
   </div>
 {/if}

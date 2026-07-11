@@ -196,13 +196,13 @@ strong { font-weight: 600; }
 .switch.on .knob { transform: translateX(16px); }
 .switch:disabled { opacity: 0.5; cursor: default; }
 
-/* Pills / chips */
+/* Chips — 8px rounded rects, same as buttons (map chips set the look). */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: 8px;
   border: 1px solid var(--rule);
   background: var(--paper);
   font-size: 12px;

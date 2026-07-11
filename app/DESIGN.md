@@ -29,8 +29,10 @@ microcopy ("Take your time. There is no rush."), never in visuals.
 - **Buttons are rounded rectangles (8px):** every `.btn` variant and
   button-like control (add-row buttons, toolbar refs, map crumbs).
   Decided 2026-07-11 (Miro; smallpdf/secubit reference) — replaced pills.
-- **Pills (999) survive only where the shape IS the meaning:** chips, the
-  switch knob/track, count badges, avatar dots. Tooltip bubbles stay 6px.
+- **Chips share the 8px button radius** (map chips set the look; home page
+  trust chips and readiness/audience chips match).
+- **Pills (999) survive only where the shape IS the meaning:** the switch
+  knob/track, count badges, avatar dots. Tooltip bubbles stay 6px.
 - Never introduce another radius.
 
 ## Buttons — one system, `app.css`

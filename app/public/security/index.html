@@ -209,9 +209,14 @@
       </div>
     </section>
 
-    <section class="verify-note" style="padding-bottom:80px">
+  </main>
+
+  <div class="sec-band" style="margin-top:64px">
+    <div class="home-main">
+    <section>
       <div class="sec-eyebrow">Verify it yourself</div>
-      <ol class="steps" style="max-width:66ch">
+      <h2 class="sec-h">Don't trust us. Check.</h2>
+      <ol class="steps" style="max-width:66ch; margin-top:34px">
         <li><strong>Read the source</strong> — small and dependency-light: one runtime dependency for zip, everything else native Web Crypto.</li>
         <li><strong>Reproduce the build</strong>, go offline, open <code>dist/build/index.html</code> from disk. It works — it never needed the network.</li>
         <li><strong>Inspect an encrypted export</strong> — plain JSON showing algorithm, KDF, iterations, salt and IV; decrypt it with Node.js alone.</li>
@@ -219,7 +224,8 @@
       </ol>
       <p style="margin-top:28px; color:var(--ink-soft)">Found a vulnerability? Email <a href="mailto:security@openfirst.io">security@openfirst.io</a> with steps to reproduce — we'll credit you unless you'd rather we didn't.</p>
     </section>
-  </main>
+    </div>
+  </div>
 
   <footer class="screen">
     <div class="container row wrap">

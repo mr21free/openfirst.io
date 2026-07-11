@@ -131,7 +131,10 @@
   .guide { flex: 1; display: flex; flex-direction: column; border-radius: 0; }
   .editor-host :global(.ce) { flex: 1; }
   .guide-side { position: absolute; top: 0; right: -52px; display: flex; flex-direction: column; gap: 8px; }
-  @media (max-width: 1140px) {
+  /* The floating rail needs ~52px of real margin beyond the 1480px container
+     (+ its padding) — below that the rail would clip off-screen (overflow-x is
+     hidden), so it folds into a row above the guide instead. */
+  @media (max-width: 1540px) {
     .guide-row { display: flex; flex-direction: column-reverse; }
     .guide-side { position: static; flex-direction: row; justify-content: flex-end; margin-bottom: 6px; }
   }

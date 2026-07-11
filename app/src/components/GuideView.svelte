@@ -6,6 +6,17 @@
 
   let { pkg, guide, lang, onOpen, onTag = null, onView = null, editing = false, canEdit = false, onStartEditing = null, onEdit, onDelete, onToggleDraft, onContent, onAddRef, onUploadMedia = null, onTitle, focusTitle = false, onTitleFocused = null } = $props();
 
+  // The draft explainer is a teaching banner: once dismissed, the user knows
+  // what a draft is — never show it again (the dashed frame + amber eye-off
+  // icon still mark draft guides). localStorage, not per plan.
+  const DRAFT_HINT_KEY = 'openfirst.draftBanner.dismissed';
+  let draftHintDismissed = $state(false);
+  try { draftHintDismissed = localStorage.getItem(DRAFT_HINT_KEY) === '1'; } catch { /* private mode */ }
+  function dismissDraftHint() {
+    draftHintDismissed = true;
+    try { localStorage.setItem(DRAFT_HINT_KEY, '1'); } catch { /* private mode */ }
+  }
+
   const shownTitle = $derived(langValue(guide.title, guide.title_i18n, lang));
 
   let titleInput = $state(null);
@@ -40,12 +51,13 @@
       </p>
     {/if}
 
-    {#if editing && guide.draft}
+    {#if editing && guide.draft && !draftHintDismissed}
       <p class="draft-banner">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" />
         </svg>
         <span><strong>Draft</strong> — kept here, but left out of the plan you export for your heir.</span>
+        <button class="iconbtn draft-x" data-tip="Got it — don't explain drafts again" data-tip-pos="left" aria-label="Dismiss draft explanation" onclick={dismissDraftHint}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </p>
     {/if}
 
@@ -149,6 +161,8 @@
     color: var(--ink-soft); font-size: 13px;
   }
   .draft-banner svg { flex: none; color: var(--draft); }
+  .draft-banner .draft-x { width: 26px; height: 26px; margin-left: auto; color: var(--ink-mute); }
+  .draft-banner .draft-x svg { color: currentColor; }
   .is-draft.guide { border-style: dashed; }
   /* The dashed frame is a screen-only "draft" cue — never print it. */
   @media print { .is-draft.guide { border: none; } }

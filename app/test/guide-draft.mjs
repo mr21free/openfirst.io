@@ -51,6 +51,17 @@ try {
   // Toggling back publishes it again.
   await toggleDraft(); await pause();
   ok('toggling again republishes (banner gone)', await page.evaluate(() => !document.querySelector('main .gtool-pub.is-draft') && !document.querySelector('main .draft-banner')));
+
+  // The explainer is dismissible and stays dismissed (localStorage): once the
+  // user knows what a draft is, only the frame + amber icon mark drafts.
+  await page.evaluate(() => document.querySelector('main .gtool-pub')?.click()); await pause();
+  ok('draft again shows the explainer', await page.evaluate(() => !!document.querySelector('main .draft-banner')));
+  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => (b.getAttribute('aria-label') || '') === 'Dismiss draft explanation')?.click()); await pause(200);
+  ok('explainer dismisses', await page.evaluate(() => !document.querySelector('main .draft-banner')));
+  await page.evaluate(() => document.querySelector('main .gtool-pub')?.click()); await pause();
+  await page.evaluate(() => document.querySelector('main .gtool-pub')?.click()); await pause();
+  ok('dismissal sticks across re-drafting (icon still marks it)', await page.evaluate(() => !document.querySelector('main .draft-banner') && !!document.querySelector('main .gtool-pub.is-draft')));
+  await page.evaluate(() => document.querySelector('main .gtool-pub')?.click()); await pause(); // republish for the rest of the test
   await toggleDraft(); await pause(); // back to draft
 
   await openGuide('New Guide (1)'); await pause(); await toggleDraft(); await pause();

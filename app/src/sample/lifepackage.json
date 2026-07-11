@@ -1,0 +1,2206 @@
+{
+  "schema": "lifepackage/v1",
+  "package": {
+    "id": "package_john_james_demo",
+    "title": "John James Family Plan (Demo)",
+    "owner_id": "person_john_james",
+    "created": "2026-07-01",
+    "updated": "2026-07-02",
+    "languages": [
+      "en"
+    ],
+    "default_language": "en",
+    "map_audience_roles": [
+      "role_primary_heir",
+      "role_executor"
+    ],
+    "map_audience_person_ids": [
+      "person_amanda_james"
+    ],
+    "notes": "Fictional demo package. It is a map and guidance system, not a vault for raw secrets.",
+    "demo_story": "John James lives with Amanda, Thomas, and Jane in Manchester. The family owns a Manchester home, a mortgaged Milan rental property, a UK stock portfolio, physical jewellery and gold coins, and a Bitcoin multisig family reserve. Amanda should stabilise the family first, then work with professionals and Josh as a limited crypto helper.",
+    "primary_person_ids": [
+      "person_amanda_james"
+    ]
+  },
+  "roles": [
+    {
+      "id": "role_owner",
+      "name": "Owner"
+    },
+    {
+      "id": "role_primary_heir",
+      "name": "Primary heir"
+    },
+    {
+      "id": "role_executor",
+      "name": "Executor"
+    },
+    {
+      "id": "role_beneficiary",
+      "name": "Beneficiary"
+    },
+    {
+      "id": "role_child",
+      "name": "Child"
+    },
+    {
+      "id": "role_crypto_helper",
+      "name": "Crypto helper"
+    },
+    {
+      "id": "role_guardian",
+      "name": "Guardian"
+    },
+    {
+      "id": "role_professional",
+      "name": "Professional"
+    },
+    {
+      "id": "role_property_helper",
+      "name": "Property helper"
+    },
+    {
+      "id": "role_friend",
+      "name": "Friend"
+    }
+  ],
+  "people": [
+    {
+      "id": "person_john_james",
+      "name": "John James",
+      "nickname": "John",
+      "roles": [
+        "role_owner"
+      ],
+      "importance": "high",
+      "notes": "Fictional demo owner of this life package."
+    },
+    {
+      "id": "person_amanda_james",
+      "name": "Amanda James",
+      "nickname": "Amanda",
+      "roles": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "importance": "high",
+      "notes": "John's wife. Main coordinator, primary heir, and the only family member who should see the full map first.",
+      "access_path": {
+        "steps": [
+          {
+            "id": "st_amanda_1",
+            "text": "Go to the home office — the safe is behind the books on the lower shelf.",
+            "ref_id": "loc_home_office"
+          },
+          {
+            "id": "st_amanda_2",
+            "text": "Open the home safe. The combination is where we agreed — if it slips your mind, your mother keeps the sealed note.",
+            "ref_id": "loc_home_safe"
+          },
+          {
+            "id": "st_amanda_3",
+            "text": "Take the red folder. Everything starts there: the printed guide, the USB stick, and the sealed password card.",
+            "ref_id": "item_red_folder"
+          },
+          {
+            "id": "st_amanda_4",
+            "text": "Plug the USB into the laptop, open start-here.html, and enter the password from the sealed card. Then read “Read me first” — slowly. There is no rush."
+          }
+        ]
+      }
+    },
+    {
+      "id": "person_thomas_james",
+      "name": "Thomas James",
+      "nickname": "Tom",
+      "roles": [
+        "role_child",
+        "role_beneficiary"
+      ],
+      "importance": "high",
+      "notes": "John and Amanda's son. In this demo he is treated as a minor child."
+    },
+    {
+      "id": "person_jane_james",
+      "name": "Jane James",
+      "nickname": "Janie",
+      "roles": [
+        "role_child",
+        "role_beneficiary"
+      ],
+      "importance": "high",
+      "notes": "John and Amanda's daughter. In this demo she is treated as a minor child."
+    },
+    {
+      "id": "person_josh_miller",
+      "name": "Josh Miller",
+      "nickname": "Josh",
+      "roles": [
+        "role_friend",
+        "role_crypto_helper"
+      ],
+      "importance": "medium",
+      "notes": "Trusted friend who understands Bitcoin self-custody. Josh should help Amanda understand the process, but should not receive all recovery parts or make financial decisions."
+    },
+    {
+      "id": "person_sarah_james",
+      "name": "Sarah James",
+      "nickname": "Sarah",
+      "roles": [
+        "role_guardian"
+      ],
+      "importance": "high",
+      "notes": "John's sister and proposed backup guardian for Thomas and Jane if Amanda cannot care for them."
+    },
+    {
+      "id": "person_eleanor_price",
+      "name": "Eleanor Price",
+      "roles": [
+        "role_professional"
+      ],
+      "importance": "high",
+      "notes": "Fictional family solicitor. Contact details are stored in the professional contacts sheet, not in this JSON."
+    },
+    {
+      "id": "person_rachel_green",
+      "name": "Rachel Green",
+      "roles": [
+        "role_professional"
+      ],
+      "importance": "medium",
+      "notes": "Fictional accountant who understands UK tax, investment records, and estate administration."
+    },
+    {
+      "id": "person_luca_bianchi",
+      "name": "Luca Bianchi",
+      "roles": [
+        "role_property_helper"
+      ],
+      "importance": "medium",
+      "notes": "Fictional Milan property manager. Can help Amanda with tenants, local invoices, keys, and repairs."
+    }
+  ],
+  "locations": [
+    {
+      "id": "loc_united_kingdom",
+      "name": "United Kingdom",
+      "order": 0
+    },
+    {
+      "id": "loc_manchester",
+      "name": "Manchester",
+      "parent_id": "loc_united_kingdom",
+      "order": 0
+    },
+    {
+      "id": "loc_family_home",
+      "name": "James family home",
+      "parent_id": "loc_manchester",
+      "order": 0,
+      "access_person_ids": [
+        "person_john_james",
+        "person_amanda_james"
+      ],
+      "notes": "Main family home for John, Amanda, Thomas, and Jane."
+    },
+    {
+      "id": "loc_home_safe",
+      "name": "Home safe in the James family home",
+      "parent_id": "loc_family_home",
+      "order": 0,
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "notes": "Contains the red inheritance folder, jewellery, gold coins, selected device backups, and sealed envelopes. No codes are stored in this JSON."
+    },
+    {
+      "id": "loc_home_office",
+      "name": "John's home office",
+      "parent_id": "loc_family_home",
+      "order": 1,
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "notes": "Contains John's laptop, Bitcoin node, and non-secret printed notes."
+    },
+    {
+      "id": "loc_desk_drawer",
+      "name": "Locked drawer in John's home office",
+      "parent_id": "loc_home_office",
+      "order": 0,
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "notes": "Contains device manuals, non-secret inventories, and estate admin notes."
+    },
+    {
+      "id": "loc_italy",
+      "name": "Italy",
+      "order": 1
+    },
+    {
+      "id": "loc_milan",
+      "name": "Milan",
+      "parent_id": "loc_italy",
+      "order": 0
+    },
+    {
+      "id": "loc_milan_property",
+      "name": "Milan rental investment property",
+      "parent_id": "loc_milan",
+      "order": 0,
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_luca_bianchi"
+      ],
+      "notes": "Rental investment property. It still has a mortgage in this demo."
+    },
+    {
+      "id": "loc_milan_document_cabinet",
+      "name": "Document cabinet inside the Milan rental property",
+      "parent_id": "loc_milan_property",
+      "order": 0,
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_luca_bianchi"
+      ],
+      "notes": "Contains local property copies only. The authoritative documents are in the red inheritance folder or with the solicitor."
+    },
+    {
+      "id": "loc_solicitor_office",
+      "name": "Eleanor Price solicitor office in Manchester",
+      "parent_id": "loc_manchester",
+      "order": 2,
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_eleanor_price"
+      ],
+      "notes": "Holds professional file copies and can guide probate and estate administration."
+    },
+    {
+      "id": "loc_online_services",
+      "name": "Online services",
+      "order": 2,
+      "notes": "Digital services are mapped here only as structure. Credentials are not stored in this JSON."
+    },
+    {
+      "id": "loc_password_manager_vault",
+      "name": "Password manager vault",
+      "parent_id": "loc_online_services",
+      "order": 0,
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "notes": "Central index for online accounts. Access method is described by the emergency access sheet, not written here."
+    },
+    {
+      "id": "loc_broker_portal",
+      "name": "UK broker online portal",
+      "parent_id": "loc_online_services",
+      "order": 1,
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "notes": "The broker account is online. Statements and tax summaries are also copied into the red inheritance folder."
+    },
+    {
+      "id": "loc_cloud_storage",
+      "name": "Family cloud storage",
+      "parent_id": "loc_online_services",
+      "order": 2,
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "notes": "Contains family photos, scanned documents, and non-secret archive material."
+    }
+  ],
+  "items": [
+    {
+      "id": "item_red_folder",
+      "name": "Red inheritance folder",
+      "description": "A physical folder that collects the non-secret estate map, signed document copies, contact lists, and guidance printouts.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_read_me_first",
+        "guide_home_safe"
+      ],
+      "sensitive": true
+    },
+    {
+      "id": "item_will_original",
+      "name": "Professionally drafted will - original",
+      "description": "Original signed will for the fictional demo estate.",
+      "importance": "high",
+      "location_ids": [
+        "loc_solicitor_office"
+      ],
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_eleanor_price"
+      ],
+      "guide_ids": [
+        "guide_sample_will",
+        "guide_read_me_first"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ]
+    },
+    {
+      "id": "item_letter_of_wishes",
+      "name": "Letter of wishes",
+      "description": "Personal, non-secret guidance to sit beside the will.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_letter_of_wishes",
+        "guide_funeral_wishes"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ]
+    },
+    {
+      "id": "item_professional_contacts",
+      "name": "Professional contacts sheet",
+      "description": "Printed and digital list of solicitor, accountant, broker, insurer, mortgage lender, and property manager contacts.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe",
+        "loc_cloud_storage"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_professionals"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ]
+    },
+    {
+      "id": "item_death_admin_checklist",
+      "name": "Death administration checklist",
+      "description": "Simple checklist for death certificates, funeral decisions, probate, banks, insurers, broker, property manager, subscriptions, and tax.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_read_me_first"
+      ],
+      "sensitive": false,
+      "container_ids": [
+        "item_red_folder"
+      ]
+    },
+    {
+      "id": "item_home_safe_access_note",
+      "name": "Home safe access note",
+      "description": "Explains who is allowed to open the home safe and where lawful access instructions are held. It does not contain the code in this JSON.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_home_safe"
+      ],
+      "sensitive": true
+    },
+    {
+      "id": "item_home_safe_inventory",
+      "name": "Home safe inventory",
+      "description": "Printed inventory of physical items in the home safe with photos to be added later in the app.",
+      "importance": "medium",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_home_safe"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ]
+    },
+    {
+      "id": "item_jewellery",
+      "name": "Amanda and family jewellery",
+      "description": "Sentimental and valuable jewellery stored in the home safe.",
+      "importance": "medium",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_home_safe"
+      ],
+      "sensitive": true
+    },
+    {
+      "id": "item_gold_coins",
+      "name": "10 physical 1 oz gold coins",
+      "description": "Fictional demo holding: ten old 1 oz physical gold coins stored as a family reserve.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_home_safe",
+        "guide_money_broker"
+      ],
+      "sensitive": true,
+      "price": "Use professional valuation at date of death; do not rely on this file for valuation."
+    },
+    {
+      "id": "item_manchester_home_documents",
+      "name": "Manchester family home documents",
+      "description": "Mortgage, title, insurance, council tax, utilities, and maintenance records for the family home.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe",
+        "loc_cloud_storage"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_read_me_first",
+        "guide_money_broker"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ]
+    },
+    {
+      "id": "item_bank_accounts_summary",
+      "name": "Bank accounts summary",
+      "description": "Non-secret list of banks used by John and Amanda, with no account numbers in this JSON.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe",
+        "loc_password_manager_vault"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_read_me_first",
+        "guide_money_broker"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ],
+      "depends_on_ids": [
+        "item_password_manager",
+        "item_main_email_account"
+      ]
+    },
+    {
+      "id": "item_life_insurance_policy",
+      "name": "Life insurance policy",
+      "description": "Policy overview and claim instructions. Full policy documents are in the red folder and cloud archive.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe",
+        "loc_cloud_storage"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_read_me_first",
+        "guide_money_broker"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ]
+    },
+    {
+      "id": "item_pension_summary",
+      "name": "Pension and workplace benefits summary",
+      "description": "Summary of pension providers and employer benefits. No policy numbers are stored here.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe",
+        "loc_password_manager_vault"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_money_broker"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ],
+      "depends_on_ids": [
+        "item_password_manager",
+        "item_main_email_account"
+      ]
+    },
+    {
+      "id": "item_stock_broker_account",
+      "name": "UK broker stock portfolio",
+      "description": "Fictional stock portfolio held with a UK broker. Credentials are only in the password manager.",
+      "importance": "high",
+      "location_ids": [
+        "loc_broker_portal",
+        "loc_password_manager_vault"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_money_broker"
+      ],
+      "sensitive": true,
+      "depends_on_ids": [
+        "item_password_manager",
+        "item_main_email_account",
+        "item_phone_john"
+      ]
+    },
+    {
+      "id": "item_broker_tax_reports",
+      "name": "Broker statements and tax reports",
+      "description": "Annual broker statements, dividend summaries, purchase history, and tax packs.",
+      "importance": "medium",
+      "location_ids": [
+        "loc_home_safe",
+        "loc_cloud_storage"
+      ],
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_rachel_green"
+      ],
+      "guide_ids": [
+        "guide_money_broker"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ],
+      "depends_on_ids": [
+        "item_stock_broker_account"
+      ]
+    },
+    {
+      "id": "item_milan_property_title",
+      "name": "Milan rental property ownership documents",
+      "description": "Property purchase documents, title copies, notary details, and legal correspondence.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe",
+        "loc_milan_document_cabinet",
+        "loc_solicitor_office"
+      ],
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_luca_bianchi",
+        "person_eleanor_price"
+      ],
+      "guide_ids": [
+        "guide_milan_property"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ]
+    },
+    {
+      "id": "item_milan_mortgage_documents",
+      "name": "Milan mortgage and loan documents",
+      "description": "Mortgage balance, lender contact route, payment schedule, and insurance obligations. No account numbers are stored here.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe",
+        "loc_cloud_storage"
+      ],
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_luca_bianchi",
+        "person_rachel_green"
+      ],
+      "guide_ids": [
+        "guide_milan_property"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ],
+      "depends_on_ids": [
+        "item_bank_accounts_summary",
+        "item_password_manager"
+      ]
+    },
+    {
+      "id": "item_milan_rental_contracts",
+      "name": "Milan rental contract and tenant documents",
+      "description": "Lease agreement, tenant contact route, deposit record, rent payment history, and local obligations.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe",
+        "loc_milan_document_cabinet",
+        "loc_cloud_storage"
+      ],
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_luca_bianchi"
+      ],
+      "guide_ids": [
+        "guide_milan_property"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ]
+    },
+    {
+      "id": "item_milan_property_insurance",
+      "name": "Milan property insurance",
+      "description": "Insurance policy, claims route, renewal date, and premium payment method.",
+      "importance": "medium",
+      "location_ids": [
+        "loc_home_safe",
+        "loc_cloud_storage"
+      ],
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_luca_bianchi"
+      ],
+      "guide_ids": [
+        "guide_milan_property"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ],
+      "depends_on_ids": [
+        "item_milan_property_title"
+      ]
+    },
+    {
+      "id": "item_milan_property_manager_notes",
+      "name": "Milan property manager notes",
+      "description": "Notes for dealing with Luca, rent, repairs, keys, local tax, and tenant communication.",
+      "importance": "medium",
+      "location_ids": [
+        "loc_home_safe",
+        "loc_cloud_storage"
+      ],
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_luca_bianchi"
+      ],
+      "guide_ids": [
+        "guide_milan_property"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ]
+    },
+    {
+      "id": "item_password_manager",
+      "name": "Password manager",
+      "description": "Central place where credentials and account notes are maintained. No master password is stored in this package.",
+      "importance": "high",
+      "location_ids": [
+        "loc_password_manager_vault"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_digital_accounts"
+      ],
+      "sensitive": true,
+      "depends_on_ids": [
+        "item_emergency_access_sheet",
+        "item_phone_john",
+        "item_yubikey"
+      ]
+    },
+    {
+      "id": "item_emergency_access_sheet",
+      "name": "Emergency access sheet",
+      "description": "Sealed document explaining how Amanda can request or obtain lawful emergency access. It does not belong inside a public will.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_digital_accounts"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ]
+    },
+    {
+      "id": "item_main_email_account",
+      "name": "John's main email account",
+      "description": "Primary email account used for broker, banking, cloud, Bitcoin service notices, and property administration.",
+      "importance": "high",
+      "location_ids": [
+        "loc_online_services"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_digital_accounts"
+      ],
+      "sensitive": true,
+      "depends_on_ids": [
+        "item_password_manager",
+        "item_phone_john",
+        "item_yubikey"
+      ]
+    },
+    {
+      "id": "item_phone_john",
+      "name": "John's phone",
+      "description": "Primary phone used for 2FA, email, password manager approval, and account recovery.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_office"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_digital_accounts"
+      ],
+      "sensitive": true
+    },
+    {
+      "id": "item_laptop_john",
+      "name": "John's laptop",
+      "description": "Laptop used for documents, broker records, wallet watch-only view, and family archive access.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_office"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_digital_accounts",
+        "guide_bitcoin_recovery"
+      ],
+      "sensitive": true,
+      "depends_on_ids": [
+        "item_password_manager"
+      ]
+    },
+    {
+      "id": "item_yubikey",
+      "name": "Hardware 2FA key",
+      "description": "Physical 2FA key used for password manager and selected accounts.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_digital_accounts"
+      ],
+      "sensitive": true
+    },
+    {
+      "id": "item_cloud_photos",
+      "name": "Family photo and video archive",
+      "description": "Family photos, holiday videos, scanned letters, and children's memory folders.",
+      "importance": "high",
+      "location_ids": [
+        "loc_cloud_storage"
+      ],
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_thomas_james",
+        "person_jane_james"
+      ],
+      "guide_ids": [
+        "guide_children_support",
+        "guide_message_children"
+      ],
+      "sensitive": true,
+      "depends_on_ids": [
+        "item_password_manager",
+        "item_main_email_account"
+      ]
+    },
+    {
+      "id": "item_subscription_list",
+      "name": "Subscriptions and recurring payments list",
+      "description": "Non-secret list of recurring subscriptions, domains, cloud services, insurance renewals, and utilities.",
+      "importance": "medium",
+      "location_ids": [
+        "loc_home_safe",
+        "loc_password_manager_vault"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_digital_accounts"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ],
+      "depends_on_ids": [
+        "item_password_manager"
+      ]
+    },
+    {
+      "id": "item_bitcoin_policy_note",
+      "name": "Bitcoin policy note for Amanda",
+      "description": "Plain-English explanation of what John intended: do not rush, do not trust strangers, involve Josh only as helper, and consider long-term custody.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_josh_miller"
+      ],
+      "guide_ids": [
+        "guide_bitcoin_overview",
+        "guide_josh_scope"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ]
+    },
+    {
+      "id": "item_bitcoin_multisig_wallet",
+      "name": "Bitcoin 2-of-3 multisig family reserve",
+      "description": "Fictional demo Bitcoin reserve using a 2-of-3 multisig setup. This JSON contains no seed words, xprvs, private keys, PINs, or passphrases.",
+      "importance": "high",
+      "location_ids": [
+        "loc_online_services",
+        "loc_home_office"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_bitcoin_overview",
+        "guide_bitcoin_recovery",
+        "guide_josh_scope"
+      ],
+      "sensitive": true,
+      "depends_on_ids": [
+        "item_seed_backup_uk",
+        "item_seed_backup_milan",
+        "item_seed_backup_solicitor",
+        "item_wallet_descriptor_printout",
+        "item_bitcoin_passphrase_location_note"
+      ],
+      "notes": "Amanda should not move funds alone. Josh may explain the process, but must not be given unilateral access."
+    },
+    {
+      "id": "item_bitcoin_watch_only_wallet",
+      "name": "Bitcoin watch-only wallet",
+      "description": "View-only wallet on John's laptop used to confirm balances and transaction history without spending.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_office"
+      ],
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_josh_miller"
+      ],
+      "guide_ids": [
+        "guide_bitcoin_overview",
+        "guide_bitcoin_recovery"
+      ],
+      "sensitive": true,
+      "depends_on_ids": [
+        "item_laptop_john",
+        "item_wallet_descriptor_printout"
+      ]
+    },
+    {
+      "id": "item_coldcard_device",
+      "name": "Coldcard hardware wallet",
+      "description": "One signing device for the multisig setup. PIN is not stored in this JSON.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_bitcoin_recovery"
+      ],
+      "sensitive": true,
+      "depends_on_ids": [
+        "item_seed_backup_uk",
+        "item_bitcoin_passphrase_location_note"
+      ]
+    },
+    {
+      "id": "item_trezor_device",
+      "name": "Trezor hardware wallet",
+      "description": "One signing device for the multisig setup. PIN is not stored in this JSON.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_bitcoin_recovery"
+      ],
+      "sensitive": true,
+      "depends_on_ids": [
+        "item_seed_backup_milan",
+        "item_bitcoin_passphrase_location_note"
+      ]
+    },
+    {
+      "id": "item_seed_backup_uk",
+      "name": "Bitcoin recovery part A - UK sealed backup",
+      "description": "One sealed recovery part for the Bitcoin multisig setup. The secret itself is not in this package.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_bitcoin_recovery"
+      ],
+      "sensitive": true
+    },
+    {
+      "id": "item_seed_backup_milan",
+      "name": "Bitcoin recovery part B - Milan sealed backup",
+      "description": "One sealed recovery part for the Bitcoin multisig setup. The secret itself is not in this package.",
+      "importance": "high",
+      "location_ids": [
+        "loc_milan_document_cabinet"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_bitcoin_recovery",
+        "guide_milan_property"
+      ],
+      "sensitive": true
+    },
+    {
+      "id": "item_seed_backup_solicitor",
+      "name": "Bitcoin recovery part C - solicitor sealed envelope",
+      "description": "One sealed recovery part kept with the solicitor. The solicitor should not have enough material to move Bitcoin alone.",
+      "importance": "high",
+      "location_ids": [
+        "loc_solicitor_office"
+      ],
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_eleanor_price"
+      ],
+      "guide_ids": [
+        "guide_bitcoin_recovery",
+        "guide_professionals"
+      ],
+      "sensitive": true
+    },
+    {
+      "id": "item_bitcoin_passphrase_location_note",
+      "name": "Bitcoin passphrase location note",
+      "description": "Sealed note explaining where the passphrase instruction lives. The passphrase is not stored in this JSON.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_bitcoin_recovery"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ]
+    },
+    {
+      "id": "item_wallet_descriptor_printout",
+      "name": "Bitcoin wallet descriptor printout",
+      "description": "Watch-only wallet descriptor and derivation notes needed to identify the correct multisig wallet. This is privacy-sensitive but not a private key.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_josh_miller"
+      ],
+      "guide_ids": [
+        "guide_bitcoin_recovery"
+      ],
+      "sensitive": true,
+      "container_ids": [
+        "item_red_folder"
+      ]
+    },
+    {
+      "id": "item_bitcoin_node",
+      "name": "Bitcoin node in John's home office",
+      "description": "Small home server used to verify Bitcoin data. It is helpful but not required to recover funds.",
+      "importance": "medium",
+      "location_ids": [
+        "loc_home_office"
+      ],
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_josh_miller"
+      ],
+      "guide_ids": [
+        "guide_bitcoin_overview",
+        "guide_bitcoin_recovery"
+      ],
+      "sensitive": true,
+      "depends_on_ids": [
+        "item_laptop_john"
+      ]
+    },
+    {
+      "id": "item_exchange_account",
+      "name": "Bitcoin exchange account, if balance remains",
+      "description": "Fictional account used only for small liquidity, tax history, and purchase records. Credentials live in the password manager.",
+      "importance": "medium",
+      "location_ids": [
+        "loc_password_manager_vault"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_money_broker",
+        "guide_bitcoin_overview"
+      ],
+      "sensitive": true,
+      "depends_on_ids": [
+        "item_password_manager",
+        "item_main_email_account",
+        "item_phone_john"
+      ]
+    },
+    {
+      "id": "item_funeral_wishes",
+      "name": "Funeral and cremation wishes",
+      "description": "John's wishes for a simple funeral, cremation, and tree memorials for close family.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_thomas_james",
+        "person_jane_james"
+      ],
+      "guide_ids": [
+        "guide_funeral_wishes"
+      ],
+      "sensitive": false,
+      "container_ids": [
+        "item_red_folder"
+      ]
+    },
+    {
+      "id": "item_children_memory_box",
+      "name": "Memory box for Thomas and Jane",
+      "description": "Letters, printed photos, small objects, and stories prepared for the children.",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james",
+        "person_thomas_james",
+        "person_jane_james"
+      ],
+      "guide_ids": [
+        "guide_children_support",
+        "guide_message_children"
+      ],
+      "sensitive": true
+    },
+    {
+      "id": "item_charity_wishes",
+      "name": "Charity wishes note",
+      "description": "Optional note asking Amanda to consider donations from part of the estate once the family is secure.",
+      "importance": "low",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "person_amanda_james"
+      ],
+      "guide_ids": [
+        "guide_letter_of_wishes"
+      ],
+      "sensitive": false,
+      "container_ids": [
+        "item_red_folder"
+      ]
+    }
+  ],
+  "guide_groups": [
+    {
+      "id": "group_start",
+      "name": "Start here",
+      "order": 0
+    },
+    {
+      "id": "group_legal",
+      "name": "Legal and professional help",
+      "order": 1
+    },
+    {
+      "id": "group_assets",
+      "name": "Assets and practical things",
+      "order": 2
+    },
+    {
+      "id": "group_crypto",
+      "name": "Bitcoin and digital assets",
+      "order": 3
+    },
+    {
+      "id": "group_family",
+      "name": "Family care",
+      "order": 4
+    },
+    {
+      "id": "group_messages",
+      "name": "Personal messages",
+      "order": 5
+    },
+    {
+      "id": "group_maintenance",
+      "name": "How to keep this plan alive",
+      "order": 6
+    }
+  ],
+  "guides": [
+    {
+      "id": "guide_read_me_first",
+      "title": "🧭 First steps for Amanda",
+      "group": "group_start",
+      "order": 0,
+      "importance": "high",
+      "content": {
+        "en": "## 🧭 First steps for Amanda\n\nAmanda, breathe first. Nothing in this package requires you to make a big financial decision today.\n\n### The first day\n1. Be with Thomas and Jane. Let someone kind sit with you.\n2. Call [[person_eleanor_price]] and say: \"John's life package says you hold the will and should guide me.\"\n3. Take out the [[item_red_folder]] from [[loc_home_safe]].\n4. Read [[guide_do_not_do]] before touching phones, laptops, Bitcoin, broker accounts, or gold.\n5. Use [[item_death_admin_checklist]] as the paper checklist.\n\n### The first week\n- Register the death and request several official death certificate copies.\n- Ask [[person_eleanor_price]] which steps are legal, which are optional, and which can wait.\n- Ask [[person_rachel_green]] to help with tax records, the [[item_stock_broker_account]], the [[item_broker_tax_reports]], and the property records.\n- Ask [[person_luca_bianchi]] to keep the Milan property calm and ordinary: rent collected, repairs handled, tenant reassured.\n\n### The main rule\n**Do not rush the assets. Stabilise the family first.**\nThe estate contains normal assets, property, and Bitcoin. Each needs a different pace."
+      },
+      "audience_roles": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "references": {
+        "person_ids": [
+          "person_eleanor_price",
+          "person_rachel_green",
+          "person_luca_bianchi"
+        ],
+        "item_ids": [
+          "item_red_folder",
+          "item_death_admin_checklist",
+          "item_stock_broker_account",
+          "item_broker_tax_reports"
+        ],
+        "location_ids": [
+          "loc_home_safe"
+        ],
+        "guide_ids": [
+          "guide_do_not_do"
+        ]
+      },
+      "updated": "2026-07-02"
+    },
+    {
+      "id": "guide_do_not_do",
+      "title": "🚫 What not to do immediately",
+      "group": "group_start",
+      "order": 1,
+      "importance": "high",
+      "content": {
+        "en": "## 🚫 What not to do immediately\n\nThis guide exists to protect you from panic decisions.\n\n### Please do not\n- Do **not** sell the [[item_gold_coins]] quickly to the first buyer.\n- Do **not** sell the [[item_stock_broker_account]] portfolio just because markets are moving.\n- Do **not** reset [[item_phone_john]] or [[item_laptop_john]].\n- Do **not** close [[item_main_email_account]] until the estate is fully settled.\n- Do **not** move Bitcoin from [[item_bitcoin_multisig_wallet]] without reading [[guide_bitcoin_recovery]] and involving calm help.\n- Do **not** type seed words, private keys, passphrases, or PINs into any website.\n- Do **not** give [[person_josh_miller]], [[person_eleanor_price]], or any other person all Bitcoin recovery parts at once.\n\n### The safer default\nPhotograph documents, preserve devices, make notes, and ask professionals before acting.\n\n**Delay is usually safer than a rushed irreversible mistake.**"
+      },
+      "audience_roles": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "references": {
+        "item_ids": [
+          "item_gold_coins",
+          "item_stock_broker_account",
+          "item_phone_john",
+          "item_laptop_john",
+          "item_main_email_account",
+          "item_bitcoin_multisig_wallet"
+        ],
+        "guide_ids": [
+          "guide_bitcoin_recovery"
+        ],
+        "person_ids": [
+          "person_josh_miller",
+          "person_eleanor_price"
+        ]
+      },
+      "updated": "2026-07-02"
+    },
+    {
+      "id": "guide_sample_will",
+      "title": "📜 Sample will structure for the demo",
+      "group": "group_legal",
+      "order": 0,
+      "importance": "high",
+      "content": {
+        "en": "## 📜 Sample will structure for the demo\n\nThis is a fictional demonstration of how a will might be organised. It is not legal advice and is not the legally binding document. The real signed document is [[item_will_original]] and [[person_eleanor_price]] should guide Amanda.\n\n### 1. Identity\n\"I, John James of Manchester, revoke previous wills and declare this to be my will.\"\n\n### 2. Executors\n\"I appoint my wife [[person_amanda_james]] as my executor. If Amanda cannot act, I ask [[person_eleanor_price]] to help the family appoint a suitable professional executor.\"\n\n### 3. Guardianship wishes\n\"If Amanda cannot care for our children, I ask [[person_sarah_james]] to act as guardian for [[person_thomas_james]] and [[person_jane_james]], subject to the law and the children's best interests.\"\n\n### 4. Personal possessions\n- Jewellery and family items in [[loc_home_safe]] should stay with Amanda unless she chooses otherwise.\n- The [[item_gold_coins]] are a family reserve, not a trophy asset.\n\n### 5. Residuary estate\n\"After debts, taxes, funeral costs, and administration costs, I leave my estate to Amanda. If Amanda has also died, I leave the estate for Thomas and Jane in equal shares, held and managed safely until they are mature enough to receive it.\"\n\n### 6. Digital and Bitcoin note\nThe will should not contain passwords, seed words, PINs, or private keys. The will should point to the separate [[item_letter_of_wishes]], [[item_red_folder]], and this life package.\n\n### 7. Final tone\n\"My intention is simple: protect Amanda, protect the children, avoid rushed decisions, and keep the family peaceful.\""
+      },
+      "audience_roles": [
+        "role_primary_heir",
+        "role_executor",
+        "role_professional"
+      ],
+      "references": {
+        "item_ids": [
+          "item_will_original",
+          "item_gold_coins",
+          "item_letter_of_wishes",
+          "item_red_folder"
+        ],
+        "person_ids": [
+          "person_eleanor_price",
+          "person_amanda_james",
+          "person_sarah_james",
+          "person_thomas_james",
+          "person_jane_james"
+        ],
+        "location_ids": [
+          "loc_home_safe"
+        ]
+      },
+      "updated": "2026-06-10"
+    },
+    {
+      "id": "guide_letter_of_wishes",
+      "title": "💌 Letter of wishes",
+      "group": "group_legal",
+      "order": 1,
+      "importance": "high",
+      "content": {
+        "en": "## 💌 Letter of wishes\n\nAmanda, this letter is not here to control you. It is here to reduce the number of decisions you have to make when you are tired.\n\n### My wishes\n- Keep the Manchester home stable for Thomas and Jane for at least the first year if you can.\n- Do not feel pressure to keep the [[item_milan_property_title]] forever. Treat it as an investment, not a monument.\n- Treat the [[item_bitcoin_multisig_wallet]] as long-term family capital. If it becomes too stressful, get proper help and simplify it safely.\n- Keep some physical reserve if it makes you feel secure, but have [[item_gold_coins]] valued professionally before any sale.\n- Use [[item_charity_wishes]] only after the family is financially safe.\n\n### People I trust for specific things\n- Legal process: [[person_eleanor_price]]\n- Tax and records: [[person_rachel_green]]\n- Milan property: [[person_luca_bianchi]]\n- Bitcoin explanation: [[person_josh_miller]]\n\n### My bigger wish\nPlease choose calm over perfection. The children do not need a perfect estate administration. They need a steady parent, familiar routines, and love."
+      },
+      "audience_roles": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "references": {
+        "item_ids": [
+          "item_milan_property_title",
+          "item_bitcoin_multisig_wallet",
+          "item_gold_coins",
+          "item_charity_wishes"
+        ],
+        "person_ids": [
+          "person_eleanor_price",
+          "person_rachel_green",
+          "person_luca_bianchi",
+          "person_josh_miller"
+        ]
+      },
+      "updated": "2026-06-10"
+    },
+    {
+      "id": "guide_professionals",
+      "title": "☎️ Professional contacts and who does what",
+      "group": "group_legal",
+      "order": 2,
+      "importance": "high",
+      "content": {
+        "en": "## ☎️ Professional contacts and who does what\n\nThe contact details are in [[item_professional_contacts]]. This JSON does not store phone numbers or email addresses.\n\n### Solicitor\n[[person_eleanor_price]] should help with:\n- locating and confirming [[item_will_original]]\n- probate and estate administration\n- communication with institutions\n- confirming what Amanda may access, move, sell, or close\n\n### Accountant\n[[person_rachel_green]] should help with:\n- tax timing\n- broker records\n- dividends, gains, and estate valuations\n- Milan property income records\n\n### Milan property manager\n[[person_luca_bianchi]] should help with:\n- tenant communication\n- rent status\n- repairs\n- local documents inside [[loc_milan_document_cabinet]]\n- keeping [[item_milan_rental_contracts]] organised\n\n### Bitcoin helper\n[[person_josh_miller]] should help explain Bitcoin only. He is not the executor, not the owner, and not the decision maker. See [[guide_josh_scope]]."
+      },
+      "audience_roles": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "references": {
+        "item_ids": [
+          "item_professional_contacts",
+          "item_will_original",
+          "item_milan_rental_contracts"
+        ],
+        "person_ids": [
+          "person_eleanor_price",
+          "person_rachel_green",
+          "person_luca_bianchi",
+          "person_josh_miller"
+        ],
+        "location_ids": [
+          "loc_milan_document_cabinet"
+        ],
+        "guide_ids": [
+          "guide_josh_scope"
+        ]
+      },
+      "updated": "2026-06-10"
+    },
+    {
+      "id": "guide_home_safe",
+      "title": "🔐 Home safe and physical items",
+      "group": "group_assets",
+      "order": 0,
+      "importance": "high",
+      "content": {
+        "en": "## 🔐 Home safe and physical items\n\nThe [[loc_home_safe]] is important, but it is not a treasure hunt. Open it calmly and make an inventory before moving anything.\n\n### Inside the safe\n- [[item_red_folder]]\n- [[item_home_safe_inventory]]\n- [[item_jewellery]]\n- [[item_gold_coins]]\n- [[item_yubikey]]\n- [[item_seed_backup_uk]]\n- [[item_bitcoin_passphrase_location_note]]\n- [[item_funeral_wishes]]\n- [[item_children_memory_box]]\n\n### Safe handling\n1. Open the safe with Amanda present.\n2. Photograph the contents on a table.\n3. Check the printed [[item_home_safe_inventory]].\n4. Put Bitcoin-related envelopes back unless you are actively following [[guide_bitcoin_recovery]].\n5. Do not discuss gold or Bitcoin holdings publicly.\n\n### Gold coins\nThe [[item_gold_coins]] should be valued by a reputable dealer or auction house. Avoid pressure buyers, cash-only offers, or anyone who says \"today only.\""
+      },
+      "audience_roles": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "references": {
+        "location_ids": [
+          "loc_home_safe"
+        ],
+        "item_ids": [
+          "item_red_folder",
+          "item_home_safe_inventory",
+          "item_jewellery",
+          "item_gold_coins",
+          "item_yubikey",
+          "item_seed_backup_uk",
+          "item_bitcoin_passphrase_location_note",
+          "item_funeral_wishes",
+          "item_children_memory_box"
+        ],
+        "guide_ids": [
+          "guide_bitcoin_recovery"
+        ]
+      },
+      "updated": "2026-06-10"
+    },
+    {
+      "id": "guide_money_broker",
+      "title": "📈 Banks, broker account, stocks, insurance and pensions",
+      "group": "group_assets",
+      "order": 1,
+      "importance": "high",
+      "content": {
+        "en": "## 📈 Banks, broker account, stocks, insurance and pensions\n\nThis part is boring, and boring is good. Slow admin beats emotional trading.\n\n### Main items\n- [[item_bank_accounts_summary]]\n- [[item_life_insurance_policy]]\n- [[item_pension_summary]]\n- [[item_stock_broker_account]]\n- [[item_broker_tax_reports]]\n- [[item_manchester_home_documents]]\n- [[item_exchange_account]]\n\n### Amanda's order of operations\n1. Ask [[person_eleanor_price]] what documents are needed before contacting each institution.\n2. Ask [[person_rachel_green]] to create a valuation snapshot for the date of death.\n3. Contact the broker through the official route, not through links in old emails.\n4. Keep the stock portfolio untouched until you understand tax, probate, cash needs, and market risk.\n5. Check [[item_life_insurance_policy]] early because it may provide practical breathing room.\n6. Keep all letters and statements in [[item_red_folder]].\n\n### Decision principle\nSell assets because the family has a plan, not because grief wants one less thing to think about."
+      },
+      "audience_roles": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "references": {
+        "item_ids": [
+          "item_bank_accounts_summary",
+          "item_life_insurance_policy",
+          "item_pension_summary",
+          "item_stock_broker_account",
+          "item_broker_tax_reports",
+          "item_manchester_home_documents",
+          "item_exchange_account",
+          "item_red_folder"
+        ],
+        "person_ids": [
+          "person_eleanor_price",
+          "person_rachel_green"
+        ]
+      },
+      "updated": "2026-06-10"
+    },
+    {
+      "id": "guide_milan_property",
+      "title": "🏠 Milan rental property",
+      "group": "group_assets",
+      "order": 2,
+      "importance": "high",
+      "content": {
+        "en": "## 🏠 Milan rental property\n\nThe [[loc_milan_property]] is a rental investment, not an emergency project. Keep it stable first.\n\n### Key items\n- [[item_milan_property_title]]\n- [[item_milan_mortgage_documents]]\n- [[item_milan_rental_contracts]]\n- [[item_milan_property_insurance]]\n- [[item_milan_property_manager_notes]]\n- [[item_seed_backup_milan]]\n\n### First actions\n1. Ask [[person_luca_bianchi]] to confirm the tenant is safe, rent is current, and no urgent repairs are open.\n2. Ask [[person_rachel_green]] to separate rental income, mortgage payments, taxes, and repair costs.\n3. Ask [[person_eleanor_price]] whether any UK estate step affects the Italian property.\n4. Do not sell the property in the first emotional weeks unless there is a clear legal or financial reason.\n\n### Important\n[[item_seed_backup_milan]] is in the Milan document cabinet for geographic separation. It is not a property document. Do not show it to tenants, contractors, or casual helpers."
+      },
+      "audience_roles": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "references": {
+        "location_ids": [
+          "loc_milan_property"
+        ],
+        "item_ids": [
+          "item_milan_property_title",
+          "item_milan_mortgage_documents",
+          "item_milan_rental_contracts",
+          "item_milan_property_insurance",
+          "item_milan_property_manager_notes",
+          "item_seed_backup_milan"
+        ],
+        "person_ids": [
+          "person_luca_bianchi",
+          "person_rachel_green",
+          "person_eleanor_price"
+        ]
+      },
+      "updated": "2026-06-10"
+    },
+    {
+      "id": "guide_digital_accounts",
+      "title": "💻 Digital accounts, phone and password manager",
+      "group": "group_crypto",
+      "order": 0,
+      "importance": "high",
+      "content": {
+        "en": "## 💻 Digital accounts, phone and password manager\n\nDigital access is the bridge to almost everything else. Preserve before you change.\n\n### Protect these first\n- [[item_phone_john]]\n- [[item_laptop_john]]\n- [[item_yubikey]]\n- [[item_main_email_account]]\n- [[item_password_manager]]\n- [[item_emergency_access_sheet]]\n- [[item_subscription_list]]\n- [[item_cloud_photos]]\n\n### Rules\n- Keep John's phone charged and offline from strangers.\n- Do not factory reset devices.\n- Do not close the main email account until the estate is complete.\n- Use the [[item_emergency_access_sheet]] to access the [[item_password_manager]] lawfully.\n- After access is stable, export important non-secret records into [[loc_cloud_storage]] and print critical copies into [[item_red_folder]].\n\n### Family archive\nThe [[item_cloud_photos]] matters emotionally. Give Thomas and Jane access to selected photos later, gently, when Amanda feels ready."
+      },
+      "audience_roles": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "references": {
+        "item_ids": [
+          "item_phone_john",
+          "item_laptop_john",
+          "item_yubikey",
+          "item_main_email_account",
+          "item_password_manager",
+          "item_emergency_access_sheet",
+          "item_subscription_list",
+          "item_cloud_photos",
+          "item_red_folder"
+        ],
+        "location_ids": [
+          "loc_cloud_storage"
+        ]
+      },
+      "updated": "2026-06-10"
+    },
+    {
+      "id": "guide_bitcoin_overview",
+      "title": "₿ Bitcoin overview for Amanda",
+      "group": "group_crypto",
+      "order": 1,
+      "importance": "high",
+      "content": {
+        "en": "## ₿ Bitcoin overview for Amanda\n\nAmanda, Bitcoin is different from the broker account. There is no customer service desk that can reverse a mistaken self-custody transaction. That is why the plan is slow and structured.\n\n### What exists\n- [[item_bitcoin_multisig_wallet]]: the main family Bitcoin reserve\n- [[item_bitcoin_watch_only_wallet]]: view-only balance checking\n- [[item_coldcard_device]] and [[item_trezor_device]]: signing devices\n- [[item_seed_backup_uk]], [[item_seed_backup_milan]], and [[item_seed_backup_solicitor]]: separated recovery parts\n- [[item_wallet_descriptor_printout]]: map for identifying the wallet\n- [[item_bitcoin_passphrase_location_note]]: sealed note about the passphrase location\n- [[item_bitcoin_node]]: helpful verification tool, not required to inherit\n\n### Simple explanation\nThis setup is designed so that one lost envelope or one dishonest person should not be enough to lose the money. But it also means you should not improvise.\n\n### Your decision power\n[[person_josh_miller]] can explain and help. He should not decide whether to sell, hold, move, or disclose the Bitcoin. That decision belongs to Amanda as executor and primary heir, with professional advice as needed."
+      },
+      "audience_roles": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "references": {
+        "item_ids": [
+          "item_bitcoin_multisig_wallet",
+          "item_bitcoin_watch_only_wallet",
+          "item_coldcard_device",
+          "item_trezor_device",
+          "item_seed_backup_uk",
+          "item_seed_backup_milan",
+          "item_seed_backup_solicitor",
+          "item_wallet_descriptor_printout",
+          "item_bitcoin_passphrase_location_note",
+          "item_bitcoin_node"
+        ],
+        "person_ids": [
+          "person_josh_miller"
+        ]
+      },
+      "updated": "2026-06-10"
+    },
+    {
+      "id": "guide_bitcoin_recovery",
+      "title": "🧩 Bitcoin recovery process",
+      "group": "group_crypto",
+      "order": 2,
+      "importance": "high",
+      "content": {
+        "en": "## 🧩 Bitcoin recovery process\n\nThis is intentionally a process, not a secret. The secrets live in sealed physical places.\n\n### Before touching anything\nRead [[guide_do_not_do]] and [[guide_josh_scope]]. Then place these on a table:\n\n- [[item_bitcoin_policy_note]]\n- [[item_wallet_descriptor_printout]]\n- [[item_bitcoin_watch_only_wallet]]\n- [[item_seed_backup_uk]]\n- [[item_seed_backup_milan]]\n- [[item_seed_backup_solicitor]]\n- [[item_bitcoin_passphrase_location_note]]\n- [[item_coldcard_device]]\n- [[item_trezor_device]]\n- [[item_laptop_john]]\n\n### Safety rules\n- Never enter seed words into a website.\n- Never photograph seed words.\n- Never send seed words to Josh, a lawyer, a broker, or support.\n- Work offline where possible.\n- Confirm the wallet from [[item_wallet_descriptor_printout]] before attempting any movement.\n- Use a tiny test transaction first if funds must be moved.\n- Keep written notes of each action for the estate file.\n\n### Recommended recovery team\n- Amanda: decision maker and executor\n- Josh: technical explainer\n- Solicitor or accountant: witness/process support if Amanda wants one\n- No one person should hold all recovery material alone.\n\n### If unsure\nStop. Put the envelopes back. Bitcoin can wait longer than grief can think clearly."
+      },
+      "audience_roles": [
+        "role_primary_heir",
+        "role_executor",
+        "role_crypto_helper"
+      ],
+      "references": {
+        "guide_ids": [
+          "guide_do_not_do",
+          "guide_josh_scope"
+        ],
+        "item_ids": [
+          "item_bitcoin_policy_note",
+          "item_wallet_descriptor_printout",
+          "item_bitcoin_watch_only_wallet",
+          "item_seed_backup_uk",
+          "item_seed_backup_milan",
+          "item_seed_backup_solicitor",
+          "item_bitcoin_passphrase_location_note",
+          "item_coldcard_device",
+          "item_trezor_device",
+          "item_laptop_john"
+        ]
+      },
+      "updated": "2026-06-10"
+    },
+    {
+      "id": "guide_josh_scope",
+      "title": "🤝 Josh's role as crypto helper",
+      "group": "group_crypto",
+      "order": 3,
+      "importance": "high",
+      "content": {
+        "en": "## 🤝 Josh's role as crypto helper\n\nJosh, thank you for helping. Your job is to reduce confusion, not to take control.\n\n### What you may help with\n- Explain multisig in plain English.\n- Help Amanda identify [[item_bitcoin_watch_only_wallet]].\n- Help verify that [[item_wallet_descriptor_printout]] matches the expected wallet.\n- Help Amanda understand the difference between watching, signing, and broadcasting.\n- Help create a safer long-term plan if Amanda wants to simplify custody.\n\n### What you should not do\n- Do not ask Amanda to send you seed words, passphrases, PINs, screenshots, or private wallet files.\n- Do not hold all recovery parts.\n- Do not make investment recommendations under pressure.\n- Do not move funds without Amanda's clear instruction and written notes for the estate.\n\n### Tone\nAmanda may be grieving and exhausted. Go slowly. Explain every step twice. If anything feels rushed, stop."
+      },
+      "audience_person_ids": [
+        "person_josh_miller",
+        "person_amanda_james"
+      ],
+      "references": {
+        "item_ids": [
+          "item_bitcoin_watch_only_wallet",
+          "item_wallet_descriptor_printout"
+        ]
+      },
+      "updated": "2026-06-10"
+    },
+    {
+      "id": "guide_children_support",
+      "title": "🧸 Supporting Thomas and Jane",
+      "group": "group_family",
+      "order": 0,
+      "importance": "high",
+      "content": {
+        "en": "## 🧸 Supporting Thomas and Jane\n\nThe estate is not the centre of the story. The children are.\n\n### What I want for them\n- Keep school and friends stable where possible.\n- Tell them the truth in simple words.\n- Do not make them carry adult financial details.\n- Let them have photos, stories, and ordinary routines.\n- Use [[item_children_memory_box]] gently over time, not all at once.\n- Keep [[item_cloud_photos]] safe and make a child-friendly album later.\n\n### If Amanda cannot act\nI would want [[person_sarah_james]] to care for [[person_thomas_james]] and [[person_jane_james]], if that is lawful and truly best for them.\n\n### Money for the children\nThe estate should first protect Amanda and the family home. Any later gifts to the children should be structured, boring, and protected from impulsive spending."
+      },
+      "audience_roles": [
+        "role_primary_heir",
+        "role_guardian"
+      ],
+      "references": {
+        "item_ids": [
+          "item_children_memory_box",
+          "item_cloud_photos"
+        ],
+        "person_ids": [
+          "person_sarah_james",
+          "person_thomas_james",
+          "person_jane_james"
+        ]
+      },
+      "updated": "2026-06-10"
+    },
+    {
+      "id": "guide_funeral_wishes",
+      "title": "🌳 Funeral, cremation and memorial wishes",
+      "group": "group_family",
+      "order": 1,
+      "importance": "high",
+      "content": {
+        "en": "## 🌳 Funeral, cremation and memorial wishes\n\nThese are wishes, not burdens. Amanda may adjust them if reality requires it.\n\n### My preference\nI would like a simple cremation and a small gathering with family and close friends.\n\n### Memorial idea\nIf it feels right, I like the idea that a small part of my ashes could be used with memorial trees for Amanda, Thomas, and Jane. In this way, I can stay close to you in something alive, growing, and peaceful.\n\n### The tone I want\n- No expensive performance.\n- No guilt.\n- Music, food, stories, and children allowed to be children.\n- Use [[item_funeral_wishes]] for any additional notes.\n- If there is disagreement, Amanda decides."
+      },
+      "audience_roles": [
+        "role_primary_heir",
+        "role_beneficiary"
+      ],
+      "references": {
+        "item_ids": [
+          "item_funeral_wishes"
+        ]
+      },
+      "updated": "2026-06-10"
+    },
+    {
+      "id": "guide_message_amanda",
+      "title": "❤️ Message for Amanda",
+      "group": "group_messages",
+      "order": 0,
+      "importance": "high",
+      "content": {
+        "en": "## ❤️ Message for Amanda\n\nAmanda,\n\nIf you are reading this, I am sorry that the plan has become real. I wrote it because I love you, not because I wanted to control what happens after me.\n\nYou do not need to be brave every hour. You only need to take the next small step.\n\nThe house, the Milan property, the broker account, the gold, the Bitcoin — all of it is just scaffolding. The real inheritance is the life we built, the children we raised, and the choices you still get to make.\n\nPlease use this plan as a helper, then ignore anything that does not fit real life.\n\nI trust you.  \nJohn"
+      },
+      "audience_person_ids": [
+        "person_amanda_james"
+      ],
+      "updated": "2026-06-10"
+    },
+    {
+      "id": "guide_message_children",
+      "title": "💛 Message for Thomas and Jane",
+      "group": "group_messages",
+      "order": 1,
+      "importance": "high",
+      "content": {
+        "en": "## 💛 Message for Thomas and Jane\n\nThomas and Jane,\n\nI love you more than any object in this plan.\n\nYou may hear adults talk about houses, money, coins, Bitcoin, documents, and decisions. Those things matter, but they are not the most important thing. You are.\n\nWhat I want you to remember:\n- Be kind to your mum.\n- Ask questions when you are ready.\n- Keep some of our stories alive.\n- Do not measure love by money.\n- Learn how to handle money slowly, with patience and humility.\n\nThere is a [[item_children_memory_box]] for you. Open it with Amanda when the time feels right.\n\nLove,  \nDad"
+      },
+      "audience_roles": [
+        "role_beneficiary",
+        "role_child"
+      ],
+      "references": {
+        "item_ids": [
+          "item_children_memory_box"
+        ]
+      },
+      "updated": "2026-06-10"
+    },
+    {
+      "id": "guide_message_josh",
+      "title": "₿ Message for Josh",
+      "group": "group_messages",
+      "order": 2,
+      "importance": "high",
+      "content": {
+        "en": "## ₿ Message for Josh\n\nJosh,\n\nIf Amanda asks you for help, please help her slowly.\n\nYou know enough to understand why this matters. You also know enough to understand how badly it can go if someone rushes. Please be the calm technical friend, not the hero.\n\nHelp her understand [[item_bitcoin_multisig_wallet]], [[item_bitcoin_watch_only_wallet]], and [[item_wallet_descriptor_printout]]. Do not ask for all recovery parts. Do not make the financial decision for her.\n\nThe best outcome is not \"Josh recovered the Bitcoin.\"  \nThe best outcome is \"Amanda understood what happened and stayed in control.\"\n\nThank you,  \nJohn"
+      },
+      "audience_person_ids": [
+        "person_josh_miller"
+      ],
+      "references": {
+        "item_ids": [
+          "item_bitcoin_multisig_wallet",
+          "item_bitcoin_watch_only_wallet",
+          "item_wallet_descriptor_printout"
+        ]
+      },
+      "updated": "2026-06-10"
+    },
+    {
+      "id": "guide_owner_maintenance",
+      "title": "🛠️ How John should maintain this plan",
+      "group": "group_maintenance",
+      "order": 0,
+      "importance": "medium",
+      "content": {
+        "en": "## 🛠️ How John should maintain this plan\n\nThis is the living part of the demo. A plan that is not updated becomes theatre.\n\n### Review every 6 months\n- Are [[person_amanda_james]], [[person_josh_miller]], [[person_eleanor_price]], [[person_rachel_green]], and [[person_luca_bianchi]] still the right people?\n- Did any location change, especially [[loc_home_safe]], [[loc_solicitor_office]], or [[loc_milan_document_cabinet]]?\n- Are [[item_password_manager]], [[item_main_email_account]], and [[item_yubikey]] still accurate?\n- Does [[item_bitcoin_multisig_wallet]] still match [[item_wallet_descriptor_printout]]?\n- Are [[item_stock_broker_account]] and [[item_milan_mortgage_documents]] up to date?\n- Are Thomas and Jane still minors? If not, update their guide access.\n\n### Annual drill\nWithout exposing secrets, ask Amanda to find:\n- the red folder\n- the will location\n- the professional contacts sheet\n- the watch-only Bitcoin wallet\n- the Milan property file\n\nIf she cannot find the map in ten minutes, the plan is too complicated."
+      },
+      "audience_roles": [
+        "role_owner"
+      ],
+      "references": {
+        "person_ids": [
+          "person_amanda_james",
+          "person_josh_miller",
+          "person_eleanor_price",
+          "person_rachel_green",
+          "person_luca_bianchi"
+        ],
+        "location_ids": [
+          "loc_home_safe",
+          "loc_solicitor_office",
+          "loc_milan_document_cabinet"
+        ],
+        "item_ids": [
+          "item_password_manager",
+          "item_main_email_account",
+          "item_yubikey",
+          "item_bitcoin_multisig_wallet",
+          "item_wallet_descriptor_printout",
+          "item_stock_broker_account",
+          "item_milan_mortgage_documents"
+        ]
+      },
+      "updated": "2026-06-10"
+    },
+    {
+      "id": "guide_best_practices_demo",
+      "title": "📚 Best-practice notes for the demo",
+      "group": "group_maintenance",
+      "order": 1,
+      "importance": "low",
+      "content": {
+        "en": "## 📚 Best-practice notes for the demo\n\nThis demo is built around a few practical principles:\n\n- A will should identify beneficiaries, executors, guardianship wishes for children, and what should happen if beneficiaries die first.\n- Executors or personal representatives need a clear map of money, property, possessions, and professional contacts.\n- Sensitive digital material should be mapped but not stored directly in this package.\n- Passwords, PINs, seed phrases, private keys, and account numbers should stay out of the JSON and out of any public or easily copied document.\n- Bitcoin inheritance should separate instructions from secrets, avoid one-person control, and use a calm recovery process rather than improvisation.\n- The owner should review the plan regularly because stale inheritance instructions can be worse than no instructions.\n\nThis guide is deliberately general. Real families should adapt the structure with a qualified solicitor, accountant, and technical helper."
+      },
+      "audience_roles": [
+        "role_owner",
+        "role_professional"
+      ],
+      "updated": "2026-06-10"
+    }
+  ],
+  "readiness_checks": [
+    {
+      "id": "ready_amanda_find_package",
+      "title": "Find the life package",
+      "importance": "high",
+      "order": 0,
+      "scope": "external",
+      "question": "You have been told John's plan exists. Where do you find this life package, and how do you open it?",
+      "expected": "Amanda can identify the physical or digital place where the package is kept, open the demo reader, and choose herself on the first screen.",
+      "owner_notes": "This tests the most basic failure mode: the plan exists, but the right person cannot find or open it.",
+      "tags": [
+        "first-hour",
+        "access"
+      ],
+      "person_ids": [
+        "person_amanda_james"
+      ],
+      "role_ids": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "related_guide_ids": [
+        "guide_read_me_first"
+      ],
+      "related_item_ids": [
+        "item_red_folder"
+      ],
+      "related_location_ids": [
+        "loc_home_safe"
+      ]
+    },
+    {
+      "id": "ready_amanda_first_24_hours",
+      "title": "Explain the first 24 hours",
+      "importance": "high",
+      "order": 1,
+      "scope": "external",
+      "question": "Open [[guide_read_me_first]] and [[guide_do_not_do]]. What are the first three things you would do, and what would you avoid doing immediately?",
+      "expected": "Amanda says she would slow down, call the right professional helpers, avoid moving Bitcoin or closing accounts in panic, and use the checklist instead of improvising.",
+      "owner_notes": "This checks whether the plan creates calm and sequencing, not just information.",
+      "tags": [
+        "first-hour",
+        "panic-proof"
+      ],
+      "person_ids": [
+        "person_amanda_james"
+      ],
+      "role_ids": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "related_guide_ids": [
+        "guide_read_me_first",
+        "guide_do_not_do"
+      ]
+    },
+    {
+      "id": "ready_amanda_find_safe_folder",
+      "title": "Find the red folder and safe instructions",
+      "importance": "high",
+      "order": 2,
+      "scope": "external",
+      "question": "Using the Map or the Home safe guide, find where the [[item_red_folder]], [[item_home_safe_access_note]], and [[item_home_safe_inventory]] are kept. Do not say or write any safe code.",
+      "expected": "Amanda can navigate to the home safe location, name the three items, and explain that the access note is sensitive and should not be copied into this app.",
+      "owner_notes": "The answer should prove she can find the physical starting point without exposing the safe code.",
+      "tags": [
+        "physical",
+        "first-hour"
+      ],
+      "person_ids": [
+        "person_amanda_james"
+      ],
+      "role_ids": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "related_guide_ids": [
+        "guide_home_safe"
+      ],
+      "related_item_ids": [
+        "item_red_folder",
+        "item_home_safe_access_note",
+        "item_home_safe_inventory"
+      ],
+      "related_location_ids": [
+        "loc_home_safe"
+      ]
+    },
+    {
+      "id": "ready_amanda_legal_contacts",
+      "title": "Find the will and legal contact",
+      "importance": "high",
+      "order": 3,
+      "scope": "external",
+      "question": "Find the original will and name the solicitor Amanda should contact before making estate decisions.",
+      "expected": "Amanda identifies [[item_will_original]] at Eleanor Price's solicitor office and names [[person_eleanor_price]] as the legal helper.",
+      "owner_notes": "This makes sure the heir does not treat this package as the legal document itself.",
+      "tags": [
+        "legal",
+        "contacts"
+      ],
+      "person_ids": [
+        "person_amanda_james"
+      ],
+      "role_ids": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "related_guide_ids": [
+        "guide_sample_will",
+        "guide_professionals"
+      ],
+      "related_person_ids": [
+        "person_eleanor_price"
+      ],
+      "related_item_ids": [
+        "item_will_original"
+      ],
+      "related_location_ids": [
+        "loc_solicitor_office"
+      ]
+    },
+    {
+      "id": "ready_amanda_money_overview",
+      "title": "Find the money overview",
+      "importance": "high",
+      "order": 4,
+      "scope": "external",
+      "question": "Find the life insurance, pension, bank summary, and broker account entries. Which one would you handle first to stabilise cash flow?",
+      "expected": "Amanda can find [[item_life_insurance_policy]], [[item_pension_summary]], [[item_bank_accounts_summary]], and [[item_stock_broker_account]], and understands she should prioritise liquidity and professional advice before selling assets.",
+      "owner_notes": "This tests whether the financial runbook is usable before stress and paperwork pile up.",
+      "tags": [
+        "money",
+        "cash-flow"
+      ],
+      "person_ids": [
+        "person_amanda_james"
+      ],
+      "role_ids": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "related_guide_ids": [
+        "guide_money_broker"
+      ],
+      "related_item_ids": [
+        "item_life_insurance_policy",
+        "item_pension_summary",
+        "item_bank_accounts_summary",
+        "item_stock_broker_account"
+      ],
+      "related_person_ids": [
+        "person_rachel_green"
+      ]
+    },
+    {
+      "id": "ready_amanda_digital_access",
+      "title": "Explain digital account access",
+      "importance": "high",
+      "order": 5,
+      "scope": "external",
+      "question": "Find the password manager, John's main email account, John's phone, and the hardware 2FA key. Explain the order you would use them in without revealing passwords or PINs.",
+      "expected": "Amanda can identify [[item_password_manager]], [[item_main_email_account]], [[item_phone_john]], and [[item_yubikey]], and understands that email and 2FA are dependencies for many accounts.",
+      "owner_notes": "This is a dry run only. It should prove the dependency chain is understood without collecting sensitive answers.",
+      "tags": [
+        "digital",
+        "access"
+      ],
+      "person_ids": [
+        "person_amanda_james"
+      ],
+      "role_ids": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "related_guide_ids": [
+        "guide_digital_accounts"
+      ],
+      "related_item_ids": [
+        "item_password_manager",
+        "item_main_email_account",
+        "item_phone_john",
+        "item_yubikey"
+      ]
+    },
+    {
+      "id": "ready_amanda_bitcoin_do_not_panic",
+      "title": "Bitcoin: know what not to do",
+      "importance": "high",
+      "order": 6,
+      "scope": "external",
+      "question": "Open the Bitcoin overview. Who should help, and what should you not do with the Bitcoin reserve on the first day?",
+      "expected": "Amanda names [[person_josh_miller]] as the limited crypto helper, understands not to type seed words into a website, not to send coins in panic, and not to give one helper all recovery parts.",
+      "owner_notes": "This is the key Bitcoin safety question: slow, limited help, no improvisation.",
+      "tags": [
+        "bitcoin",
+        "panic-proof"
+      ],
+      "person_ids": [
+        "person_amanda_james"
+      ],
+      "role_ids": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "related_guide_ids": [
+        "guide_bitcoin_overview",
+        "guide_bitcoin_recovery"
+      ],
+      "related_person_ids": [
+        "person_josh_miller"
+      ],
+      "related_item_ids": [
+        "item_bitcoin_multisig_wallet",
+        "item_bitcoin_policy_note"
+      ]
+    },
+    {
+      "id": "ready_amanda_bitcoin_map",
+      "title": "Bitcoin: find the recovery map",
+      "importance": "high",
+      "order": 7,
+      "scope": "external",
+      "question": "Find the watch-only wallet, wallet descriptor printout, and the three sealed recovery parts. Do not open or combine the sealed backups during the test.",
+      "expected": "Amanda can find [[item_bitcoin_watch_only_wallet]], [[item_wallet_descriptor_printout]], [[item_seed_backup_uk]], [[item_seed_backup_milan]], and [[item_seed_backup_solicitor]], while keeping the sealed backups separate.",
+      "owner_notes": "This checks discoverability of the recovery map without turning the dry run into a real recovery ceremony.",
+      "tags": [
+        "bitcoin",
+        "physical"
+      ],
+      "person_ids": [
+        "person_amanda_james"
+      ],
+      "role_ids": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "related_guide_ids": [
+        "guide_bitcoin_recovery"
+      ],
+      "related_item_ids": [
+        "item_bitcoin_watch_only_wallet",
+        "item_wallet_descriptor_printout",
+        "item_seed_backup_uk",
+        "item_seed_backup_milan",
+        "item_seed_backup_solicitor"
+      ],
+      "related_location_ids": [
+        "loc_home_safe",
+        "loc_milan_document_cabinet",
+        "loc_solicitor_office"
+      ]
+    },
+    {
+      "id": "ready_josh_scope",
+      "title": "Josh can explain his boundaries",
+      "importance": "medium",
+      "order": 8,
+      "scope": "external",
+      "question": "Josh: read your role guide. What are you allowed to help Amanda with, and what should you refuse to take control of?",
+      "expected": "Josh can explain that he may help Amanda understand watch-only status, descriptors, devices, and the recovery process, but must not collect all seed parts, make financial decisions, or become custodian of the Bitcoin.",
+      "owner_notes": "This proves the helper understands the boundary between technical support and control.",
+      "tags": [
+        "bitcoin",
+        "helper-boundaries"
+      ],
+      "person_ids": [
+        "person_josh_miller"
+      ],
+      "role_ids": [
+        "role_crypto_helper"
+      ],
+      "related_guide_ids": [
+        "guide_josh_scope",
+        "guide_message_josh"
+      ],
+      "related_person_ids": [
+        "person_josh_miller",
+        "person_amanda_james"
+      ],
+      "related_item_ids": [
+        "item_bitcoin_watch_only_wallet",
+        "item_wallet_descriptor_printout"
+      ]
+    },
+    {
+      "id": "ready_amanda_milan_property",
+      "title": "Find the Milan property runbook",
+      "importance": "medium",
+      "order": 9,
+      "scope": "external",
+      "question": "Find the Milan property documents, mortgage documents, tenant contracts, and the local helper Amanda should contact.",
+      "expected": "Amanda can find [[item_milan_property_title]], [[item_milan_mortgage_documents]], [[item_milan_rental_contracts]], and names [[person_luca_bianchi]] as the local property helper.",
+      "owner_notes": "This tests the non-Bitcoin estate complexity that can easily be forgotten during grief.",
+      "tags": [
+        "property",
+        "contacts"
+      ],
+      "person_ids": [
+        "person_amanda_james"
+      ],
+      "role_ids": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "related_guide_ids": [
+        "guide_milan_property"
+      ],
+      "related_person_ids": [
+        "person_luca_bianchi"
+      ],
+      "related_item_ids": [
+        "item_milan_property_title",
+        "item_milan_mortgage_documents",
+        "item_milan_rental_contracts"
+      ],
+      "related_location_ids": [
+        "loc_milan_document_cabinet"
+      ]
+    },
+    {
+      "id": "ready_amanda_children_support",
+      "title": "Find the children and family wishes",
+      "importance": "medium",
+      "order": 10,
+      "scope": "external",
+      "question": "Find the guardian, the children's memory box, and the funeral wishes. What should Amanda do with these before making public announcements?",
+      "expected": "Amanda finds [[person_sarah_james]], [[item_children_memory_box]], and [[item_funeral_wishes]], and understands that family support and the children's needs come before administrative perfection.",
+      "owner_notes": "This checks the human side of the runbook: children, memory, and family support.",
+      "tags": [
+        "family",
+        "children"
+      ],
+      "person_ids": [
+        "person_amanda_james"
+      ],
+      "role_ids": [
+        "role_primary_heir",
+        "role_executor"
+      ],
+      "related_guide_ids": [
+        "guide_children_support",
+        "guide_funeral_wishes"
+      ],
+      "related_person_ids": [
+        "person_sarah_james"
+      ],
+      "related_item_ids": [
+        "item_children_memory_box",
+        "item_funeral_wishes"
+      ]
+    },
+    {
+      "id": "ready_owner_print_amanda_sheet",
+      "title": "Print Amanda's annual dry-run sheet",
+      "importance": "medium",
+      "order": 11,
+      "scope": "internal",
+      "question": "",
+      "expected": "",
+      "owner_notes": "Once a year, filter Readiness to Amanda's dry-run checks, print the list, and ask her to work through it without coaching. Record what confused her.",
+      "tags": [
+        "annual-review",
+        "owner-todo"
+      ],
+      "person_ids": [
+        "person_john_james"
+      ],
+      "role_ids": [
+        "role_owner"
+      ],
+      "related_person_ids": [
+        "person_amanda_james"
+      ],
+      "related_guide_ids": [
+        "guide_owner_maintenance"
+      ]
+    },
+    {
+      "id": "ready_owner_verify_contacts",
+      "title": "Verify professional contacts",
+      "importance": "medium",
+      "order": 12,
+      "scope": "internal",
+      "question": "",
+      "expected": "",
+      "owner_notes": "Confirm that Eleanor, Rachel, Luca, and Josh are still willing and reachable. Replace anyone who is no longer appropriate.",
+      "tags": [
+        "annual-review",
+        "contacts"
+      ],
+      "person_ids": [
+        "person_john_james"
+      ],
+      "role_ids": [
+        "role_owner"
+      ],
+      "related_person_ids": [
+        "person_eleanor_price",
+        "person_rachel_green",
+        "person_luca_bianchi",
+        "person_josh_miller"
+      ],
+      "related_guide_ids": [
+        "guide_professionals",
+        "guide_owner_maintenance"
+      ]
+    },
+    {
+      "id": "ready_owner_test_without_secrets",
+      "title": "Check that dry runs never collect secrets",
+      "importance": "medium",
+      "order": 13,
+      "scope": "internal",
+      "question": "",
+      "expected": "",
+      "owner_notes": "Review every external question and make sure it asks Amanda to prove access or understanding without typing safe codes, passwords, PINs, seed words, private keys, or passphrases into the app.",
+      "tags": [
+        "opsec",
+        "owner-todo"
+      ],
+      "person_ids": [
+        "person_john_james"
+      ],
+      "role_ids": [
+        "role_owner"
+      ],
+      "related_guide_ids": [
+        "guide_best_practices_demo",
+        "guide_owner_maintenance"
+      ]
+    }
+  ],
+  "readiness_runs": [],
+  "attachments": []
+}

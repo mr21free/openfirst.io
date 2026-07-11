@@ -1,0 +1,23 @@
+START HERE
+==========
+
+This folder is a life package. Take your time. There is no rush.
+
+You can read it in two ways:
+
+1) WITHOUT any app (always works):
+   - Open "lifepackage.json" in a plain text editor if you need the raw data.
+   - This demo does not include attachment files or real secrets.
+
+2) WITH the reader app (easier):
+   - Open OpenFirst (a single web page that works offline).
+   - Drag this whole folder — or the file "lifepackage.json" — onto it.
+   - It will lay everything out for you, step by step.
+
+Nothing here is sent anywhere. There are no accounts and no internet is required.
+
+The machine-readable source of truth is "lifepackage.json".
+Its format is open and documented (schema: lifepackage/v1), so this plan
+can still be read in many years, even if the app no longer exists.
+
+Last updated: 2026-07-01

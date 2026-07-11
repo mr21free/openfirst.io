@@ -1,0 +1,18 @@
+{
+  "schema": "lifepackage/v1",
+  "package_id": "package_john_james_demo",
+  "title": "John James Family Life Package Demo",
+  "created": "2026-07-01",
+  "updated": "2026-07-01",
+  "languages": ["en"],
+  "default_language": "en",
+  "generator": "OpenFirst (sample fixture)",
+  "files": {
+    "source": "lifepackage.json",
+    "human_entry": "START_HERE.txt",
+    "guides_dir": "guides/",
+    "print_dir": null,
+    "attachments_dir": null
+  },
+  "note": "The source of truth is lifepackage.json. This is a fictional JSON-only demo package with no real secrets and no attachment files."
+}

@@ -76,7 +76,7 @@
   .map-chip {
     display: inline-flex; align-items: center; gap: 4px;
     font-size: 13px; color: var(--ink-soft);
-    border: 1px solid var(--rule); border-radius: 999px; padding: 5px 11px; background: var(--paper);
+    border: 1px solid var(--rule); border-radius: 8px; padding: 5px 11px; background: var(--paper);
   }
   .map-chip:hover { border-color: var(--accent-deep); color: var(--accent-deep); }
   .unplaced { border-left-color: var(--ink-mute); border-style: dashed; }

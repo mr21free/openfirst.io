@@ -26,9 +26,12 @@ microcopy ("Take your time. There is no rush."), never in visuals.
 
 - **Surfaces are sharp (0):** cards, dialogs, drawers, inputs, popovers,
   previews, icon-button hover washes. Paper has corners.
-- **Pills (999) are the exception, reserved for:** text buttons (`.btn`),
-  chips, the switch knob/track, tooltip bubbles (6px). Nothing else.
-- Never introduce a third radius.
+- **Buttons are rounded rectangles (8px):** every `.btn` variant and
+  button-like control (add-row buttons, toolbar refs, map crumbs).
+  Decided 2026-07-11 (Miro; smallpdf/secubit reference) — replaced pills.
+- **Pills (999) survive only where the shape IS the meaning:** chips, the
+  switch knob/track, count badges, avatar dots. Tooltip bubbles stay 6px.
+- Never introduce another radius.
 
 ## Buttons — one system, `app.css`
 
@@ -37,7 +40,7 @@ styles in components** — if a variant is missing, add it to app.css.
 
 | class | use |
 |---|---|
-| `.btn` | default (paper, hairline border, pill) |
+| `.btn` | default (paper, hairline border, 8px rounded rect) |
 | `.btn.btn-primary` | the one main action of a screen/dialog |
 | `.btn.btn-secondary` / `.btn.btn-ghost` | quieter siblings |
 | `.btn.btn-danger` | destructive confirm |

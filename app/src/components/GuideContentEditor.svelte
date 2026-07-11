@@ -634,7 +634,7 @@
   .tb-expand { margin-left: auto; }
   .tb-sep { width: 1px; height: 18px; background: var(--rule); margin: 0 4px; flex: none; }
   .refwrap { position: relative; }
-  .tb-ref { font-size: 13px; border: 1px solid var(--rule); border-radius: 999px; padding: 6px 12px; background: var(--paper); color: var(--accent-deep); cursor: pointer; }
+  .tb-ref { font-size: 13px; border: 1px solid var(--rule); border-radius: 8px; padding: 6px 12px; background: var(--paper); color: var(--accent-deep); cursor: pointer; }
   .tb-ref:hover { border-color: var(--accent-deep); }
   .refpop { position: absolute; top: 36px; left: 0; z-index: var(--z-popover); width: 320px; max-width: 80vw; background: var(--paper); border: 1px solid var(--rule); border-radius: 0; box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18); padding: 8px; }
   .refq { width: 100%; font: inherit; font-size: 14px; border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; background: var(--paper); color: var(--ink); }

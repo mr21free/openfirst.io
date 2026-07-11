@@ -115,11 +115,11 @@ strong { font-weight: 600; }
   gap: 9px;
   min-height: 44px;
   padding: 11px 18px;
-  border-radius: 999px;
+  border-radius: 8px;
   border: 1px solid var(--rule);
   background: var(--paper);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   transition: border-color .15s, background .15s, color .15s, transform .05s;
 }
 .btn:hover { border-color: var(--accent-deep); }
@@ -361,7 +361,7 @@ strong { font-weight: 600; }
 .frm .row-add { display: grid; grid-template-columns: 130px 1fr auto; gap: 8px; align-items: center; }
 .frm .mini { width: 34px; height: 36px; border-radius: 0; color: var(--ink-mute); border: 1px solid var(--rule); background: var(--paper); flex: none; display: inline-flex; align-items: center; justify-content: center; }
 .frm .mini:hover { color: var(--warn); }
-.frm .addbtn { align-self: flex-start; min-height: 34px; padding: 7px 12px; font-size: 13px; background: transparent; border: 1px solid var(--rule); border-radius: 999px; }
+.frm .addbtn { align-self: flex-start; min-height: 34px; padding: 7px 12px; font-size: 13px; background: transparent; border: 1px solid var(--rule); border-radius: 8px; }
 .frm .addbtn:hover { border-color: var(--accent-deep); color: var(--accent-deep); }
 .frm .form-foot { margin-top: 4px; padding-top: 14px; border-top: 1px solid var(--rule-soft); }
 .frm .form-danger { color: var(--warn); border-color: oklch(0.85 0.06 40); align-self: flex-start; }

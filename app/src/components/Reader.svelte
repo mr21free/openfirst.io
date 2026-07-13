@@ -859,7 +859,7 @@
   {:else}
     <div class="body container">
       <!-- Navigation -->
-      <nav class="nav no-print">
+      <nav class="nav no-print" class:editing>
         {#snippet draftMark()}
           <span class="draft-mark" title="Draft — left out of the heir reader (.html)" aria-label="Draft">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -1522,6 +1522,9 @@
   .navguide-input.active { background: var(--accent-wash); color: var(--accent-deep); font-weight: 500; }
   .navgroup-items { display: flex; flex-direction: column; gap: 2px; }
   .navgroup-items .navrow { padding-left: 16px; }
+  /* Ungrouped guides (edit mode): same left inset as grouped rows, so a new
+     guide's grip lines up with the group entries instead of hugging the edge. */
+  .nav.editing > .navrow { padding-left: 16px; }
   .navguide-child { padding-left: 10px; }
   .navlink-child { padding-left: 12px; }
   .navrow { display: flex; align-items: center; gap: 2px; padding-right: 12px; }
@@ -1655,6 +1658,7 @@
     .navsep { display: none; }
     .navlink { white-space: nowrap; }
     .navlink-child { padding-left: 12px; }
+    .nav.editing > .navrow { padding-left: 0; } /* horizontal nav: no inset */
     .shell { --reader-section-gap: 12px; }
     .plan-title, .plan-title-input { max-width: 38vw; width: auto; }
     .sel-wrap .tiny { display: none; }

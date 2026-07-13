@@ -139,18 +139,14 @@
      tall as the left menu — never taller. */
   .guide-row { position: relative; flex: 1; display: flex; flex-direction: column; }
   .guide-col { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 22px; }
-  /* A guide reads like a sheet of paper — square corners, not rounded. */
-  .guide { flex: 1; display: flex; flex-direction: column; border-radius: 0; }
+  /* The content pane IS the sheet now (white, joined to the rail) — the guide
+     itself carries no frame. The dashed draft cue below keeps an explicit one. */
+  .guide { flex: 1; display: flex; flex-direction: column; border-radius: 0; border: 0; }
   .editor-host :global(.ce) { flex: 1; }
-  .guide-side { position: absolute; top: 0; right: -52px; display: flex; flex-direction: column; gap: 8px; }
-  /* The floating rail needs ~52px of real margin beyond the 1480px container.
-     Below that (laptops, tablets) the guide narrows instead and the rail sits
-     INSIDE the reserved right gutter — tools always beside the guide. Only on
-     phone widths does the rail fold into a row above the guide. */
-  @media (max-width: 1540px) {
-    .guide-row.editing { padding-right: 50px; }
-    .guide-side { right: 0; }
-  }
+  /* Edit tools sit in a reserved gutter at the pane's right edge — always
+     beside the guide. Only on phone widths does the rail fold into a row. */
+  .guide-side { position: absolute; top: 0; right: 0; display: flex; flex-direction: column; gap: 8px; }
+  .guide-row.editing { padding-right: 50px; }
   @media (max-width: 700px) {
     .guide-row.editing { padding-right: 0; }
     .guide-row { display: flex; flex-direction: column-reverse; }
@@ -169,7 +165,7 @@
   .draft-banner svg { flex: none; color: var(--draft); }
   .draft-banner .draft-x { width: 26px; height: 26px; margin-left: auto; color: var(--ink-mute); }
   .draft-banner .draft-x svg { color: currentColor; }
-  .is-draft.guide { border-style: dashed; }
+  .is-draft.guide { border: 1px dashed var(--rule); }
   /* The dashed frame is a screen-only "draft" cue — never print it. */
   @media print { .is-draft.guide { border: none; } }
   .ghead { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 22px; }

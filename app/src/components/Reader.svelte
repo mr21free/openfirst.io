@@ -744,7 +744,7 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<div class="shell" style="--reading-font: {readingFont};">
+<div class="shell" class:with-actions={!readOnly} style="--reading-font: {readingFont};">
   {#if editing}
     <StalenessBanner {store} onReview={() => go('readiness')} />
     <ExportSizeBanner {store} />
@@ -813,46 +813,18 @@
               </svg>
             </button>
           {/if}
-          {#if !readOnly}
-            <button class="iconbtn" class:on={editing} class:plan-done={editing} class:plan-edit={!editing} data-tip={editing ? 'Done editing — view the plan' : 'Edit this plan'} aria-label={editing ? 'Done editing' : 'Edit'} onclick={toggleEdit}>
-              {#if editing}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" /><circle cx="12" cy="12" r="3" />
-                </svg>
-              {:else}
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-              {/if}
-            </button>
-          {/if}
           {#if pkg.languages.length > 1}
             <select class="sel lang" bind:value={lang} aria-label="Language" title="Language">
               {#each pkg.languages as l}<option value={l}>{l.toUpperCase()}</option>{/each}
             </select>
           {/if}
-          {#if !readOnly}
-            <button class="iconbtn" data-tip="Export plan to disk" aria-label="Export" onclick={() => (showExport = true)}>
+          {#if readOnly}
+            <!-- The heir's file has no action rail — print stays up here. -->
+            <button class="iconbtn" data-tip="Print" aria-label="Print" onclick={() => window.print()}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-            </button>
-          {/if}
-          <!-- Printing an edit surface produces a broken page — print reads the view. -->
-          <button class="iconbtn" data-tip={editing ? 'Switch to view mode to print' : 'Print'} aria-label="Print" disabled={editing} onclick={() => window.print()}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 6 2 18 2 18 9" />
-              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-              <rect x="6" y="14" width="12" height="8" />
-            </svg>
-          </button>
-          {#if !readOnly}
-            <button class="iconbtn" data-tip="Settings" aria-label="Settings" onclick={openSettings}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />
-                <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6l-.08.1a2 2 0 0 1-3.84 0L10 20a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1l-.1-.08a2 2 0 0 1 0-3.84L4 10a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6l.08-.1a2 2 0 0 1 3.84 0L14 4a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.08.36.28.7.6 1l.1.08a2 2 0 0 1 0 3.84L20 14c-.32.3-.52.64-.6 1Z" />
+                <polyline points="6 9 6 2 18 2 18 9" />
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" />
               </svg>
             </button>
           {/if}
@@ -866,6 +838,37 @@
       onChoose={chooseAudience} onAdmin={() => { audience = null; chosen = true; }} />
   {:else}
     <div class="body">
+      {#if !readOnly}
+        <!-- Action rail: the app's verbs, Productboard-style — icons with
+             tiny labels, Settings pinned to the bottom. -->
+        <aside class="actionbar no-print">
+          <div class="actionbar-in">
+            <button class="abtn" class:on={editing} class:plan-done={editing} class:plan-edit={!editing} onclick={toggleEdit} aria-label={editing ? 'Done editing' : 'Edit'}>
+              {#if editing}
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" /><circle cx="12" cy="12" r="3" /></svg>
+                <span>Read</span>
+              {:else}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                <span>Edit</span>
+              {/if}
+            </button>
+            <button class="abtn" onclick={() => (showExport = true)} aria-label="Export">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+              <span>Export</span>
+            </button>
+            <!-- Printing an edit surface produces a broken page — print reads the view. -->
+            <button class="abtn" disabled={editing} data-tip={editing ? 'Switch to view mode to print' : undefined} data-tip-pos="right" onclick={() => window.print()} aria-label="Print">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
+              <span>Print</span>
+            </button>
+            <span class="aspacer"></span>
+            <button class="abtn" onclick={openSettings} aria-label="Settings">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" /><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6l-.08.1a2 2 0 0 1-3.84 0L10 20a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1l-.1-.08a2 2 0 0 1 0-3.84L4 10a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6l.08-.1a2 2 0 0 1 3.84 0L14 4a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.08.36.28.7.6 1l.1.08a2 2 0 0 1 0 3.84L20 14c-.32.3-.52.64-.6 1Z" /></svg>
+              <span>Settings</span>
+            </button>
+          </div>
+        </aside>
+      {/if}
       <!-- Navigation rail: a full-height pane that shares its right border
            with the content pane — frames touch, Productboard-style. -->
       <div class="railcol no-print">
@@ -1372,13 +1375,15 @@
   .bar {
     /* Full-bleed, like the panes below. First column: 16px pad + 270px + 32px
        gap = 318px, so the plan title starts exactly where the content pane's
-       inner edge does (290px rail + 28px pane padding). */
+       inner edge does (290px rail + 28px pane padding). With the action rail,
+       everything shifts 65px right. */
     padding: 10px 20px 10px 16px;
     display: grid;
     grid-template-columns: 270px minmax(240px, 340px) minmax(0, 1fr);
     gap: 32px;
     align-items: center;
   }
+  .with-actions .bar { grid-template-columns: 335px minmax(240px, 340px) minmax(0, 1fr); }
   .bar-plan { min-width: 0; display: flex; align-items: center; gap: 14px; }
   .bar-actions { min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
   .brand { font-weight: 500; gap: 10px; }
@@ -1405,8 +1410,9 @@
   .gs-count { margin-bottom: 12px; }
 
   /* ---- The heir's access path (their first screen) ---- */
-  /* Stretches like a guide — the accent rule marks it as auto-generated. */
-  .access { border-left: 2px solid var(--accent); padding: 34px 36px; flex: 1; }
+  /* Stretches like a guide — the accent rule marks it as auto-generated.
+     No card frame: the white pane is the sheet. */
+  .access { border: 0; border-left: 2px solid var(--accent); padding: 34px 36px; flex: 1; }
   .access-h { font-size: clamp(24px, 3.4vw, 34px); margin: 8px 0 12px; }
   .access-steps { list-style: none; padding: 0; margin: 24px 0 8px; display: flex; flex-direction: column; }
   .access-step { display: flex; gap: 16px; padding: 16px 0; border-top: 1px solid var(--rule-soft); }
@@ -1444,7 +1450,27 @@
     padding: 0; align-items: stretch;
     min-height: calc(100vh - var(--topbar-h));
   }
+  .with-actions .body { grid-template-columns: 64px 290px minmax(0, 1fr); }
   .railcol { background: var(--paper); border-right: 1px solid var(--rule-soft); }
+  /* The action rail: the leftmost pane, verbs only. */
+  .actionbar { background: var(--paper); border-right: 1px solid var(--rule-soft); }
+  .actionbar-in {
+    position: sticky; top: var(--topbar-h);
+    height: calc(100vh - var(--topbar-h));
+    display: flex; flex-direction: column; align-items: stretch; gap: 4px;
+    padding: 10px 6px 14px;
+  }
+  .aspacer { flex: 1; }
+  .abtn {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 9px 2px 7px; border-radius: 0;
+    color: var(--ink-soft);
+    transition: background .12s, color .12s;
+  }
+  .abtn span { font-family: var(--mono, inherit); font-size: 9.5px; letter-spacing: 0.04em; }
+  .abtn:hover:not(:disabled) { background: color-mix(in oklch, var(--ink) 5%, var(--paper)); color: var(--ink); }
+  .abtn.on { background: var(--accent-wash); color: var(--accent-deep); box-shadow: inset 2px 0 0 var(--accent-deep); }
+  .abtn:disabled { opacity: 0.4; cursor: not-allowed; }
   .nav {
     display: flex; flex-direction: column; gap: 1px;
     padding: 10px 0 16px;
@@ -1589,7 +1615,10 @@
   }
   .navend.drop-on { border-color: var(--accent-deep); color: var(--accent-deep); background: var(--accent-wash); }
 
-  .content { min-width: 0; display: flex; flex-direction: column; gap: 22px; padding: var(--reader-section-gap) 28px 90px; }
+  /* The content pane is itself the white sheet — same surface as the rail,
+     joined at the 1px border. What used to be a floating card gap now reads
+     as the pane's own inner padding, Productboard-style. */
+  .content { min-width: 0; display: flex; flex-direction: column; gap: 22px; padding: var(--reader-section-gap) 28px 90px; background: var(--paper); }
   .vh { font-size: clamp(22px, 3vw, 30px); }
   .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .head-actions { display: flex; align-items: center; gap: 8px; }
@@ -1667,9 +1696,16 @@
     /* minmax(0,…): the railcol wrapper isn't a scroll container itself, so
        without it the horizontal nav's intrinsic width would blow the column
        past the viewport. */
-    .body { grid-template-columns: minmax(0, 1fr); gap: 0; min-height: 0; }
+    .body, .with-actions .body { grid-template-columns: minmax(0, 1fr); gap: 0; min-height: 0; }
     .railcol { min-width: 0; }
-    .bar { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    /* The action rail folds to a flush strip above the nav strip. */
+    .actionbar { border-right: 0; border-bottom: 1px solid var(--rule-soft); }
+    .actionbar-in { position: static; height: auto; flex-direction: row; padding: 4px 10px; gap: 2px; }
+    .abtn { flex-direction: row; gap: 7px; padding: 7px 10px; }
+    /* The invisible (opacity-0) tooltip bubble would poke past the right
+       viewport edge in the horizontal strip — labels are visible here anyway. */
+    .actionbar :global([data-tip])::after { display: none; }
+    .bar, .with-actions .bar { grid-template-columns: minmax(0, 1fr); gap: 8px; }
     .bar-actions { justify-content: flex-start; flex-wrap: wrap; gap: 8px; }
     /* The rail folds to a horizontal strip under the top bar — still flush. */
     .railcol { border-right: 0; border-bottom: 1px solid var(--rule-soft); }

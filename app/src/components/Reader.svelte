@@ -340,17 +340,21 @@
   }
 
   const navBlocks = $derived.by(() => {
-    const groups = new Map(groupDefs.map((d) => [d.id, { kind: 'group', id: d.id, title: langValue(d.name, d.raw?.name_i18n, lang), raw: d.raw, guides: [], order: d.order ?? Infinity }]));
+    const groups = new Map(groupDefs.map((d) => [d.id, { kind: 'group', id: d.id, title: langValue(d.name, d.raw?.name_i18n, lang), raw: d.raw, guides: [], order: d.order ?? Infinity, explicit: d.order != null }]));
     const blocks = [];
     for (const g of navGuides) {
       if (g.group) {
         let block = groups.get(g.group);
         if (!block) {
-          block = { kind: 'group', id: g.group, title: guideGroupLabel(g.group), raw: null, guides: [], order: Infinity };
+          block = { kind: 'group', id: g.group, title: guideGroupLabel(g.group), raw: null, guides: [], order: Infinity, explicit: false };
           groups.set(g.group, block);
         }
         block.guides.push(g);
-        block.order = Math.min(block.order, g.order ?? Infinity);
+        // An explicit group order wins; earliest-member order is only the
+        // fallback. Authored plans often number guides per group (0,1,2…),
+        // which would otherwise collapse every group to 0 and leave the nav
+        // sorted by group id.
+        if (!block.explicit) block.order = Math.min(block.order, g.order ?? Infinity);
       } else {
         blocks.push({ kind: 'guide', id: g.id, guide: g, order: g.order ?? Infinity });
       }
@@ -518,7 +522,11 @@
   function locEndOver(e) { if (!locDrag) return; e.preventDefault(); locDrop = { id: '__end', pos: 'end' }; }
   function locEndDrop(e) { if (!locDrag) return; e.preventDefault(); store.moveLocation(locDrag, null, null); locDragEnd(); }
 
-  const homeGuide = $derived(guides[0] || null);
+  // The "start" view. Editing: land on the first guide as the NAV shows it —
+  // importance must not hijack the owner's landing view. Reading (heir):
+  // keep the importance-first pick, so e.g. a personal message marked high
+  // greets its reader before the how-to guides (persona-review decision).
+  const homeGuide = $derived(editing ? (flatNav[0] || null) : (guides[0] || null));
   const owner = $derived(pkg.owner);
   const readinessChecks = $derived(pkg.readinessOrdered());
   const readinessCount = $derived(readinessChecks.length);

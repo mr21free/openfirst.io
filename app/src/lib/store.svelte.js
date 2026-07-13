@@ -421,13 +421,17 @@ export class Store {
     this.ensureGuideGroups();
     const navGuides = this.#navGuides();
     const groups = new Map();
-    for (const def of this.data.guide_groups || []) groups.set(def.id, { kind: 'group', id: def.id, def, guides: [], order: def.order });
+    for (const def of this.data.guide_groups || []) groups.set(def.id, { kind: 'group', id: def.id, def, guides: [], order: def.order ?? Infinity, explicit: def.order != null });
     const blocks = [];
     for (const g of navGuides) {
       if (g.group) {
-        const block = groups.get(g.group) || { kind: 'group', id: g.group, def: null, guides: [], order: Infinity };
+        const block = groups.get(g.group) || { kind: 'group', id: g.group, def: null, guides: [], order: Infinity, explicit: false };
         block.guides.push(g);
-        block.order = Math.min(block.order ?? Infinity, g.order ?? Infinity);
+        // Explicit group order wins; member-min is only the fallback for
+        // implied groups. Imported plans number guides per group, which would
+        // otherwise collapse every group to 0 — and renumbering would then
+        // PERSIST that shuffled order into the plan.
+        if (!block.explicit) block.order = Math.min(block.order ?? Infinity, g.order ?? Infinity);
         groups.set(g.group, block);
       } else {
         blocks.push({ kind: 'guide', id: g.id, guide: g, order: g.order ?? Infinity });

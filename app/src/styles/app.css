@@ -311,16 +311,18 @@ strong { font-weight: 600; }
   line-height: 1.4;
 }
 
-/* Unified list — spaced name + description cards that open a detail view */
-.ulist { display: flex; flex-direction: column; gap: 8px; }
+/* Unified list — unframed rows on the pane, hairline separators between
+   them (no per-row boxes), hover wash marks the row under the pointer. */
+.ulist { display: flex; flex-direction: column; gap: 0; }
 .ulist-row {
   display: flex; align-items: center; gap: 14px;
   padding: 12px 16px; text-align: left;
-  background: var(--paper);
-  border: 1px solid var(--rule-soft); border-radius: 0;
-  transition: background .12s, border-color .12s;
+  background: transparent;
+  border: 0; border-top: 1px solid var(--rule-soft); border-radius: 0;
+  transition: background .12s;
 }
-.ulist-row:hover { background: var(--accent-wash); border-color: var(--accent-deep); }
+.ulist-row:last-child { border-bottom: 1px solid var(--rule-soft); }
+.ulist-row:hover { background: var(--accent-wash); }
 .ulist-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .ulist-name { color: var(--ink); display: flex; align-items: center; gap: 8px; }
 .ulist-desc {

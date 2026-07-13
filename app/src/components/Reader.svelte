@@ -625,6 +625,12 @@
       return !(check.person_ids || []).length && !(check.role_ids || []).length;
     });
   }
+  // A dry run only makes sense when the person it would target actually has
+  // questions/tasks to walk through — same person pick as startDryRun.
+  const dryRunTaskCount = $derived.by(() => {
+    const target = audience || primaryIds[0] || audiences[0]?.id || null;
+    return applicableReadinessChecks(target).length;
+  });
   function cancelDryRun() {
     if (dryRunId) store.deleteReadinessRun(dryRunId);
     dryRun = false;
@@ -778,7 +784,7 @@
               </select>
             </label>
             {#if !readOnly}
-            <button class="iconbtn" class:on={dryRun} data-tip={dryRun ? 'Dry run in progress' : 'Start dry run'} aria-label={dryRun ? 'Dry run in progress' : 'Start dry run'} onclick={() => dryRun ? null : startDryRun()}>
+            <button class="iconbtn" class:on={dryRun} disabled={!dryRun && !dryRunTaskCount} data-tip={dryRun ? 'Dry run in progress' : (dryRunTaskCount ? 'Start dry run' : 'No questions or tasks for this person yet')} aria-label={dryRun ? 'Dry run in progress' : 'Start dry run'} onclick={() => dryRun ? null : startDryRun()}>
                 {#if dryRun}
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
                 {:else}
@@ -1383,7 +1389,12 @@
     gap: 32px;
     align-items: center;
   }
-  .with-actions .bar { grid-template-columns: 335px minmax(240px, 340px) minmax(0, 1fr); }
+  /* With the rail: the logo owns the rail's 65px, so the plan title starts
+     exactly at the rail's right edge; the search column still starts at the
+     content pane's inner edge (65 + 290 + 2 borders + 28 = 385 = 353 + 32). */
+  .with-actions .bar { grid-template-columns: 353px minmax(240px, 340px) minmax(0, 1fr); padding-left: 0; }
+  .with-actions .bar-plan { gap: 14px; }
+  .with-actions .brand-home { width: 65px; justify-content: center; margin-right: -14px; }
   .bar-plan { min-width: 0; display: flex; align-items: center; gap: 14px; }
   .bar-actions { min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
   .brand { font-weight: 500; gap: 10px; }

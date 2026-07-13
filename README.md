@@ -4,7 +4,7 @@
 tool to build an inheritance / "in case I die" plan and hand your loved ones a
 single file they open with no app, no account, and no internet.
 
-Nothing breaks if you're gone tomorrow: you build a private map of everything
+Your family finds everything, even without you: you build a private map of everything
 that matters — the **people**, the **places** things live, the **items**
 (accounts, wallets, keys, documents), the **files**, and plain-language
 **guides** — then export one **self-contained `start-here.html`** your heirs

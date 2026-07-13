@@ -784,7 +784,7 @@
               </select>
             </label>
             {#if !readOnly}
-            <button class="iconbtn" class:on={dryRun} disabled={!dryRun && !dryRunTaskCount} data-tip={dryRun ? 'Dry run in progress' : (dryRunTaskCount ? 'Start dry run' : 'No questions or tasks for this person yet')} aria-label={dryRun ? 'Dry run in progress' : 'Start dry run'} onclick={() => dryRun ? null : startDryRun()}>
+            <button class="iconbtn" class:on={dryRun} disabled={!dryRun && !dryRunTaskCount} data-tip-pos="left" data-tip={dryRun ? 'Dry run in progress' : (dryRunTaskCount ? 'Start dry run' : 'No questions or tasks for this person yet')} aria-label={dryRun ? 'Dry run in progress' : 'Start dry run'} onclick={() => dryRun ? null : startDryRun()}>
                 {#if dryRun}
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
                 {:else}
@@ -813,7 +813,7 @@
         {/if}
         {#if !showGate}
           {#if !readOnly && store.draftProtected}
-            <button class="iconbtn" data-tip="Lock the draft and return to start" aria-label="Lock draft" onclick={lockDraft}>
+            <button class="iconbtn" data-tip-pos="left" data-tip="Lock the draft and return to start" aria-label="Lock draft" onclick={lockDraft}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
@@ -826,7 +826,7 @@
           {/if}
           {#if readOnly}
             <!-- The heir's file has no action rail — print stays up here. -->
-            <button class="iconbtn" data-tip="Print" aria-label="Print" onclick={() => window.print()}>
+            <button class="iconbtn" data-tip-pos="left" data-tip="Print" aria-label="Print" onclick={() => window.print()}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 6 2 18 2 18 9" />
                 <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />

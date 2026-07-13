@@ -159,7 +159,11 @@ strong { font-weight: 600; }
 .iconbtn:hover { color: var(--ink); background: var(--accent-wash); }
 .iconbtn.danger:hover { color: var(--warn); background: var(--warn-wash); }
 .iconbtn.on { color: var(--accent-deep); background: var(--accent-wash); }
-.iconbtn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* Disabled: dim the icon, not the button — a whole-button opacity would fade
+   the data-tip bubble (::after) to unreadable grey. No not-allowed cursor;
+   the tooltip does the explaining. */
+.iconbtn:disabled { cursor: default; }
+.iconbtn:disabled > * { opacity: 0.4; }
 .iconbtn:disabled:hover { color: var(--ink-soft); background: transparent; }
 
 /* Tooltips — a black bubble on hover/focus. Put the label in `data-tip`

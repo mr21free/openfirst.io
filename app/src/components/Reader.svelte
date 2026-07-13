@@ -775,7 +775,7 @@
       <div class="bar-actions">
         {#if editing && !showGate}<span class="sr-only" aria-live="polite">{store.savedAt ? 'Auto-saved to this device' : 'Saving…'}</span>{/if}
         {#if chosen && !editing}
-          <div class="reader-tools" title="Read this plan as a particular person">
+          <div class="reader-tools">
             <label class="sel-wrap">
               <span class="tiny muted">Reading as</span>
               <select class="sel" value={audience ?? '__all'} onchange={(e) => switchAudience(e.target.value)}>
@@ -1481,7 +1481,9 @@
   .abtn span { font-family: var(--mono, inherit); font-size: 9.5px; letter-spacing: 0.04em; }
   .abtn:hover:not(:disabled) { background: color-mix(in oklch, var(--ink) 5%, var(--paper)); color: var(--ink); }
   .abtn.on { background: var(--accent-wash); color: var(--accent-deep); box-shadow: inset 2px 0 0 var(--accent-deep); }
-  .abtn:disabled { opacity: 0.4; cursor: not-allowed; }
+  /* Dim contents only — whole-button opacity would fade the tooltip too. */
+  .abtn:disabled { cursor: default; }
+  .abtn:disabled > svg, .abtn:disabled > span { opacity: 0.4; }
   .nav {
     display: flex; flex-direction: column; gap: 1px;
     padding: 10px 0 16px;

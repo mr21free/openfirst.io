@@ -81,15 +81,15 @@
       <p class="eyebrow">Your plans</p>
       <h1>{drafts.length ? 'Welcome back.' : 'Start your plan.'}</h1>
       <p class="lede soft">
-        Everything you build stays on this device — no account, no cloud.
+        Everything you build is saved in this browser's storage, on this computer — no account, no cloud.
         {#if !drafts.length}Start with the map: the people, the places, the things that matter.{/if}
       </p>
 
       {#each drafts as draft (draft.key)}
         <div class="draft card no-print">
           <div class="draft-main">
-            <strong>{#if draft.protected}<span class="draft-lock" title="Passphrase-protected on this device"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>{/if}{draft.title}</strong>
-            <span class="small muted">{draftWhen(draft.savedAt) ? `saved ${draftWhen(draft.savedAt)} · ` : ''}kept on this device{draft.protected ? ' · encrypted' : ''}</span>
+            <strong>{#if draft.protected}<span class="draft-lock" title="Passphrase-protected in this browser's storage"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>{/if}{draft.title}</strong>
+            <span class="small muted">{draftWhen(draft.savedAt) ? `saved ${draftWhen(draft.savedAt)} · ` : ''}kept in this browser{draft.protected ? ' · encrypted' : ''}</span>
           </div>
           <div class="row" style="gap:8px">
             <button class="btn btn-primary" onclick={() => resumeDraft?.(draft.key)}>Resume</button>
@@ -99,10 +99,16 @@
           </div>
         </div>
       {/each}
+      {#if drafts.length}
+        <p class="soft small" style="margin: 2px 0 6px">
+          Plans saved here live in this browser's own storage. They don't sync and aren't backed up —
+          clearing this browser's site data removes them. Your exported file is the durable copy.
+        </p>
+      {/if}
 
       <div class="action-grid no-print">
         <div class="action-card">
-          <p class="soft small">Start building your plan. Everything stays on this device.</p>
+          <p class="soft small">Start building your plan. Your work autosaves to this browser's storage — nothing is uploaded.</p>
           <button class="btn btn-primary" onclick={() => newPlan?.()}>Create new plan</button>
         </div>
         <div class="action-card">

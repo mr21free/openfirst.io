@@ -43,7 +43,7 @@
   async function turnOffProtection() {
     const ok = await requestConfirm?.({
       title: 'Turn off draft protection?',
-      message: 'The working draft on this device will be stored unencrypted again. Your exported files are not affected.',
+      message: 'The working draft in this browser will be stored unencrypted again. Your exported files are not affected.',
       confirmLabel: 'Turn off',
       tone: 'danger'
     });
@@ -138,9 +138,9 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
         </span>
         <div class="protect-main">
-          <span class="lbl" style="margin:0">Draft protection<InfoHint text="Encrypts the auto-saved draft on this device (the plan JSON and any files) with a passphrase. Protects a copied disk or profile — not a live-compromised browser or your unlocked screen. The encrypted export stays your durable backup." /></span>
+          <span class="lbl" style="margin:0">Draft protection<InfoHint text="Encrypts the auto-saved draft in this browser's storage (the plan JSON and any files) with a passphrase. Protects a copied disk or profile — not a live-compromised browser or your unlocked screen. The encrypted export stays your durable backup." /></span>
           <p class="tiny muted protect-desc">
-            {#if store?.draftProtected}This draft is encrypted at rest on this device.{:else}The working draft is saved unencrypted on this device.{/if}
+            {#if store?.draftProtected}This draft is encrypted at rest in this browser's storage on this computer.{:else}The working draft is saved unencrypted in this browser's storage on this computer.{/if}
           </p>
           {#if store?.draftProtected && !showProtect}
             <button class="btn-link" onclick={() => (showProtect = true)}>Change passphrase…</button>

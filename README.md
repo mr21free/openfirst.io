@@ -15,7 +15,7 @@ realistic sample plan exactly as the primary heir would see it.
 
 ## Principles
 
-- **Nothing leaves your device.** No server, no account, no telemetry. The
+- **No data leaves your device.** No server, no account, no telemetry. The
   builder auto-saves locally (IndexedDB); export writes a file to your disk.
 - **Provably offline.** The built app ships a strict CSP with
   `connect-src 'none'` — even a maliciously crafted plan cannot phone home.

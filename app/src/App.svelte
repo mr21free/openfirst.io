@@ -39,6 +39,13 @@ import { templateSeed } from './lib/templates.js';
     if (onHttp && !readerMode && location.pathname !== '/build/') history.pushState(null, '', '/build/');
   }
 
+  // Each tab remembers which plan it has open (drafts persist under the plan
+  // id), so refreshing /build/ resumes that work instead of starting a fresh
+  // plan — and doesn't scatter a new draft per reload.
+  const CURRENT_PLAN_KEY = 'openfirst.currentPlan';
+  function rememberCurrentPlan(id) { try { if (id) sessionStorage.setItem(CURRENT_PLAN_KEY, id); } catch { /* private mode */ } }
+  function forgetCurrentPlan() { try { sessionStorage.removeItem(CURRENT_PLAN_KEY); } catch { /* private mode */ } }
+
   // Auto screen-lock: while a passphrase-protected plan is open, 10 minutes
   // without any interaction flushes the encrypted save, drops the key and the
   // plan from memory, and returns to the start. Free with draft protection —
@@ -109,34 +116,48 @@ import { templateSeed } from './lib/templates.js';
       return;
     }
     if (!booted && bootMode === 'build') {
-      // /build with nothing loaded = start building. (An untouched new plan is
-      // never auto-saved, so stray visits don't leave draft clutter.)
+      // /build with nothing loaded: resume the plan this tab was working on
+      // (a refresh mustn't look like lost work), else start building fresh.
+      // (An untouched new plan is never auto-saved, so stray visits don't
+      // leave draft clutter.)
       // /build/?template=<id> seeds the new plan from a free template and
       // opens the template's own guide read-first, not the editor — the link
       // on /guides/ promises "read this template", editing is one click away.
       booted = true;
-      const seed = templateSeed(new URLSearchParams(location.search).get('template'));
-      newPlan(seed);
-      if (seed?.guides?.[0]) {
-        store.stopEditing();
-        templateView = seed.guides[0].id;
-      }
+      const templateId = new URLSearchParams(location.search).get('template');
+      (async () => {
+        if (!templateId) {
+          let key = null;
+          try { key = sessionStorage.getItem(CURRENT_PLAN_KEY); } catch { /* private mode */ }
+          if (key && await resumeDraft(key)) return;
+          await newPlan();
+          return;
+        }
+        const seed = templateSeed(templateId);
+        await newPlan(seed);
+        if (seed?.guides?.[0]) {
+          store.stopEditing();
+          templateView = seed.guides[0].id;
+        }
+      })();
       return;
     }
     booted = true;
-    (async () => {
-      const all = await loadAllDrafts();
-      drafts = all
-        .filter((d) => d.data || d.enc)
-        .map((d) => ({
-          key: d.key,
-          savedAt: d.savedAt,
-          protected: d.enc === 'v1',
-          title: (d.enc ? d.title : d.data?.package?.title) || 'Unnamed plan'
-        }))
-        .sort((a, b) => (b.savedAt || '') > (a.savedAt || '') ? 1 : -1);
-    })();
+    refreshDrafts();
   });
+
+  async function refreshDrafts() {
+    const all = await loadAllDrafts();
+    drafts = all
+      .filter((d) => d.data || d.enc)
+      .map((d) => ({
+        key: d.key,
+        savedAt: d.savedAt,
+        protected: d.enc === 'v1',
+        title: (d.enc ? d.title : d.data?.package?.title) || 'Unnamed plan'
+      }))
+      .sort((a, b) => (b.savedAt || '') > (a.savedAt || '') ? 1 : -1);
+  }
 
   async function unlockEmbedded(password) {
     const loaded = await decryptAndLoad(gateEnvelope, password);
@@ -147,9 +168,19 @@ import { templateSeed } from './lib/templates.js';
   let demoAudience = $state(null);
   let templateView = $state(null); // guide id a /build/?template= link opens on
 
-  function onLoaded(loaded) { store.load(loaded); showEditorUrl(); window.scrollTo({ top: 0 }); }
+  // ?template= has done its job once the user starts editing the seeded plan —
+  // drop it, so a refresh resumes the (now autosaving) draft instead of
+  // re-seeding a fresh copy of the template over their work.
+  $effect(() => {
+    if (store.pkg && store.mode === 'edit' && onHttp && !readerMode && location.pathname === '/build/' && location.search) {
+      history.replaceState(null, '', '/build/');
+    }
+  });
+
+  function onLoaded(loaded) { store.load(loaded); rememberCurrentPlan(loaded.data?.package?.id); showEditorUrl(); window.scrollTo({ top: 0 }); }
   function close() {
     store.reset();
+    forgetCurrentPlan();
     demoAudience = null;
     // Closing a plan always lands on the launcher — and the URL says so.
     if (onHttp && !readerMode && location.pathname !== '/open/') {
@@ -159,12 +190,20 @@ import { templateSeed } from './lib/templates.js';
 
   // Start a brand-new plan and drop straight into edit mode with a "Start here"
   // guide in a "General" group so the user knows where to begin.
-  function newPlan(seed = null) {
+  async function newPlan(seed = null) {
     const id = crypto?.randomUUID?.() || 'plan_' + Math.random().toString(36).slice(2);
     const today = new Date().toISOString().slice(0, 10);
     // Unique default name, same pattern as guides/groups: "My plan",
-    // "My plan (1)"… when earlier plans already use the name.
-    const taken = new Set(drafts.map((d) => d.title));
+    // "My plan (1)"… when earlier plans already use the name. Read the titles
+    // straight from the saved drafts — the local `drafts` list is only
+    // populated on the launcher, and /build/ boots here directly.
+    let taken;
+    try {
+      const all = await loadAllDrafts();
+      taken = new Set(all.map((d) => (d.enc ? d.title : d.data?.package?.title)).filter(Boolean));
+    } catch {
+      taken = new Set(drafts.map((d) => d.title));
+    }
     let title = seed?.title ? `My ${seed.title}` : 'My plan';
     let n = 1;
     while (taken.has(title)) title = `${seed?.title ? 'My ' + seed.title : 'My plan'} (${n++})`;
@@ -205,6 +244,7 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
     };
     store.load({ data, attachmentUrls: {}, blobs: new Map() });
     store.startEditing();
+    rememberCurrentPlan(id);
     showEditorUrl();
     window.scrollTo({ top: 0 });
   }
@@ -212,11 +252,13 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
   // A protected draft being resumed: hold it until the passphrase is entered.
   let draftGate = $state(null); // { key } | null
 
+  /** Resume a saved draft. Returns true when the draft was found (including
+   *  the protected case, which parks it behind the passphrase gate). */
   async function resumeDraft(key) {
     const d = await loadDraft(key);
-    if (!d) return;
-    if (d.enc === 'v1') { draftGate = { key }; return; } // needs the passphrase
-    if (!d.data) return;
+    if (!d) return false;
+    if (d.enc === 'v1') { draftGate = { key }; return true; } // needs the passphrase
+    if (!d.data) return false;
     const attachmentUrls = {};
     const blobs = new Map();
     const mimeFor = (id) => {
@@ -236,9 +278,11 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
     // (inline) blobs must be written to it on the first save.
     store.load({ data: d.data, attachmentUrls, blobs, persistedDraft: !d.legacyBlobs });
     store.startEditing();
+    rememberCurrentPlan(key);
     showEditorUrl();
     drafts = [];
     window.scrollTo({ top: 0 });
+    return true;
   }
 
   // Decrypt-and-open a protected draft. Throws on a wrong passphrase (AES-GCM
@@ -258,6 +302,7 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
     }
     store.load({ data, attachmentUrls, blobs, persistedDraft: true, draftKey: cryptoKey, draftSalt: new Uint8Array(d.salt) });
     store.startEditing();
+    rememberCurrentPlan(key);
     showEditorUrl();
     draftGate = null;
     lockedNotice = false;
@@ -280,7 +325,7 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
 {:else if store.pkg}
   <Reader {store} onClose={close} initialAudience={demoAudience} initialView={templateView} />
 {:else if draftGate}
-  <UnlockGate hint="Your draft passphrase (not the export password)." onUnlock={unlockDraft} onCancel={() => (draftGate = null)} />
+  <UnlockGate hint="Your draft passphrase (not the export password)." onUnlock={unlockDraft} onCancel={() => { draftGate = null; refreshDrafts(); }} />
 {:else}
   {#if lockedNotice}
     <div class="locked-note no-print" role="status">

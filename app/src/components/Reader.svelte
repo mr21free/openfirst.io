@@ -1522,9 +1522,13 @@
   .navguide-input.active { background: var(--accent-wash); color: var(--accent-deep); font-weight: 500; }
   .navgroup-items { display: flex; flex-direction: column; gap: 2px; }
   .navgroup-items .navrow { padding-left: 16px; }
-  /* Ungrouped guides (edit mode): same left inset as grouped rows, so a new
-     guide's grip lines up with the group entries instead of hugging the edge. */
-  .nav.editing > .navrow { padding-left: 16px; }
+  /* Edit mode hierarchy: a root-level guide's grip lines up with the group
+     grips (both live at the root), and rows INSIDE a group sit 16px deeper —
+     otherwise an ungrouped guide reads as a child of whatever group is above.
+     13px, not the grid's 16px: the guide grip carries 3px of internal padding
+     the group grip doesn't, so 13 puts the visible dots on the same pixel. */
+  .nav.editing > .navrow { padding-left: 13px; }
+  .nav.editing .navgroup-items .navrow { padding-left: 29px; }
   .navguide-child { padding-left: 10px; }
   .navlink-child { padding-left: 12px; }
   .navrow { display: flex; align-items: center; gap: 2px; padding-right: 12px; }
@@ -1658,7 +1662,8 @@
     .navsep { display: none; }
     .navlink { white-space: nowrap; }
     .navlink-child { padding-left: 12px; }
-    .nav.editing > .navrow { padding-left: 0; } /* horizontal nav: no inset */
+    .nav.editing > .navrow { padding-left: 0; } /* horizontal nav: no insets */
+    .nav.editing .navgroup-items .navrow { padding-left: 16px; }
     .shell { --reader-section-gap: 12px; }
     .plan-title, .plan-title-input { max-width: 38vw; width: auto; }
     .sel-wrap .tiny { display: none; }

@@ -865,9 +865,11 @@
     <AudienceGate {pkg} {owner} primary={gatePrimary} rest={gateRest} {adminLabel}
       onChoose={chooseAudience} onAdmin={() => { audience = null; chosen = true; }} />
   {:else}
-    <div class="body container">
-      <!-- Navigation -->
-      <nav class="nav no-print" class:editing>
+    <div class="body">
+      <!-- Navigation rail: a full-height pane that shares its right border
+           with the content pane — frames touch, Productboard-style. -->
+      <div class="railcol no-print">
+      <nav class="nav" class:editing>
         {#snippet draftMark()}
           <span class="draft-mark" title="Draft — left out of the heir reader (.html)" aria-label="Draft">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -1028,6 +1030,7 @@
           <button class="navlink navadd" onclick={addGuideGroup}>+ New group</button>
         {/if}
       </nav>
+      </div>
 
       <!-- Content -->
       <main class="content">
@@ -1367,11 +1370,12 @@
     border-bottom: 1px solid var(--rule-soft);
   }
   .bar {
-    max-width: var(--maxw);
-    margin: 0 auto;
-    padding: 10px 28px;
+    /* Full-bleed, like the panes below. First column: 16px pad + 270px + 32px
+       gap = 318px, so the plan title starts exactly where the content pane's
+       inner edge does (290px rail + 28px pane padding). */
+    padding: 10px 20px 10px 16px;
     display: grid;
-    grid-template-columns: 290px minmax(240px, 340px) minmax(0, 1fr);
+    grid-template-columns: 270px minmax(240px, 340px) minmax(0, 1fr);
     gap: 32px;
     align-items: center;
   }
@@ -1432,20 +1436,22 @@
   /* .iconbtn is global (app.css) — the bare pattern from DESIGN.md. */
 
 
-  /* stretch: the content column grows to match the (usually taller) sticky
-     nav, so a short/empty guide fills exactly to the menu's height — no more. */
-  .body { display: grid; grid-template-columns: 290px 1fr; gap: 32px; padding: var(--reader-section-gap) 28px 90px; align-items: stretch; }
+  /* The workspace: two panes sharing one 1px border, no gaps, no outer
+     gutters — and never shorter than the viewport, so the rail always
+     touches the bottom of the browser window. */
+  .body {
+    display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 0;
+    padding: 0; align-items: stretch;
+    min-height: calc(100vh - var(--topbar-h));
+  }
+  .railcol { background: var(--paper); border-right: 1px solid var(--rule-soft); }
   .nav {
     display: flex; flex-direction: column; gap: 1px;
-    background: var(--paper);
-    border: 1px solid var(--rule-soft);
-    border-radius: 0;
-    padding: 8px 0;
-    align-self: start;
+    padding: 10px 0 16px;
     position: sticky;
-    /* Sits just below the sticky top bar and holds its place as you scroll. */
-    top: calc(var(--topbar-h) + 16px);
-    max-height: calc(100vh - var(--topbar-h) - 32px);
+    /* Sits flush under the sticky top bar and holds while you scroll. */
+    top: var(--topbar-h);
+    max-height: calc(100vh - var(--topbar-h));
     overflow-y: auto;
     /* Reserve a real gutter for the scrollbar so it never overlaps the counts
        or delete buttons on the right edge. Styling ::-webkit-scrollbar makes it
@@ -1583,7 +1589,7 @@
   }
   .navend.drop-on { border-color: var(--accent-deep); color: var(--accent-deep); background: var(--accent-wash); }
 
-  .content { min-width: 0; display: flex; flex-direction: column; gap: 22px; }
+  .content { min-width: 0; display: flex; flex-direction: column; gap: 22px; padding: var(--reader-section-gap) 28px 90px; }
   .vh { font-size: clamp(22px, 3vw, 30px); }
   .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .head-actions { display: flex; align-items: center; gap: 8px; }
@@ -1658,10 +1664,17 @@
   .loc-row.loc-after { box-shadow: inset 0 -2px 0 var(--accent-deep); }
   .loc-row.loc-inside { background: var(--accent-wash); outline: 1px dashed var(--accent); border-radius: 8px; }
   @media (max-width: 820px) {
-    .body { grid-template-columns: 1fr; gap: 16px; }
+    /* minmax(0,…): the railcol wrapper isn't a scroll container itself, so
+       without it the horizontal nav's intrinsic width would blow the column
+       past the viewport. */
+    .body { grid-template-columns: minmax(0, 1fr); gap: 0; min-height: 0; }
+    .railcol { min-width: 0; }
     .bar { grid-template-columns: minmax(0, 1fr); gap: 8px; }
     .bar-actions { justify-content: flex-start; flex-wrap: wrap; gap: 8px; }
-    .nav { position: static; flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 4px; }
+    /* The rail folds to a horizontal strip under the top bar — still flush. */
+    .railcol { border-right: 0; border-bottom: 1px solid var(--rule-soft); }
+    .nav { position: static; max-height: none; flex-direction: row; overflow-x: auto; gap: 6px; padding: 6px 12px; }
+    .content { padding: var(--reader-section-gap) 14px 60px; }
     .map-row { display: flex; flex-direction: column-reverse; }
     .map-side { position: static; flex-direction: row; justify-content: flex-end; margin-bottom: 6px; }
     .navgroup { flex: none; flex-direction: row; align-items: center; gap: 6px; margin: 0; }

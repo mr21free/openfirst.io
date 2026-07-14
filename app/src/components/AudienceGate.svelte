@@ -10,32 +10,31 @@
   let { pkg, owner, primary = [], rest = [], adminLabel, onChoose, onAdmin } = $props();
 </script>
 
-<div class="gate container">
-  <div class="card gate-card">
-    <p class="eyebrow">Before we begin</p>
-    <h1 class="gate-h">Take your time. There is no rush.</h1>
-    <p class="soft">This plan was prepared by <strong>{owner?.name || 'the owner'}</strong>. So it can show you the right things first — who are you?</p>
-    {#snippet whoBtn(p)}
-      <button class="who" onclick={() => onChoose(p.id)}>
-        <span class="who-ico" aria-hidden="true"><Icon kind="person" /></span>
-        <span class="who-main">
-          <span class="who-name">{pkg.name(p.id)}{#if p.nickname} <span class="muted small">· {p.name}</span>{:else if p.display_as} <span class="muted small">· {p.display_as}</span>{/if}</span>
-          <span class="row wrap">{#each p.roles as r}<span class="chip">{pkg.roleLabel(r)}</span>{/each}</span>
-        </span>
-      </button>
-    {/snippet}
-    <div class="gate-people">
-      {#each primary as p}{@render whoBtn(p)}{/each}
-      {#if primary.length && rest.length}<div class="gate-sep" aria-hidden="true"></div>{/if}
-      {#each rest as p}{@render whoBtn(p)}{/each}
-    </div>
-    <button class="btn btn-ghost" onclick={() => onAdmin()}>{adminLabel}</button>
+<div class="gate">
+  <p class="eyebrow">Before we begin</p>
+  <h1 class="gate-h">Take your time.</h1>
+  <p class="soft">This plan was prepared by <strong>{owner?.name || 'the owner'}</strong>. So it can show you the right things first — who are you?</p>
+  {#snippet whoBtn(p)}
+    <button class="who" onclick={() => onChoose(p.id)}>
+      <span class="who-ico" aria-hidden="true"><Icon kind="person" /></span>
+      <span class="who-main">
+        <span class="who-name">{pkg.name(p.id)}{#if p.nickname} <span class="muted small">· {p.name}</span>{:else if p.display_as} <span class="muted small">· {p.display_as}</span>{/if}</span>
+        <span class="row wrap">{#each p.roles as r}<span class="chip">{pkg.roleLabel(r)}</span>{/each}</span>
+      </span>
+    </button>
+  {/snippet}
+  <div class="gate-people">
+    {#each primary as p}{@render whoBtn(p)}{/each}
+    {#if primary.length && rest.length}<div class="gate-sep" aria-hidden="true"></div>{/if}
+    {#each rest as p}{@render whoBtn(p)}{/each}
   </div>
+  <button class="btn btn-ghost" onclick={() => onAdmin()}>{adminLabel}</button>
 </div>
 
 <style>
-  .gate { display: block; padding: var(--reader-section-gap) 28px 64px; }
-  .gate-card { width: 100%; border-left: 2px solid var(--accent); }
+  /* Flush with the rail and content edges — no card box, no centering gutter
+     — same "auto-generated page" treatment as the heir's access-path pane. */
+  .gate { border: 0; border-left: 2px solid var(--accent); padding: 34px 36px; flex: 1; }
   .gate-h { font-size: clamp(26px, 4vw, 38px); margin: 8px 0 14px; }
   .gate-people { display: grid; gap: 12px; margin: 22px 0; }
   .gate-sep { height: 1px; background: var(--rule-soft); margin: 2px 0; }

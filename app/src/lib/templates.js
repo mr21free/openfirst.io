@@ -15,7 +15,7 @@ export const TEMPLATES = {
         title: 'The first 72 hours',
         content: `## Nothing is on fire
 
-Take your time. There is no rush. Money in accounts stays in accounts. Everything here was built so that **waiting is safe**.
+Take your time. Money in accounts stays in accounts. Everything here was built so that **waiting is safe**.
 
 ## Day one — people only
 

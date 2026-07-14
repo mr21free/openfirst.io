@@ -45,7 +45,7 @@ function startHereText(data) {
     'START HERE',
     '==========',
     '',
-    `This folder is ${title}. Take your time. There is no rush.`,
+    `This folder is ${title}. Take your time.`,
     '',
     'Read it without any app: open the guides in this package as plain text.',
     `Or open it with the ${APP_NAME} reader and drop this folder / the .zip in.`,
@@ -172,17 +172,30 @@ function stripUnusedFonts(docEl, keep) {
   }
 }
 
-/** Clone the currently-running reader HTML and inject the package payload so the
- *  file boots straight into a read-only reader. Everything is already inlined. */
-function buildReaderHtml(payload, keepFonts = null) {
-  const docEl = document.documentElement.cloneNode(true);
+/** A self-contained reader needs a fully inlined page to clone. In production
+ *  the running page already is that (everything bundled by viteSingleFile).
+ *  In dev, the page is loaded over the network (/@vite/client, /src/main.js)
+ *  and can't stand alone — fetch a real in-memory production build from the
+ *  dev server instead (see `readerTemplateDevServer` in vite.config.js) so
+ *  export works out of the box without a manual `npm run build`. */
+async function readerTemplateRoot() {
+  if (!document.querySelector('script[src]')) return document.documentElement;
+  const res = await fetch('/__reader-template.html');
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`Could not build the heir reader (dev server): ${detail || res.statusText}`);
+  }
+  return new DOMParser().parseFromString(await res.text(), 'text/html').documentElement;
+}
+
+/** Clone the reader template and inject the package payload so the file boots
+ *  straight into a read-only reader. Everything is already inlined. */
+async function buildReaderHtml(payload, keepFonts = null) {
+  const docEl = (await readerTemplateRoot()).cloneNode(true);
   docEl.removeAttribute('data-theme'); // let the embedded plan's theme decide
   if (keepFonts) stripUnusedFonts(docEl, keepFonts);
-  // A self-contained reader needs everything inlined. In the dev server the app
-  // is loaded over the network (/@vite/client, /src/main.js) and would open to a
-  // blank page — only the production build inlines the bundle.
   if (docEl.querySelector('script[src]')) {
-    throw new Error('Create the heir reader from the built app (run “npm run build”, then open dist/index.html), not the dev server.');
+    throw new Error('The built reader template still references external scripts — this should not happen.');
   }
   const app = docEl.querySelector('#app');
   if (app) app.innerHTML = ''; // boot fresh, not from the current render
@@ -221,8 +234,11 @@ export async function exportSelfContainedReader(data, blobs, { password = '', hi
   }
   // Bundle only the fonts the heir reader renders (UI mono + the chosen guide
   // font) — computed from the original data even when the payload is encrypted.
-  const html = buildReaderHtml(payload, fontsToKeep(data));
-  triggerDownload(new Blob([html], { type: 'text/html' }), 'start-here.html');
+  const html = await buildReaderHtml(payload, fontsToKeep(data));
+  // Same <title>_<date> pattern as the .zip and .encrypted.json exports (so
+  // multiple plans don't collide/overwrite each other on disk), with the
+  // "start-here" cue kept intact for a heir who doesn't know what to look for.
+  triggerDownload(new Blob([html], { type: 'text/html' }), `${packageFolderName(data, name)}_start-here.html`);
 }
 
 /** Export just the JSON source (no attachments) — quick backup. */

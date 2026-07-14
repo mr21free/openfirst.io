@@ -16,23 +16,28 @@
   import AudienceGate from './AudienceGate.svelte';
   import GlobalSearch from './GlobalSearch.svelte';
   import ReadinessView from './ReadinessView.svelte';
+  import DryRunPicker from './DryRunPicker.svelte';
+  import AudiencePicker from './AudiencePicker.svelte';
   import { langValue } from '../lib/package.js';
 
-  let { store, onClose, readOnly = false, initialAudience = null, initialView = null } = $props();
+  let { store, onClose, readOnly = false, initialAudience = null, initialAdmin = false, initialView = null } = $props();
 
   const pkg = $derived(store.pkg);
   const editing = $derived(!readOnly && store.mode === 'edit');
 
   // /demo (and similar) can pre-answer the "who are you?" gate — e.g. open the
-  // sample directly as the primary heir would see it.
+  // sample directly as the primary heir would see it, or (initialAdmin) skip
+  // straight to the admin's own read view so the Edit button is visible.
   $effect(() => {
-    if (initialAudience && !chosen && audiences.some((p) => p.id === initialAudience)) {
+    if (chosen) return;
+    if (initialAdmin) { audience = null; chosen = true; return; }
+    if (initialAudience && audiences.some((p) => p.id === initialAudience)) {
       chooseAudience(initialAudience);
     }
   });
 
   async function toggleEdit() {
-    if (readOnly) return;
+    if (readOnly || previewingHeir) return;
     // Stay on the guide being read: 'start' is an alias for "first guide in
     // the CURRENT list", and that list changes between read (published, per
     // audience) and edit (everything, incl. drafts) — without pinning, EDIT
@@ -238,6 +243,14 @@
   let drawerId = $state(null);
   let dryRun = $state(false);
   let dryRunId = $state(null);
+  let showDryRunPicker = $state(false);
+  let showAudiencePicker = $state(false);
+  let showNewMenu = $state(false);
+  // The horizontal (narrow-viewport) nav scrolls (overflow-x: auto), which per
+  // the CSS spec forces overflow-y to auto too — an absolutely-positioned
+  // popover anchored inside it gets clipped. Fixed-position + a rect computed
+  // on open sidesteps that entirely.
+  let newMenuPos = $state({ top: 0, left: 0 });
   let query = $state('');
   let filters = $state({});  // faceted filters per list: { facetKey: [values] }
   let sortBy = $state('name');
@@ -313,6 +326,10 @@
   const gateRest = $derived(audiences.filter((p) => !primaryIds.includes(p.id)));
   // The "who are you?" gate is a reader (heir) step — not shown while editing.
   const showGate = $derived(!chosen && audiences.length && !editing);
+  // Previewing a specific heir's view (not admin, not editing) simulates the
+  // exported reader exactly — no builder-only affordances, so what the owner
+  // sees while checking someone's view is what that heir actually gets.
+  const previewingHeir = $derived(!readOnly && !editing && audience !== null);
   const guides = $derived(editing ? pkg.guides : pkg.guidesFor(audience));
   const navGuides = $derived(guides);
   const groupDefs = $derived(pkg.guideGroups());
@@ -468,6 +485,27 @@
   }
   let focusGroupId = $state(null);
   function addGuideGroup() { focusGroupId = store.addGuideGroup(); }
+  function openNewMenu(e) {
+    const r = e.currentTarget.getBoundingClientRect();
+    newMenuPos = { top: r.bottom + 6, left: r.left };
+    showNewMenu = !showNewMenu;
+  }
+  // Close the "+ New" popover on click-away or Escape — same pattern as the
+  // content editor's "+ Reference" popover.
+  $effect(() => {
+    if (!showNewMenu) return;
+    const onDown = (e) => {
+      const t = e.target instanceof Element ? e.target : null;
+      if (!t || !t.closest('.newwrap')) showNewMenu = false;
+    };
+    const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); showNewMenu = false; } };
+    window.addEventListener('pointerdown', onDown, true);
+    window.addEventListener('keydown', onKey, true);
+    return () => {
+      window.removeEventListener('pointerdown', onDown, true);
+      window.removeEventListener('keydown', onKey, true);
+    };
+  });
   function autofocusGroup(node, gid) {
     const tryFocus = (g) => { if (g === focusGroupId) { node.focus(); node.select?.(); focusGroupId = null; } };
     tryFocus(gid);
@@ -570,6 +608,13 @@
   const fileIds = $derived(fileResults.map((a) => a.id));
   const planOwnerName = $derived(owner?.name || 'the owner');
   const adminLabel = $derived(`Admin${owner?.nickname ? ` (${owner.nickname})` : ''}`);
+  // The "Reading as" indicator has little room, so a person with no nickname
+  // shows just their first name there rather than the full "Eleanor Price".
+  function readingAsName(id) {
+    const p = pkg.entity(id)?.obj;
+    if (!p) return pkg.name(id);
+    return p.nickname || (p.name || '').split(' ')[0] || pkg.name(id);
+  }
   // The plan's own title (set in Settings) leads; fall back to the owner's name.
   const planTitle = $derived(pkg.meta.title?.trim() || `Inheritance plan of ${planOwnerName}`);
   function openEntity(id) {
@@ -602,6 +647,18 @@
     drawerId = null;
     window.scrollTo({ top: 0 });
   }
+  function openAudiencePicker() {
+    if (editing) return;
+    showAudiencePicker = true;
+  }
+  function pickAudience(personId) {
+    showAudiencePicker = false;
+    switchAudience(personId);
+  }
+  function pickAudienceAdmin() {
+    showAudiencePicker = false;
+    switchAudience('__all');
+  }
   function startDryRun(personId = null) {
     if (readOnly) return;
     const id = personId || audience || primaryIds[0] || audiences[0]?.id || null;
@@ -625,12 +682,19 @@
       return !(check.person_ids || []).length && !(check.role_ids || []).length;
     });
   }
-  // A dry run only makes sense when the person it would target actually has
-  // questions/tasks to walk through — same person pick as startDryRun.
-  const dryRunTaskCount = $derived.by(() => {
-    const target = audience || primaryIds[0] || audiences[0]?.id || null;
-    return applicableReadinessChecks(target).length;
-  });
+  function openDryRunPicker() {
+    if (readOnly || editing || dryRun) return;
+    showDryRunPicker = true;
+  }
+  function pickDryRunPerson(personId) {
+    showDryRunPicker = false;
+    startDryRun(personId);
+  }
+  // A dry run only makes sense for people who actually have questions/tasks to
+  // walk through — offered as a pick-a-person list, independent of "Reading as".
+  const dryRunPrimary = $derived(gatePrimary.filter((p) => applicableReadinessChecks(p.id).length > 0));
+  const dryRunRest = $derived(gateRest.filter((p) => applicableReadinessChecks(p.id).length > 0));
+  const anyDryRunPeople = $derived(dryRunPrimary.length > 0 || dryRunRest.length > 0);
   function cancelDryRun() {
     if (dryRunId) store.deleteReadinessRun(dryRunId);
     dryRun = false;
@@ -750,7 +814,7 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<div class="shell" class:with-actions={!readOnly} style="--reading-font: {readingFont};">
+<div class="shell with-actions" style="--reading-font: {readingFont};">
   {#if editing}
     <StalenessBanner {store} onReview={() => go('readiness')} />
     <ExportSizeBanner {store} />
@@ -759,7 +823,8 @@
     <div class="bar">
       <div class="bar-plan">
         {#if readOnly}
-          <div class="brand row"><img class="logo" src={logo} alt="" aria-hidden="true" /><span class="plan-title" title={planTitle}>{planTitle}</span></div>
+          <span class="brand-home" aria-hidden="true"><img class="logo" src={logo} alt="" aria-hidden="true" /></span>
+          <span class="plan-title" title={planTitle}>{planTitle}</span>
         {:else}
           <button class="brand-home" onclick={onClose} title="Back to start" aria-label="Back to start"><img class="logo" src={logo} alt="" aria-hidden="true" /></button>
           {#if editing && store.data?.package}
@@ -774,45 +839,8 @@
       {/if}
       <div class="bar-actions">
         {#if editing && !showGate}<span class="sr-only" aria-live="polite">{store.savedAt ? 'Auto-saved to this device' : 'Saving…'}</span>{/if}
-        {#if chosen && !editing}
-          <div class="reader-tools">
-            <label class="sel-wrap">
-              <span class="tiny muted">Reading as</span>
-              <select class="sel" value={audience ?? '__all'} onchange={(e) => switchAudience(e.target.value)}>
-                <option value="__all">{adminLabel}</option>
-                {#each audiences as p}<option value={p.id}>{pkg.name(p.id)}</option>{/each}
-              </select>
-            </label>
-            {#if !readOnly}
-            <button class="iconbtn" class:on={dryRun} disabled={!dryRun && !dryRunTaskCount} data-tip-pos="left" data-tip={dryRun ? 'Dry run in progress' : (dryRunTaskCount ? 'Start dry run' : 'No questions or tasks for this person yet')} aria-label={dryRun ? 'Dry run in progress' : 'Start dry run'} onclick={() => dryRun ? null : startDryRun()}>
-                {#if dryRun}
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
-                {:else}
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
-                {/if}
-              </button>
-            {/if}
-          </div>
-        {/if}
-        {#if readOnly}
-          <button class="iconbtn" title={appliedDark ? 'Light mode' : 'Dark mode'} aria-label="Toggle dark mode" onclick={toggleTheme}>
-            {#if appliedDark}
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="5" />
-                <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
-                <line x1="4.2" y1="4.2" x2="5.6" y2="5.6" /><line x1="18.4" y1="18.4" x2="19.8" y2="19.8" />
-                <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
-                <line x1="4.2" y1="19.8" x2="5.6" y2="18.4" /><line x1="18.4" y1="5.6" x2="19.8" y2="4.2" />
-              </svg>
-            {:else}
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-              </svg>
-            {/if}
-          </button>
-        {/if}
         {#if !showGate}
-          {#if !readOnly && store.draftProtected}
+          {#if !readOnly && !previewingHeir && store.draftProtected}
             <button class="iconbtn" data-tip-pos="left" data-tip="Lock the draft and return to start" aria-label="Lock draft" onclick={lockDraft}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -824,57 +852,95 @@
               {#each pkg.languages as l}<option value={l}>{l.toUpperCase()}</option>{/each}
             </select>
           {/if}
-          {#if readOnly}
-            <!-- The heir's file has no action rail — print stays up here. -->
-            <button class="iconbtn" data-tip-pos="left" data-tip="Print" aria-label="Print" onclick={() => window.print()}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 6 2 18 2 18 9" />
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                <rect x="6" y="14" width="12" height="8" />
-              </svg>
-            </button>
-          {/if}
         {/if}
       </div>
     </div>
   </header>
 
-  {#if showGate}
-    <AudienceGate {pkg} {owner} primary={gatePrimary} rest={gateRest} {adminLabel}
-      onChoose={chooseAudience} onAdmin={() => { audience = null; chosen = true; }} />
-  {:else}
-    <div class="body">
-      {#if !readOnly}
-        <!-- Action rail: the app's verbs, Productboard-style — icons with
-             tiny labels, Settings pinned to the bottom. -->
-        <aside class="actionbar no-print">
-          <div class="actionbar-in">
-            <button class="abtn" class:on={editing} class:plan-done={editing} class:plan-edit={!editing} onclick={toggleEdit} aria-label={editing ? 'Done editing' : 'Edit'}>
-              {#if editing}
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" /><circle cx="12" cy="12" r="3" /></svg>
-                <span>Read</span>
-              {:else}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-                <span>Edit</span>
-              {/if}
-            </button>
-            <button class="abtn" onclick={() => (showExport = true)} aria-label="Export">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-              <span>Export</span>
-            </button>
-            <!-- Printing an edit surface produces a broken page — print reads the view. -->
-            <button class="abtn" disabled={editing} data-tip={editing ? 'Switch to view mode to print' : undefined} data-tip-pos="right" onclick={() => window.print()} aria-label="Print">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
-              <span>Print</span>
-            </button>
-            <span class="aspacer"></span>
-            <button class="abtn" onclick={openSettings} aria-label="Settings">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" /><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6l-.08.1a2 2 0 0 1-3.84 0L10 20a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1l-.1-.08a2 2 0 0 1 0-3.84L4 10a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6l.08-.1a2 2 0 0 1 3.84 0L14 4a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.08.36.28.7.6 1l.1.08a2 2 0 0 1 0 3.84L20 14c-.32.3-.52.64-.6 1Z" /></svg>
-              <span>Settings</span>
-            </button>
-          </div>
-        </aside>
-      {/if}
+  <div class="body">
+    <!-- Action rail: the app's verbs, Productboard-style — icons with tiny
+         labels. Present in both modes (editor + heir reader) so the reader
+         reads as the same app; the mode toggle or Settings is pinned to the
+         bottom. Shown even on the "who's reading?" gate, so the rail never
+         pops in/out between screens. -->
+    <aside class="actionbar no-print">
+      <div class="actionbar-in">
+        {#if chosen}
+          <!-- Lets whoever's holding the plan switch whose view they're seeing
+               — not gated by readOnly, since a shared export can still hold
+               multiple heirs who each want to check the others' view. -->
+          <button class="abtn" disabled={editing} data-tip={editing ? 'Switch to view mode to change this' : undefined} data-tip-pos="right" onclick={openAudiencePicker} aria-label="Reading as">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11h.01" /><path d="M14 6h.01" /><path d="M18 6h.01" /><path d="M6.5 13.1h.01" /><path d="M22 5c0 9-4 12-6 12s-6-3-6-12c0-2 2-3 6-3s6 1 6 3" /><path d="M17.4 9.9c-.8.8-2 .8-2.8 0" /><path d="M10.1 7.1C9 7.2 7.7 7.7 6 8.6c-3.5 2-4.7 3.9-3.7 5.6 4.5 7.8 9.5 8.4 11.2 7.4.9-.5 1.9-2.1 1.9-4.7" /><path d="M9.1 16.5c.3-1.1 1.4-1.7 2.4-1.4" /></svg>
+            {#if audience}
+              <span class="who">{readingAsName(audience)}</span>
+            {:else}
+              <span class="tag">Reading as</span>
+            {/if}
+          </button>
+        {/if}
+        {#if !readOnly && !previewingHeir}
+          <button class="abtn" class:on={editing} class:plan-done={editing} class:plan-edit={!editing} onclick={toggleEdit} aria-label={editing ? 'Done editing' : 'Edit'} data-tip={editing ? 'Switch to view mode — Ctrl+E' : 'Switch to edit mode — Ctrl+E'} data-tip-pos="right">
+            {#if editing}
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" /><circle cx="12" cy="12" r="3" /></svg>
+              <span>Read</span>
+            {:else}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+              <span>Edit</span>
+            {/if}
+          </button>
+          <button class="abtn" onclick={() => (showExport = true)} aria-label="Export">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+            <span>Export</span>
+          </button>
+        {/if}
+        <!-- Printing an edit surface produces a broken page — print reads the
+             view; nothing to print before a person is chosen either. -->
+        <button class="abtn" disabled={showGate || editing || noGuidesForAudience} data-tip={showGate ? "Choose who's reading first" : (editing ? 'Switch to view mode to print' : (noGuidesForAudience ? 'No guides for this person — nothing to print' : undefined))} data-tip-pos="right" onclick={() => window.print()} aria-label="Print">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
+          <span>Print</span>
+        </button>
+        {#if !readOnly && !previewingHeir}
+          <!-- A dry run walks a chosen person through their readiness checklist
+               as if they were reading for real — needs view mode and someone
+               to pick, and only makes sense once questions/tasks exist. -->
+          <button class="abtn" disabled={editing || dryRun || !anyDryRunPeople} data-tip={editing ? 'Switch to view mode for a dry run' : (dryRun ? 'Dry run in progress' : (!anyDryRunPeople ? 'No questions or tasks set up yet' : undefined))} data-tip-pos="right" onclick={openDryRunPicker} aria-label="Dry run">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M9 14l2 2 4-4" /></svg>
+            <span>Dry run</span>
+          </button>
+        {/if}
+        <span class="aspacer"></span>
+        {#if readOnly || previewingHeir}
+          <button class="abtn" onclick={toggleTheme} aria-label="Toggle dark mode">
+            {#if appliedDark}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+              <span>Light</span>
+            {:else}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.2" y1="4.2" x2="5.6" y2="5.6" /><line x1="18.4" y1="18.4" x2="19.8" y2="19.8" />
+                <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.2" y1="19.8" x2="5.6" y2="18.4" /><line x1="18.4" y1="5.6" x2="19.8" y2="4.2" />
+              </svg>
+              <span>Dark</span>
+            {/if}
+          </button>
+        {:else}
+          <button class="abtn" onclick={openSettings} aria-label="Settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" /><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6l-.08.1a2 2 0 0 1-3.84 0L10 20a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1l-.1-.08a2 2 0 0 1 0-3.84L4 10a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6l.08-.1a2 2 0 0 1 3.84 0L14 4a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.08.36.28.7.6 1l.1.08a2 2 0 0 1 0 3.84L20 14c-.32.3-.52.64-.6 1Z" /></svg>
+            <span>Settings</span>
+          </button>
+        {/if}
+      </div>
+    </aside>
+    {#if showGate}
+      <div class="gatewrap">
+        <AudienceGate {pkg} {owner} primary={gatePrimary} rest={gateRest} {adminLabel}
+          onChoose={chooseAudience} onAdmin={() => { audience = null; chosen = true; }} />
+      </div>
+    {:else}
       <!-- Navigation rail: a full-height pane that shares its right border
            with the content pane — frames touch, Productboard-style. -->
       <div class="railcol no-print">
@@ -999,16 +1065,35 @@
                block — e.g. after a trailing group. Always present so arming it
                can't reparent/cancel the active drag. -->
           <div class="end-zone" class:armed={!!drag} class:active={dropEnd} ondragover={endOver} ondrop={endDrop} role="presentation"></div>
+          <div class="nav-add-row">
+            <div class="newwrap">
+              <button class="btn btn-small btn-primary" onclick={openNewMenu}>+ New</button>
+              {#if showNewMenu}
+                <div class="newpop" style="top: {newMenuPos.top}px; left: {newMenuPos.left}px;">
+                  <button class="newopt" onclick={() => { showNewMenu = false; addGuide(); }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="15" y2="17" /></svg>
+                    <span class="newopt-main">Guide<span class="newopt-hint">A how-to for one or more people</span></span>
+                  </button>
+                  <button class="newopt" onclick={() => { showNewMenu = false; addGuideGroup(); }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>
+                    <span class="newopt-main">Group<span class="newopt-hint">A folder to organize guides under</span></span>
+                  </button>
+                </div>
+              {/if}
+            </div>
+          </div>
         {/if}
         <!-- The Map (spatial overview) sits on its own, set apart from the
              guides above and the object lists below — Productboard-style. -->
         {#if canSeeMap}
+          <div class="nav-mapband">
+            <button class="navlink navlink-section navlink-map" class:active={view === 'map'} onclick={() => go('map')}>
+              <span class="navico" aria-hidden="true"><Icon kind="map" /></span><span class="navlabel">Map</span>
+            </button>
+          </div>
+        {:else}
           <div class="navsep"></div>
-          <button class="navlink navlink-section navlink-map" class:active={view === 'map'} onclick={() => go('map')}>
-            <span class="navico" aria-hidden="true"><Icon kind="map" /></span><span class="navlabel">Map</span>
-          </button>
         {/if}
-        <div class="navsep"></div>
         <div class="navobjects">
           {#if canSeeReadiness}
             <button class="navlink navlink-section" class:active={view === 'readiness'} onclick={() => go('readiness')}>
@@ -1033,11 +1118,6 @@
             </button>
           {/if}
         </div>
-        {#if editing}
-          <div class="navsep"></div>
-          <button class="navlink navadd" onclick={addGuide}>+ New guide</button>
-          <button class="navlink navadd" onclick={addGuideGroup}>+ New group</button>
-        {/if}
       </nav>
       </div>
 
@@ -1050,7 +1130,7 @@
           {/if}
         {/snippet}
         {#if currentGuide}
-          <GuideView {pkg} guide={currentGuide} {lang} onOpen={openEntity} onTag={openTag} onView={(v) => go(v)} {editing} canEdit={!readOnly} onStartEditing={toggleEdit} onEdit={() => editEntity(currentGuide.id)} onDelete={() => removeEntity(currentGuide.id)} onToggleDraft={() => store.toggleGuideDraft(currentGuide.id)} onContent={(l, v) => store.setGuideContent(currentGuide.id, l, v)} onAddRef={(k, id) => store.addGuideRef(currentGuide.id, k, id)} onUploadMedia={(file) => uploadGuideMedia(currentGuide.id, file)} onTitle={(l, v) => store.setGuideTitle(currentGuide.id, l, v)} focusTitle={focusNewGuideTitle} onTitleFocused={() => (focusNewGuideTitle = false)} />
+          <GuideView {pkg} guide={currentGuide} {lang} onOpen={openEntity} onTag={openTag} onView={(v) => go(v)} {editing} canEdit={!readOnly && !previewingHeir} onStartEditing={toggleEdit} onEdit={() => editEntity(currentGuide.id)} onDelete={() => removeEntity(currentGuide.id)} onToggleDraft={() => store.toggleGuideDraft(currentGuide.id)} onContent={(l, v) => store.setGuideContent(currentGuide.id, l, v)} onAddRef={(k, id) => store.addGuideRef(currentGuide.id, k, id)} onUploadMedia={(file) => uploadGuideMedia(currentGuide.id, file)} onTitle={(l, v) => store.setGuideTitle(currentGuide.id, l, v)} focusTitle={focusNewGuideTitle} onTitleFocused={() => (focusNewGuideTitle = false)} />
         {:else if view === 'start' && editing && pkg.guides.length === 0}
           <div class="card empty-hint">
             <span class="eyebrow">New plan</span>
@@ -1058,12 +1138,21 @@
             <p class="soft small">Use the sections on the left to add <strong>People</strong>, <strong>Locations</strong> (countries, homes, safes…), <strong>Items</strong> (accounts, keys, documents), <strong>Files</strong>, and <strong>Guides</strong>. Everything auto-saves to this device — use <strong>Export</strong> for a copy on disk.</p>
           </div>
 
+        {:else if view === 'start' && noGuidesForAudience}
+          <!-- A person with no guides addressed to them: say so, and point at
+               what they CAN browse — the menu sections still work. -->
+          <div class="card empty-hint">
+            <span class="eyebrow">{pkg.name(audience)}</span>
+            <h3 style="margin-top:6px">No guides for you yet.</h3>
+            <p class="soft small">This plan has no guides addressed to you — but you can still browse everything shared with you from the menu on the left{#if canSeeMap}, starting with the <strong>Map</strong>{/if}.</p>
+          </div>
+
         {:else if view === 'access'}
           {@const steps = pathFor(audience)}
           <div class="access card">
             <span class="eyebrow">Your access path</span>
             <h1 class="access-h">Start here, {pkg.name(audience)}.</h1>
-            <p class="soft">Take your time — there is no rush. When you're ready, follow these steps in order. If you're unsure at any point, stop and ask the person named in this plan.</p>
+            <p class="soft">Take your time. When you're ready, follow these steps in order. If you're unsure at any point, stop and ask the person named in this plan.</p>
             <ol class="access-steps">
               {#each steps as st, i (st.id || i)}
                 <li class="access-step">
@@ -1350,8 +1439,8 @@
           </div>
         {/if}
       </main>
-    </div>
-  {/if}
+    {/if}
+  </div>
 
   {#if editing}<input bind:this={fileInput} type="file" multiple hidden onchange={onFile} />{/if}
 
@@ -1361,6 +1450,14 @@
 
   {#if dryRun && dryRunId}
     <DryRunPanel {pkg} {store} runId={dryRunId} personId={audience} {adminLabel} onSubmit={submitDryRun} onCancel={cancelDryRun} />
+  {/if}
+
+  {#if showDryRunPicker}
+    <DryRunPicker {pkg} primary={dryRunPrimary} rest={dryRunRest} onPick={pickDryRunPerson} onCancel={() => (showDryRunPicker = false)} />
+  {/if}
+
+  {#if showAudiencePicker}
+    <AudiencePicker {pkg} primary={gatePrimary} rest={gateRest} {adminLabel} onPick={pickAudience} onAdmin={pickAudienceAdmin} onCancel={() => (showAudiencePicker = false)} />
   {/if}
 
   {#if showExport}
@@ -1379,27 +1476,25 @@
     border-bottom: 1px solid var(--rule-soft);
   }
   .bar {
-    /* Full-bleed, like the panes below. First column: 16px pad + 270px + 32px
-       gap = 318px, so the plan title starts exactly where the content pane's
-       inner edge does (290px rail + 28px pane padding). With the action rail,
-       everything shifts 65px right. */
+    /* Full-bleed, like the panes below. First column sized so the search box
+       opens exactly at the nav rail's right border (16px pad + 242px + 32px
+       gap = 290px). */
     padding: 10px 20px 10px 16px;
     display: grid;
-    grid-template-columns: 270px minmax(240px, 340px) minmax(0, 1fr);
+    grid-template-columns: 242px minmax(240px, 340px) minmax(0, 1fr);
     gap: 32px;
     align-items: center;
   }
-  /* With the rail: the logo owns the rail's 65px, so the plan title starts
-     exactly at the rail's right edge; the search column still starts at the
-     content pane's inner edge (65 + 290 + 2 borders + 28 = 385 = 353 + 32). */
-  .with-actions .bar { grid-template-columns: 353px minmax(240px, 340px) minmax(0, 1fr); padding-left: 0; }
+  /* With the rail: the logo owns the rail's 64px, the plan title starts at
+     the rail's right edge, and the search box at the guides menu's right
+     border (0 pad + 322px + 32px gap = 354px = 64 rail + 290 menu). */
+  .with-actions .bar { grid-template-columns: 322px minmax(240px, 340px) minmax(0, 1fr); padding-left: 0; }
   .with-actions .bar-plan { gap: 14px; }
   .with-actions .brand-home { width: 65px; justify-content: center; margin-right: -14px; }
   .bar-plan { min-width: 0; display: flex; align-items: center; gap: 14px; }
   .bar-actions { min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
-  .brand { font-weight: 500; gap: 10px; }
   .brand-home { flex: none; display: inline-flex; padding: 2px; border-radius: 6px; }
-  .brand-home:hover { background: var(--accent-wash); }
+  button.brand-home:hover { background: var(--accent-wash); }
   .logo { width: 24px; height: 24px; display: block; }
   .plan-title {
     min-width: 0; max-width: 44vw;
@@ -1414,8 +1509,6 @@
   }
   .plan-title-input:hover { border-color: var(--rule); }
   .plan-title-input:focus { outline: none; border-color: var(--accent); background: var(--paper); }
-  .reader-tools { display: inline-flex; align-items: center; gap: 8px; }
-  .sel-wrap { display: inline-flex; align-items: center; gap: 8px; }
 
   /* Global search box + dropdown */
   .gs-count { margin-bottom: 12px; }
@@ -1449,6 +1542,7 @@
     font: inherit; font-size: 13px; color: var(--ink); cursor: pointer;
   }
   .sel:hover { border-color: var(--accent-deep); }
+  .sel:disabled { opacity: 0.5; cursor: default; border-color: var(--rule); }
   .lang { font-weight: 500; }
   /* .iconbtn is global (app.css) — the bare pattern from DESIGN.md. */
 
@@ -1462,11 +1556,19 @@
     min-height: calc(100vh - var(--topbar-h));
   }
   .with-actions .body { grid-template-columns: 64px 290px minmax(0, 1fr); }
+  /* The "who's reading?" gate takes the nav+content columns together — one
+     flush paper pane, same rhythm as .content once a person is chosen. */
+  .gatewrap { grid-column: 2 / -1; min-width: 0; display: flex; flex-direction: column; background: var(--paper); }
   .railcol { background: var(--paper); border-right: 1px solid var(--rule-soft); }
   /* The action rail: the leftmost pane, verbs only. */
   .actionbar { background: var(--paper); border-right: 1px solid var(--rule-soft); }
+  /* z-index (not just position: sticky) — .nav in the next column over is
+     also sticky, and comes later in the DOM, so at the same z-index:auto it
+     paints above this rail's tooltips (data-tip-pos="right" reaches into the
+     .nav column) regardless of the tooltip's own z-index. This ranks the
+     whole rail's sticky context above .nav's. */
   .actionbar-in {
-    position: sticky; top: var(--topbar-h);
+    position: sticky; top: var(--topbar-h); z-index: 2;
     height: calc(100vh - var(--topbar-h));
     display: flex; flex-direction: column; align-items: stretch; gap: 4px;
     padding: 10px 6px 14px;
@@ -1479,6 +1581,9 @@
     transition: background .12s, color .12s;
   }
   .abtn span { font-family: var(--mono, inherit); font-size: 9.5px; letter-spacing: 0.04em; }
+  /* The chosen heir's name, unlike the other rail labels, is a proper name —
+     set it in the sans voice so it doesn't read as a machine-generated tag. */
+  .abtn span.who { font-family: var(--sans); font-size: 10.5px; font-weight: 500; color: var(--accent-deep); max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .abtn:hover:not(:disabled) { background: color-mix(in oklch, var(--ink) 5%, var(--paper)); color: var(--ink); }
   .abtn.on { background: var(--accent-wash); color: var(--accent-deep); box-shadow: inset 2px 0 0 var(--accent-deep); }
   /* Dim contents only — whole-button opacity would fade the tooltip too. */
@@ -1597,6 +1702,14 @@
   .navgroup:hover .navgroup-del, .navgroup-del:focus-visible { opacity: 1; }
   .navgroup-del:hover { color: var(--warn); border-color: var(--rule); background: var(--paper); }
   .navsep { height: 1px; background: var(--rule-soft); margin: 8px 0; }
+  /* The Map gets its own band: bounded by rules, faintly washed — clearly
+     apart from the guides above and the object lists below. */
+  .nav-mapband {
+    display: flex; flex-direction: column;
+    margin: 10px 0; padding: 5px 0;
+    border-top: 1px solid var(--rule-soft); border-bottom: 1px solid var(--rule-soft);
+    background: color-mix(in oklch, var(--accent-wash) 45%, transparent);
+  }
   .map-row { position: relative; flex: 1; display: flex; flex-direction: column; }
   .map-col { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 22px; }
   .map-side { position: absolute; top: 0; right: -52px; display: flex; flex-direction: column; gap: 8px; }
@@ -1672,11 +1785,30 @@
     color: var(--ink-mute);
     background: var(--accent-wash);
   }
-  .navadd { color: var(--accent-deep); }
+  /* Adding a guide/group is a real action, not navigation — give it the same
+     small primary-blue button used for "+ New" everywhere else (People, Roles,
+     Locations, Items, Files), not a nav-link. */
+  .nav-add-row { display: flex; flex-direction: row; align-items: center; gap: 8px; padding: 10px 16px 4px; }
+  .nav-add-row .btn { width: auto; }
+  .newwrap { position: relative; }
+  /* Same popover recipe as the content editor's "+ Reference" — .newpop, but
+     position: fixed (not absolute + relative wrapper): the horizontal
+     (narrow-viewport) nav scrolls, and an absolutely-positioned popover
+     anchored inside a scrolling ancestor gets clipped by it. */
+  .newpop {
+    position: fixed; z-index: var(--z-popover);
+    width: 230px; background: var(--paper); border: 1px solid var(--rule);
+    border-radius: 0; box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18);
+    padding: 6px; display: flex; flex-direction: column; gap: 1px;
+  }
+  .newopt { display: flex; align-items: flex-start; gap: 9px; padding: 9px 10px; text-align: left; border-radius: 0; }
+  .newopt:hover { background: var(--accent-wash); }
+  .newopt svg { flex: none; color: var(--ink-soft); margin-top: 1px; }
+  .newopt-main { display: flex; flex-direction: column; font-size: 13.5px; color: var(--ink); }
+  .newopt-hint { font-size: 11.5px; color: var(--ink-mute); font-weight: 400; margin-top: 1px; }
   /* Save state is announced to assistive tech but never shown on screen. */
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .empty-hint { border-left: 2px solid var(--accent); }
-  .empty-results { padding: 14px 16px; color: var(--ink-mute); font-size: 14px; }
   .bulk-tag { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0 4px; padding: 10px 12px; background: var(--accent-wash); border-radius: 9px; }
   .bulk-input { font: inherit; font-size: 14px; border: 1px solid var(--rule); border-radius: 8px; padding: 6px 10px; background: var(--paper); color: var(--ink); }
   .bulk-input:focus { outline: none; border-color: var(--accent-deep); }
@@ -1710,6 +1842,7 @@
        without it the horizontal nav's intrinsic width would blow the column
        past the viewport. */
     .body, .with-actions .body { grid-template-columns: minmax(0, 1fr); gap: 0; min-height: 0; }
+    .gatewrap { grid-column: 1 / -1; }
     .railcol { min-width: 0; }
     /* The action rail folds to a flush strip above the nav strip. */
     .actionbar { border-right: 0; border-bottom: 1px solid var(--rule-soft); }
@@ -1718,7 +1851,11 @@
     /* The invisible (opacity-0) tooltip bubble would poke past the right
        viewport edge in the horizontal strip — labels are visible here anyway. */
     .actionbar :global([data-tip])::after { display: none; }
-    .bar, .with-actions .bar { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    /* Stacked single-column bar: each row now owns the full width, so the
+       desktop trick of zeroing the left pad (to let the rail-width logo carry
+       it) no longer applies — restore a normal, symmetric gutter. */
+    .bar, .with-actions .bar { grid-template-columns: minmax(0, 1fr); gap: 8px; padding-left: 16px; }
+    .with-actions .brand-home { width: auto; justify-content: flex-start; margin-right: 0; }
     .bar-actions { justify-content: flex-start; flex-wrap: wrap; gap: 8px; }
     /* The rail folds to a horizontal strip under the top bar — still flush. */
     .railcol { border-right: 0; border-bottom: 1px solid var(--rule-soft); }
@@ -1730,12 +1867,17 @@
     .navgroup-title { padding: 9px 0 9px 8px; white-space: nowrap; }
     .navgroup-items { flex-direction: row; gap: 6px; }
     .navsep { display: none; }
+    .nav-add-row { flex: none; padding: 0; }
+    .nav-add-row .btn { white-space: nowrap; }
+    .nav-mapband { flex: none; flex-direction: row; margin: 0; padding: 0; border: 0; background: transparent; }
     .navlink { white-space: nowrap; }
     .navlink-child { padding-left: 12px; }
     .nav.editing > .navrow { padding-left: 0; } /* horizontal nav: no insets */
     .nav.editing .navgroup-items .navrow { padding-left: 16px; }
     .shell { --reader-section-gap: 12px; }
-    .plan-title, .plan-title-input { max-width: 38vw; width: auto; }
-    .sel-wrap .tiny { display: none; }
+    /* Each bar item is its own full-width row here (single-column grid), so
+       the title no longer shares a row with search/actions — drop the
+       desktop 38vw cap that was sized for the three-across layout. */
+    .plan-title, .plan-title-input { max-width: none; width: auto; }
   }
 </style>

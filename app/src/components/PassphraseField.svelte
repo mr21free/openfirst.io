@@ -6,8 +6,10 @@
     two always look and behave the same.
   */
   import { generatePassphrase, estimateBits, strength } from '../lib/passphrase.js';
+  import Callout from './Callout.svelte';
+  import InfoHint from './InfoHint.svelte';
 
-  let { value = $bindable(''), confirmOk = $bindable(true), placeholder = 'Password or passphrase', onEnter = null, autofocus = false } = $props();
+  let { value = $bindable(''), confirmOk = $bindable(true), placeholder = 'Password or passphrase', onEnter = null, autofocus = false, strengthHint = '' } = $props();
 
   let show = $state(false);
   let copied = $state(false);
@@ -71,7 +73,10 @@
   <div class="pw-bar"><span class="pw-fill {str.tone}" style="width:{value ? barW : 0}%"></span></div>
   <div class="pw-meta-row">
     <span class="pw-strength {str.tone}">{value ? str.label : ''}</span>
-    <button class="btn-link pw-gen-link" type="button" onclick={suggest}>Suggest a passphrase</button>
+    <span class="pw-gen-wrap">
+      <button class="btn-link pw-gen-link" type="button" onclick={suggest}>Suggest a passphrase</button>
+      {#if strengthHint}<InfoHint text={strengthHint} label="About passphrase strength" pos="left" />{/if}
+    </span>
   </div>
 
   {#if needsConfirm}
@@ -83,7 +88,7 @@
       autocomplete="new-password"
       onkeydown={(e) => e.key === 'Enter' && onEnter?.()}
     />
-    {#if mismatch}<p class="pw-mismatch">The two passwords don't match yet.</p>{/if}
+    {#if mismatch}<Callout text="The two passwords don't match yet." />{/if}
   {/if}
 </div>
 
@@ -112,6 +117,6 @@
   .pw-strength { font-size: 11px; color: var(--ink-mute); }
   .pw-strength.weak { color: var(--warn); }
   .pw-strength.vstrong { color: oklch(0.55 0.14 150); }
+  .pw-gen-wrap { display: inline-flex; align-items: center; }
   .pw-gen-link { font-size: 11px; }
-  .pw-mismatch { margin: -4px 0 0; font-size: 12px; color: var(--warn); }
 </style>

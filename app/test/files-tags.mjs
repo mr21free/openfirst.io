@@ -43,7 +43,9 @@ try {
   ok('tag filter shows the tagged files', await page.evaluate(() => document.querySelectorAll('main .ulist .ulist-row').length === 2 && document.querySelector('.filterbtn.on') != null && document.querySelector('.filterpills .fpill') != null));
 
   // add a guide and reference the tag, then click it in read mode
-  await click('+ New guide'); await pause();
+  await click('+ New');
+  await page.evaluate(() => [...document.querySelectorAll('.newpop button')].find((b) => b.textContent.includes('Guide'))?.click());
+  await pause();
   await page.waitForFunction(() => !!document.querySelector('main .ce .tb-ref'), { timeout: 4000 });
   await page.click('main .ce .ce-edit'); await page.keyboard.type('Docs: ');
   await page.evaluate(() => document.querySelector('main .ce .tb-ref')?.click()); await pause();

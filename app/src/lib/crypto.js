@@ -14,8 +14,6 @@ import { ENCRYPTED_FORMAT, ENCRYPTED_FORMATS } from './format.js';
 
 const ENC = new TextEncoder();
 
-// Minimum password length we recommend / the Builder will enforce.
-export const MIN_PASSWORD_LENGTH = 12;
 // OWASP 2023 guidance for PBKDF2-HMAC-SHA256. Stored in the envelope, so it can
 // be raised later without breaking older files.
 export const DEFAULT_ITERATIONS = 600000;

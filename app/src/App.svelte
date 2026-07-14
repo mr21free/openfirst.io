@@ -105,11 +105,13 @@ import { templateSeed } from './lib/templates.js';
     }
     if (store.pkg) return; // editing/reading — don't check
     if (!booted && bootMode === 'demo') {
-      // /demo boots straight into the sample plan, read as the primary heir.
+      // /demo boots straight into the sample plan, read-only, as the admin —
+      // so the Edit button is visible and a builder can discover it (and
+      // Ctrl+E) instead of landing on a heir's locked-down view with no way out.
       booted = true;
+      demoAdmin = true;
       (async () => {
         const loaded = await loadSample();
-        demoAudience = loaded.data?.package?.primary_person_ids?.[0] || null;
         store.load(loaded);
         window.scrollTo({ top: 0 });
       })();
@@ -165,7 +167,7 @@ import { templateSeed } from './lib/templates.js';
     gateEnvelope = null;
   }
 
-  let demoAudience = $state(null);
+  let demoAdmin = $state(false);
   let templateView = $state(null); // guide id a /build/?template= link opens on
 
   // ?template= has done its job once the user starts editing the seeded plan —
@@ -181,7 +183,7 @@ import { templateSeed } from './lib/templates.js';
   function close() {
     store.reset();
     forgetCurrentPlan();
-    demoAudience = null;
+    demoAdmin = false;
     // Closing a plan always lands on the launcher — and the URL says so.
     if (onHttp && !readerMode && location.pathname !== '/open/') {
       history.replaceState(null, '', '/open/');
@@ -323,7 +325,7 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
     <UnlockGate hint={gateEnvelope.hint} onUnlock={unlockEmbedded} />
   {/if}
 {:else if store.pkg}
-  <Reader {store} onClose={close} initialAudience={demoAudience} initialView={templateView} />
+  <Reader {store} onClose={close} initialAdmin={demoAdmin} initialView={templateView} />
 {:else if draftGate}
   <UnlockGate hint="Your draft passphrase (not the export password)." onUnlock={unlockDraft} onCancel={() => { draftGate = null; refreshDrafts(); }} />
 {:else}

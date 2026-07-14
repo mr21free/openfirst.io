@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
-import { defineConfig } from 'vite';
+import { defineConfig, build as viteBuild } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 
@@ -135,11 +135,61 @@ function localSiteRoutes() {
   };
 }
 
+// The self-contained heir export (start-here.html) needs a fully inlined page
+// to clone — the dev server serves the app over the network (/@vite/client,
+// /src/main.js), which can't stand alone as a file. Rather than send the owner
+// off to run `npm run build` by hand, run a real (in-memory) production build
+// on demand and serve it at this URL; export.js fetches it when it detects
+// dev mode. Cached until a source file changes, so repeat exports are instant.
+function readerTemplateDevServer() {
+  const ROUTE = '/__reader-template.html';
+  let cache = null;
+  let building = null;
+  return {
+    name: 'reader-template-dev-server',
+    apply: 'serve',
+    configureServer(server) {
+      const invalidate = (file) => {
+        if (file.includes('/dist/') || file.includes('/node_modules/')) return;
+        cache = null;
+      };
+      server.watcher.on('add', invalidate);
+      server.watcher.on('change', invalidate);
+      server.watcher.on('unlink', invalidate);
+
+      server.middlewares.use(async (req, res, next) => {
+        if ((req.url || '').split('?')[0] !== ROUTE) return next();
+        try {
+          if (!cache) {
+            building ??= viteBuild({
+              configFile: fileURLToPath(new URL('./vite.config.js', import.meta.url)),
+              logLevel: 'silent',
+              build: { write: false }
+            }).finally(() => { building = null; });
+            const result = await building;
+            const bundle = Array.isArray(result) ? result[0] : result;
+            const chunk = bundle.output.find((o) => o.fileName === 'index.html');
+            cache = chunk?.source;
+          }
+          if (!cache) throw new Error('production build produced no index.html');
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          res.end(cache);
+        } catch (err) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+          res.end(`Reader template build failed: ${err?.message || err}`);
+        }
+      });
+    }
+  };
+}
+
 // Goal: one self-contained index.html that runs offline from disk (file://),
 // with no network calls, no CDN, no fonts-from-web. Everything (JS, CSS, fonts)
 // is inlined so the built file is the durable, "outlives-the-company" artifact.
 export default defineConfig({
-  plugins: [localSiteRoutes(), svelte(), viteSingleFile(), injectCspOnBuild()],
+  plugins: [localSiteRoutes(), svelte(), viteSingleFile(), injectCspOnBuild(), readerTemplateDevServer()],
   build: {
     target: 'es2020',
     // Inline every asset (incl. woff2 fonts) as base64 so nothing is fetched.

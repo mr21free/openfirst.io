@@ -4,7 +4,7 @@
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { mkdtempSync, existsSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -30,10 +30,17 @@ try {
   await page.waitForFunction(() => !!document.querySelector('.plan-edit'), { timeout: 8000 });
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => (b.getAttribute('aria-label') || '') === 'Export')?.click());
   await page.waitForFunction(() => document.body.innerText.includes('Save a copy to disk'), { timeout: 5000 });
-  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].find((b) => /create reader/i.test(b.textContent))?.click());
-  const out = resolve(dir, 'start-here.html');
-  let waited = 0; while (!existsSync(out) && waited < 8000) { await pause(150); waited += 150; }
-  ok('start-here.html produced', existsSync(out));
+  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].find((b) => b.textContent.trim() === 'Export')?.click());
+  // Filename now carries the plan title + date (like the .zip/.encrypted.json
+  // exports), so match by suffix rather than the old exact name.
+  const findReader = (d) => readdirSync(d).find((f) => f.endsWith('_start-here.html'));
+  let waited = 0; while (!findReader(dir) && waited < 8000) { await pause(150); waited += 150; }
+  ok('start-here.html produced', !!findReader(dir));
+  const out = resolve(dir, findReader(dir));
+
+  // A successful export hands off to the review-reminder follow-up dialog — dismiss it
+  // so the export dialog resets cleanly for the next export on this same page.
+  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].find((b) => b.textContent.trim() === 'No thanks')?.click());
 
   // Recover: open the reader in a fresh builder via "Open existing plan".
   const p2 = await browser.newPage();
@@ -76,10 +83,10 @@ try {
     const inputs = [...document.querySelectorAll('[role="dialog"] input[type=password]')];
     if (inputs[1]) { const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; setter.call(inputs[1], pw); inputs[1].dispatchEvent(new Event('input', { bubbles: true })); }
   }, PW);
-  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].find((b) => /create reader/i.test(b.textContent))?.click());
-  const enc = resolve(dir2, 'start-here.html');
-  let w2 = 0; while (!existsSync(enc) && w2 < 8000) { await pause(150); w2 += 150; }
-  ok('encrypted start-here.html produced', existsSync(enc));
+  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].find((b) => b.textContent.trim() === 'Export')?.click());
+  let w2 = 0; while (!findReader(dir2) && w2 < 8000) { await pause(150); w2 += 150; }
+  ok('encrypted start-here.html produced', !!findReader(dir2));
+  const enc = resolve(dir2, findReader(dir2));
 
   const p4 = await browser.newPage();
   await p4.goto(FILE, { waitUntil: 'load' });
@@ -104,7 +111,7 @@ try {
   const inp3 = await p3.$('input[type=file]:not([webkitdirectory])');
   await inp3.uploadFile(junk);
   await pause(600);
-  ok('non-reader .html shows a friendly error', await p3.evaluate(() => /isn.t an OpenFirst reader/i.test(document.querySelector('.error')?.textContent || '')));
+  ok('non-reader .html shows a friendly error', await p3.evaluate(() => /isn.t an OpenFirst reader/i.test(document.querySelector('.error-callout')?.textContent || '')));
 } catch (e) { ok('flow threw: ' + e.message, false); }
 finally { await browser.close(); rmSync(dir, { recursive: true, force: true }); }
 

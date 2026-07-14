@@ -33,7 +33,12 @@ const get = (ics, key) => ics.split(/\r\n/).find((l) => l.startsWith(key + ':'))
   const expectByday = (ord >= 5 ? '-1' : String(ord)) + 'SA';
   ok('RRULE recurs every 3 months', rrule.includes('FREQ=MONTHLY') && rrule.includes('INTERVAL=3'));
   ok('RRULE pins the weekday via BYDAY', rrule.includes('BYDAY=' + expectByday));
-  ok('summary + description present', /SUMMARY:Review my OpenFirst plan/.test(ics) && ics.includes('DESCRIPTION:'));
+  ok('summary weaves in the plan title (no "my" before it)', /SUMMARY:Review My plan/.test(ics) && ics.includes('DESCRIPTION:'));
+  ok('carries the brand + site as location and URL', ics.includes('LOCATION:https://openfirst.io/') && ics.includes('URL:https://openfirst.io/'));
+  // Long lines get RFC 5545 folded ("\r\n " continuations) — unfold before
+  // substring checks so a fold landing mid-phrase doesn't false-fail.
+  const unfolded = ics.replace(/\r\n /g, '');
+  ok('description keeps the brand + site even if LOCATION is hidden', unfolded.includes('Made with OpenFirst') && unfolded.includes('https://openfirst.io/'));
 }
 
 // Scenario 2: every 6 months, Monday evening — interval + weekday/time honoured.
@@ -44,6 +49,7 @@ const get = (ics, key) => ics.split(/\r\n/).find((l) => l.startsWith(key + ':'))
   ok('Monday honoured', start.getDay() === 1 && get(ics, 'RRULE').includes(DAYS[1]));
   ok('evening hour honoured (19:00)', start.getHours() === 19);
   ok('first reminder ~6 months out', start > new Date(2026, 10, 1) && start < new Date(2027, 1, 1));
+  ok('summary falls back to the generic name with no title', /SUMMARY:Review my OpenFirst plan/.test(ics));
 }
 
 // Google Calendar link carries the same schedule (incl. the repeat rule).
@@ -53,6 +59,8 @@ const get = (ics, key) => ics.split(/\r\n/).find((l) => l.startsWith(key + ':'))
   ok('google link targets calendar.google.com', u.hostname === 'calendar.google.com' && u.searchParams.get('action') === 'TEMPLATE');
   ok('google link carries the repeat (recur RRULE)', /^RRULE:FREQ=MONTHLY;INTERVAL=3;BYDAY=/.test(u.searchParams.get('recur') || ''));
   ok('google link has a start/end date range', /^\d{8}T\d{6}\/\d{8}T\d{6}$/.test(u.searchParams.get('dates') || ''));
+  ok('google link carries the site as location', u.searchParams.get('location') === 'https://openfirst.io/');
+  ok('google link title weaves in the plan title', u.searchParams.get('text') === 'Review My plan');
 }
 
 console.log('\n=== Review reminder (.ics) ===');

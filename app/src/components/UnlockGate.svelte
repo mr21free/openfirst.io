@@ -8,6 +8,7 @@
     `onUnlock(password)` may throw — that's shown as a kind, retryable error.
   */
   import logo from '../assets/logo.svg';
+  import Callout from './Callout.svelte';
   let { hint = '', onUnlock, onCancel = null, modal = false } = $props();
 
   let password = $state('');
@@ -25,7 +26,9 @@
       password = '';
       show = false;
     } catch (e) {
-      error = 'That password didn’t work. Check capital letters and spaces — and try the hint above. The file is fine; you can try again.';
+      error = hint
+        ? 'That password didn’t work. Check capital letters and spaces — and try the hint above. The file is fine; you can try again.'
+        : 'That password didn’t work. Check capital letters and spaces. The file is fine; you can try again.';
     } finally {
       busy = false;
     }
@@ -35,24 +38,34 @@
 {#snippet gateCard()}
   <div class="card gate" class:modal-card={modal} role={modal ? 'dialog' : undefined} aria-modal={modal ? 'true' : undefined} aria-label={modal ? 'Enter password' : undefined}>
     {#if !modal}
-      <div class="brand row"><img class="logo" src={logo} alt="" aria-hidden="true" /><span>OpenFirst</span></div>
+      <div class="brand row"><img class="logo" src={logo} alt="" aria-hidden="true" /><span class="brand-name"><b>open</b>first</span></div>
     {/if}
-    <span class="lock-ico" aria-hidden="true">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-    </span>
-    <h3>This plan is protected</h3>
-    <p class="soft small">Enter the password to open it. It is unlocked here on your device — nothing is sent anywhere.</p>
-    {#if hint}<p class="hint small"><span class="muted">Hint:</span> {hint}</p>{/if}
-    <div class="pw-row">
-      <!-- svelte-ignore a11y_autofocus -->
-      <input class="pw" type={show ? 'text' : 'password'} bind:value={password} placeholder="Password"
-        autocomplete="new-password" autofocus onkeydown={(e) => e.key === 'Enter' && unlock()} />
-      <button class="pw-toggle" type="button" onclick={() => (show = !show)}>{show ? 'Hide' : 'Show'}</button>
+    <div class="gate-title row">
+      <span class="lock-ico" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+      </span>
+      <h3>This plan is protected</h3>
     </div>
-    {#if error}<p class="error small">{error}</p>{/if}
+    <p class="soft small">Enter the password to open it.</p>
+    {#if hint}<p class="soft small"><strong>Hint:</strong> {hint}</p>{/if}
+    <div class="pw-field">
+      <!-- svelte-ignore a11y_autofocus -->
+      <input class="pw inp" type={show ? 'text' : 'password'} bind:value={password} placeholder="Password"
+        autocomplete="new-password" autofocus onkeydown={(e) => e.key === 'Enter' && unlock()} />
+      <button class="pw-icon" type="button" data-tip={show ? 'Hide' : 'Show'} data-tip-pos="top" aria-label={show ? 'Hide password' : 'Show password'} onclick={() => (show = !show)}>
+        {#if show}
+          <!-- password is visible → crossed-out eye: clicking hides it -->
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+        {:else}
+          <!-- password is hidden → open eye: clicking reveals it -->
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+        {/if}
+      </button>
+    </div>
+    {#if error}<Callout text={error} />{/if}
     <div class="gate-actions">
-      {#if onCancel}<button class="btn btn-ghost" onclick={() => onCancel()}>Cancel</button>{/if}
       <button class="btn btn-primary" onclick={unlock} disabled={busy || !password}>{busy ? 'Opening…' : 'Unlock'}</button>
+      {#if onCancel}<button class="btn btn-ghost" onclick={() => onCancel()}>Cancel</button>{/if}
     </div>
   </div>
 {/snippet}
@@ -81,20 +94,23 @@
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
     z-index: var(--z-modal);
   }
-  .brand { font-weight: 500; gap: 10px; margin-bottom: 4px; }
+  .brand { font-family: var(--mono); font-weight: 500; gap: 10px; margin-bottom: 4px; color: var(--ink); }
+  .brand-name b { color: var(--accent-deep); font-weight: 500; }
   .logo { width: 24px; height: 24px; }
+  .gate-title { gap: 10px; }
   .lock-ico { display: inline-flex; color: var(--ink-soft); }
-  .gate h3 { font-size: 19px; }
-  .hint { background: var(--accent-wash); border-radius: 0; padding: 8px 12px; }
-  .pw-row { display: flex; gap: 8px; }
-  .pw {
-    flex: 1; font: inherit; font-size: 15px; color: var(--ink);
-    border: 1px solid var(--rule); border-radius: 0; padding: 11px 14px; background: var(--paper);
+  .gate h3 { font-size: 19px; margin: 0; }
+  .pw-field { position: relative; }
+  .inp {
+    width: 100%; font: inherit; font-size: 14px; color: var(--ink);
+    border: 1px solid var(--rule); border-radius: 0; padding: 10px 40px 10px 12px; background: var(--paper);
   }
-  .pw:focus { outline: none; border-color: var(--accent-deep); }
-  .pw-toggle { font-size: 13px; color: var(--ink-mute); padding: 0 6px; }
-  .pw-toggle:hover { color: var(--ink); }
-  .error { color: var(--warn); }
-  .gate-actions { display: flex; gap: 8px; justify-content: flex-end; }
-  .gate-actions .btn-primary { flex: 1; }
+  .inp:focus { outline: none; border-color: var(--accent-deep); }
+  .pw-icon {
+    position: absolute; top: 50%; right: 10px; transform: translateY(-50%);
+    display: flex; align-items: center; background: none; border: none; cursor: pointer;
+    color: var(--ink-mute); padding: 2px 4px; line-height: 1;
+  }
+  .pw-icon:hover { color: var(--ink); }
+  .gate-actions { display: flex; gap: 8px; justify-content: flex-start; }
 </style>

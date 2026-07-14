@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { mkdtempSync, existsSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FILE = 'file://' + resolve(__dirname, '../dist/build/index.html');
@@ -33,13 +33,16 @@ try {
     return !!lbl?.querySelector('input[type=checkbox]')?.checked;
   });
   ok('export dialog defaults to self-contained reader', readerOn);
-  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].find((b) => /create reader/i.test(b.textContent))?.click());
+  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].find((b) => b.textContent.trim() === 'Export')?.click());
 
-  // Wait for start-here.html to land.
-  const out = resolve(dir, 'start-here.html');
+  // Wait for the reader to land — filename now carries the plan title + date
+  // (like the .zip and .encrypted.json exports), so match by suffix.
+  const findOut = () => readdirSync(dir).find((f) => f.endsWith('_start-here.html'));
   let waited = 0;
-  while (!existsSync(out) && waited < 8000) { await new Promise((r) => setTimeout(r, 150)); waited += 150; }
-  ok('start-here.html was produced', existsSync(out));
+  while (!findOut() && waited < 8000) { await new Promise((r) => setTimeout(r, 150)); waited += 150; }
+  const readerFile = findOut();
+  ok('start-here.html was produced', !!readerFile);
+  const out = resolve(dir, readerFile || 'start-here.html');
 
   // Open the produced file: it must boot read-only into the plan.
   const p2 = await browser.newPage();

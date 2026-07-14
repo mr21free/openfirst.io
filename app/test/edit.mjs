@@ -28,7 +28,7 @@ try {
   await page.keyboard.down('Meta');
   await page.keyboard.press('KeyE');
   await page.keyboard.up('Meta');
-  await page.waitForFunction(() => !!document.querySelector('nav .navadd'), { timeout: 6000 });
+  await page.waitForFunction(() => !!document.querySelector('nav .nav-add-row'), { timeout: 6000 });
   ok('keyboard shortcut enters edit mode', true);
 
   await page.evaluate(() => [...document.querySelectorAll('nav .navlink-section')].find((b) => b.textContent.includes('People'))?.click());
@@ -109,7 +109,8 @@ try {
   ok('drag a location to reorder / unnest (DnD)', unnested);
 
   // --- Guides: add via nav → opens the inline WYSIWYG editor on the guide page ---
-  await clickText('+ New guide');
+  await clickText('+ New');
+  await page.evaluate(() => [...document.querySelectorAll('.newpop button')].find((b) => b.textContent.includes('Guide'))?.click());
   await page.waitForFunction(() => !!document.querySelector('main .ce .ce-edit'), { timeout: 6000 });
   ok('add guide opens the inline WYSIWYG editor on the page', await page.evaluate(() => !!document.querySelector('main .ce .tb-ref') && !!document.querySelector('main .ce .ce-edit')));
   // a brand-new (empty) guide, viewed in read mode, shows the empty-state CTA
@@ -133,7 +134,8 @@ try {
   await page.keyboard.press('Escape');
 
   // --- Guide nav: new group + drag a guide into it ---
-  await page.evaluate(() => [...document.querySelectorAll('nav button')].find((b) => b.textContent.trim() === '+ New group')?.click());
+  await page.evaluate(() => [...document.querySelectorAll('nav button')].find((b) => b.textContent.trim() === '+ New')?.click());
+  await page.evaluate(() => [...document.querySelectorAll('.newpop button')].find((b) => b.textContent.includes('Group'))?.click());
   const groupHeader = await page.waitForFunction(() => [...document.querySelectorAll('nav .navgroup-title')].some((t) => t.textContent.trim() === 'New group' || t.querySelector('input')?.value === 'New group'), { timeout: 4000 }).then(() => true).catch(() => false);
   ok('add nav group creates a group header', groupHeader);
   await page.evaluate(() => {

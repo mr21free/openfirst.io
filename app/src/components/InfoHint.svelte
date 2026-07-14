@@ -1,7 +1,10 @@
 <script>
   // A small "i" affordance that reveals extra explanation on hover/focus — the
   // reusable pattern for documenting a property without cluttering the form.
-  let { text = '', label = 'More information' } = $props();
+  // pos="left" is for icons that sit near a panel's right edge (mirrors the
+  // app's data-tip-pos="left" convention) so the bubble opens leftward
+  // instead of clipping off-screen.
+  let { text = '', label = 'More information', pos = 'right' } = $props();
 </script>
 
 <span class="info">
@@ -10,7 +13,7 @@
       <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
     </svg>
   </button>
-  <span class="info-pop" role="tooltip">{text}</span>
+  <span class="info-pop" class:pos-left={pos === 'left'} role="tooltip">{text}</span>
 </span>
 
 <style>
@@ -18,7 +21,7 @@
   .info-btn {
     display: inline-flex; align-items: center; justify-content: center;
     width: 18px; height: 18px; border-radius: 999px; padding: 0;
-    color: var(--ink-mute); border: none; background: none; cursor: help;
+    color: var(--ink-mute); border: none; background: none; cursor: pointer;
   }
   .info-btn:hover, .info-btn:focus-visible { color: var(--accent-deep); }
   /* Anchored to the icon's left edge so it extends rightward — help icons sit
@@ -37,5 +40,8 @@
     content: ''; position: absolute; top: 100%; left: 9px;
     border: 5px solid transparent; border-top-color: var(--ink);
   }
+  /* Anchored to the icon's right edge instead, opening leftward. */
+  .info-pop.pos-left { left: auto; right: -2px; }
+  .info-pop.pos-left::after { left: auto; right: 9px; }
   .info:hover .info-pop, .info-btn:focus-visible + .info-pop { opacity: 1; visibility: visible; }
 </style>

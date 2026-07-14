@@ -61,7 +61,9 @@ Don't fill everything in by hand. Paste our prompt into **your own AI**,
 describe your setup in plain words (no real secrets), and import the result.
 
 → **[docs/ai-builder-prompt.md](docs/ai-builder-prompt.md)** — the ready-to-paste
-prompt. It runs on your side; we never see your data.
+prompt. OpenFirst never receives this data — but the AI provider you paste it
+into might. Use non-sensitive descriptions and check that provider's privacy
+terms, or use a local model to avoid external processing entirely.
 
 ## Run it
 

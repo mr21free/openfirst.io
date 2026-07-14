@@ -51,7 +51,9 @@ try {
   ok('continue leads on to the guides', true);
 
   // Admin: the person drawer shows the path + the print button; edit mode has the editor.
-  await page.evaluate(() => { const sel = document.querySelector('.reader-tools select'); if (sel) { sel.value = '__all'; sel.dispatchEvent(new Event('change', { bubbles: true })); } });
+  await page.evaluate(() => document.querySelector('button[aria-label="Reading as"]')?.click());
+  await page.waitForFunction(() => !!document.querySelector('[aria-label="Choose who you\'re reading as"]'), { timeout: 6000 });
+  await page.evaluate(() => [...document.querySelectorAll('[aria-label="Choose who you\'re reading as"] button')].find((b) => /^Admin/.test(b.textContent))?.click());
   await pause(300);
   await page.evaluate(() => [...document.querySelectorAll('nav .navlink-section')].find((b) => /People/.test(b.textContent))?.click());
   await page.waitForFunction(() => [...document.querySelectorAll('main .ulist-name')].some((n) => /Amanda/.test(n.textContent)), { timeout: 6000 });

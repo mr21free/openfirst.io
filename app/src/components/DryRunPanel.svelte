@@ -1,6 +1,7 @@
 <script>
   import Prose from './Prose.svelte';
   import StatusIcon from './StatusIcon.svelte';
+  import Callout from './Callout.svelte';
 
   let { pkg, store, runId, personId = null, adminLabel = 'Admin', onSubmit = null, onCancel = null } = $props();
   let full = $state(false);
@@ -38,11 +39,19 @@
       <p class="tiny muted">{doneCount}/{checks.length} checked</p>
     </div>
     <div class="dhead-actions">
-      <button class="btn btn-ghost close" onclick={() => (full = !full)} title={full ? 'Shrink panel' : 'Expand panel'} aria-label={full ? 'Shrink panel' : 'Expand panel'}>{full ? '⤡' : '⤢'}</button>
-      <button class="btn btn-ghost close" onclick={() => onCancel?.()} aria-label="Close">✕</button>
+      <button class="iconbtn" onclick={() => (full = !full)} data-tip={full ? 'Shrink panel' : 'Expand panel'} data-tip-pos="left" aria-label={full ? 'Shrink panel' : 'Expand panel'}>
+        {#if full}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" /><line x1="14" y1="10" x2="21" y2="3" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
+        {:else}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
+        {/if}
+      </button>
+      <button class="iconbtn" onclick={() => onCancel?.()} data-tip="Close" data-tip-pos="left" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+      </button>
     </div>
   </div>
-  <p class="dry-warning">Do not type PINs, passwords, seed words, passphrases, or private keys here.</p>
+  <Callout text="Do not type PINs, passwords, seed words, passphrases, or private keys here." tone="warning" />
 
   {#if checks.length}
     <div class="dry-list">
@@ -101,9 +110,7 @@
   .dhead-main { min-width: 0; }
   .dhead h2 { margin-top: 4px; font-size: 24px; }
   .dhead-actions { display: flex; align-items: center; gap: 6px; flex: none; }
-  .close { min-height: 36px; min-width: 36px; padding: 4px 8px; font-size: 20px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
   .dry-done { padding-top: 12px; display: flex; justify-content: flex-end; border-top: 1px solid var(--rule-soft); }
-  .dry-warning { margin: 0; padding: 8px 10px; border: 1px solid oklch(0.83 0.08 70); background: oklch(0.97 0.03 78); color: oklch(0.38 0.07 65); font-size: 12px; line-height: 1.35; }
   .dry-list { display: grid; gap: 18px; }
   .dry-card { display: grid; gap: 11px; padding: 0 0 16px; border-bottom: 1px solid var(--rule-soft); }
   .dry-card:last-child { border-bottom: none; }

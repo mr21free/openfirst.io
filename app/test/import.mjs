@@ -51,7 +51,7 @@ try {
 
   await fresh();
   await upload('broken.json');
-  const err = await page.evaluate(() => document.querySelector('.error')?.textContent || '');
+  const err = await page.evaluate(() => document.querySelector('.error-callout')?.textContent || '');
   ok('broken plan is rejected with the bad owner_id', /owner_id.*not a known person/i.test(err));
   ok('broken plan flags the dangling location reference', /missing location/i.test(err));
 } catch (e) { ok('flow threw: ' + e.message, false); }

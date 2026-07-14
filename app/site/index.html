@@ -118,10 +118,19 @@
     body.home .topbar .container, body.home .screen .container { max-width: 1160px; padding-left: 40px; padding-right: 40px; }
     @media (max-width: 640px) { body.home .topbar .container, body.home .screen .container { padding-left: 22px; padding-right: 22px; } }
     .hero { padding: 72px 0 60px; display: grid; grid-template-columns: minmax(0, 6.2fr) minmax(0, 5.8fr); gap: 56px; align-items: center; }
-    .hero-art { min-width: 0; position: relative; }
+    .hero-art { min-width: 0; position: relative; margin-top: -56px; }
     /* Stacked hero: words first, picture after — the mockup doesn't explain
        itself without the copy above it. */
     @media (max-width: 940px) { .hero { grid-template-columns: 1fr; gap: 40px; padding: 44px 0 36px; } }
+    /* Laptop-height windows (e.g. a MacBook Air) can leave the CTA sitting at
+       the very bottom edge — tighten the vertical rhythm without touching type
+       size or the wide-screen composition. */
+    @media (max-height: 800px) {
+      .hero { padding: 36px 0 28px; }
+      .hero h1 { margin-top: 8px; }
+      .hero .lede { margin-top: 14px; }
+      .cta-row { margin-top: 20px; }
+    }
 
     /* Product-window mockup: the OpenFirst reader showing an heir's access path. */
     .mock {
@@ -159,11 +168,17 @@
     .hero h1 { font-size: clamp(38px, 4.6vw, 62px); font-weight: 650; letter-spacing: -0.028em; line-height: 1.04; max-width: 18ch; margin: 16px 0 0; }
     .hero h1 .hl { color: var(--accent-deep); }
     .hero .lede { margin-top: 24px; max-width: 54ch; font-size: 18px; line-height: 1.65; }
-    .hero .lede .mono-bit { font-family: var(--mono); font-size: 0.9em; color: var(--accent-deep); }
+    /* Monospace gives the space char the same fixed advance as any glyph — wider
+       than the surrounding proportional text's space, so a multi-word mono
+       snippet needs the gap pulled back in to read as one phrase. */
+    .hero .lede .mono-bit { font-family: var(--mono); font-size: 0.9em; color: var(--accent-deep); word-spacing: -0.2em; }
     .cta-row { margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
     /* trust chips — the machine vouches in its own voice */
-    .chips { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip { font-family: var(--mono); font-size: 12px; font-weight: 500; border: 1px solid var(--rule); background: var(--paper); color: var(--ink-soft); padding: 5px 12px; border-radius: 8px; }
+    .chips { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 8px 20px; }
+    /* No box, no border — a bordered pill reads as an outline button. A plain
+       dot-marked fact list can't be mistaken for something clickable. */
+    .chip { display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--ink-soft); }
+    .chip::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--accent-deep); flex: none; }
     .problems { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin: 8px 0 0; }
     .problem { background: var(--paper); border: 1px solid var(--rule-soft); border-left: 2px solid var(--accent); padding: 26px 28px; }
     .problem h3 { font-size: 18px; font-weight: 500; line-height: 1.35; margin-bottom: 10px; }
@@ -282,21 +297,22 @@
     <section class="hero">
       <div class="hero-copy">
         <span class="eyebrow">An inheritance plan your family can actually open</span>
-        <h1>Your family finds everything. <span class="hl">Even without you.</span></h1>
+        <h1>Leave your family a map they can follow <span class="hl">— without you.</span></h1>
         <p class="lede">
           Build a private map of everything that matters — bank accounts,
-          Bitcoin wallets, passwords, documents, people. Your family opens
+          Bitcoin wallets, documents, devices, people, and where access details
+          are kept. Your family opens
           <span class="mono-bit">one file</span> when the time comes.
         </p>
         <div class="cta-row">
-          <a class="btn btn-primary" href="/build/">Start your plan</a>
+          <a class="btn btn-primary" href="/build/">Build your plan</a>
           <a class="btn" href="/demo/">See the demo</a>
         </div>
         <div class="chips">
           <span class="chip">Free &amp; open source</span>
           <span class="chip">Works offline</span>
           <span class="chip">No account</span>
-          <span class="chip">AES-256 encrypted</span>
+          <span class="chip">AES-256 encryption available</span>
         </div>
       </div>
       <div class="hero-art">
@@ -467,6 +483,7 @@
   <footer class="screen">
     <div class="container row wrap">
       <span class="tiny">© 2026 OpenFirst™</span>
+      <span class="tiny">Made with ❤ in Switzerland</span>
       <span class="spacer"></span>
       <nav class="row wrap" style="gap:16px">
         <a class="tiny" href="/how-to-use/" style="color:var(--screen-px)">How to use</a>

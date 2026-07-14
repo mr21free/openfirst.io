@@ -127,7 +127,7 @@
       <body onload="setTimeout(() => { window.focus(); window.print(); }, 150)">
         <div class="eyebrow">Open only if something has happened to ${owner}</div>
         <h1>For ${name}</h1>
-        <p class="calm">Take your time. There is no rush. Everything important is designed to wait. When you are ready, follow these steps in order — and if you are unsure at any point, stop and call the person this plan names first.</p>
+        <p class="calm">Take your time. Everything important is designed to wait. When you are ready, follow these steps in order — and if you are unsure at any point, stop and call the person this plan names first.</p>
         <ol>${stepsHtml}</ol>
         <div class="foot">Last updated: ${updated} · Always use the copy with the newest date.</div>
       </body></html>`);

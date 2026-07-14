@@ -86,7 +86,7 @@ try {
   await page.type('input.pw', 'totally-wrong-passphrase');
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /unlock/i.test(b.textContent))?.click());
   await pause(700);
-  ok('wrong passphrase is rejected', await page.evaluate(() => !!document.querySelector('.error') && !!document.querySelector('input.pw')));
+  ok('wrong passphrase is rejected', await page.evaluate(() => !!document.querySelector('.error-callout') && !!document.querySelector('input.pw')));
 
   // Correct passphrase → back into the plan with the marker intact.
   await page.click('input.pw', { clickCount: 3 });

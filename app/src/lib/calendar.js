@@ -32,9 +32,15 @@ function fold(line) {
   return out + '\r\n ' + rest;
 }
 
-const SUMMARY = 'Review my OpenFirst plan';
+const SITE = 'https://openfirst.io/';
+// No "my" in front of the title itself — a plan named "My plan" would
+// otherwise read as "Review my My plan".
+const summary = (title) => (title && title.trim() ? `Review ${title.trim()}` : 'Review my OpenFirst plan');
+// The brand + URL are woven into the text itself (not just LOCATION/URL fields,
+// which some calendar clients hide) so the reminder still makes sense standing
+// alone months later, after the name and site have been forgotten.
 const describe = (title) =>
-  `Time to review ${title && title.trim() ? `“${title.trim()}”` : 'your plan'}: check what changed, update values, re-export the reader, and replace the copy you gave your loved ones.`;
+  `Time to review ${title && title.trim() ? `“${title.trim()}”` : 'your plan'}: check what changed, update values, re-export the reader, and replace the copy you gave your loved ones.\n\nMade with OpenFirst — ${SITE}`;
 
 // Shared schedule: first reminder one interval out, snapped to the chosen weekday,
 // recurring every N months pinned to that weekday (e.g. "2nd Saturday every 3 months").
@@ -77,11 +83,13 @@ export function buildReviewIcs(opts = {}) {
     `DTSTART:${fmtLocal(start)}`,
     `DTEND:${fmtLocal(end)}`,
     `RRULE:${rrule}`,
-    fold(`SUMMARY:${esc(SUMMARY)}`),
+    fold(`SUMMARY:${esc(summary(opts.title))}`),
     fold(`DESCRIPTION:${esc(describe(opts.title))}`),
+    fold(`LOCATION:${esc(SITE)}`),
+    fold(`URL:${SITE}`),
     'BEGIN:VALARM',
     'ACTION:DISPLAY',
-    `DESCRIPTION:${esc(SUMMARY)}`,
+    `DESCRIPTION:${esc(summary(opts.title))}`,
     'TRIGGER:-PT0M',
     'END:VALARM',
     'END:VEVENT',
@@ -95,9 +103,10 @@ export function googleCalendarUrl(opts = {}) {
   const { start, end, rrule } = occurrence(opts);
   const p = new URLSearchParams({
     action: 'TEMPLATE',
-    text: SUMMARY,
+    text: summary(opts.title),
     dates: `${fmtLocal(start)}/${fmtLocal(end)}`,
     details: describe(opts.title),
+    location: SITE,
     recur: `RRULE:${rrule}`,
   });
   const tz = localTZ();
@@ -114,10 +123,11 @@ export function outlookCalendarUrl(opts = {}) {
   const p = new URLSearchParams({
     path: '/calendar/action/compose',
     rru: 'addevent',
-    subject: SUMMARY,
+    subject: summary(opts.title),
     startdt: iso(start),
     enddt: iso(end),
     body: describe(opts.title),
+    location: SITE,
   });
   return `https://outlook.live.com/calendar/0/deeplink/compose?${p.toString()}`;
 }
@@ -129,7 +139,7 @@ export function downloadReviewIcs(opts = {}) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'life-plan-review-reminder.ics';
+  a.download = 'openfirst-plan-review-reminder.ics';
   document.body.appendChild(a);
   a.click();
   a.remove();

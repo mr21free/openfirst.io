@@ -4,7 +4,8 @@
   import InfoHint from './InfoHint.svelte';
   import PassphraseField from './PassphraseField.svelte';
   import Switch from './Switch.svelte';
-  import { MIN_PASSWORD_LENGTH } from '../lib/crypto.js';
+  import Callout from './Callout.svelte';
+  import { estimateBits } from '../lib/passphrase.js';
   let { pkg, raw, store, requestConfirm = null, requestNotice = null } = $props(); // raw = data.package
 
   let newLang = $state('');
@@ -20,8 +21,8 @@
 
   async function applyProtection() {
     draftErr = '';
-    if (draftPass.length < MIN_PASSWORD_LENGTH) {
-      draftErr = `Use at least ${MIN_PASSWORD_LENGTH} characters — a 6-word passphrase is ideal.`;
+    if (estimateBits(draftPass) < 40) {
+      draftErr = 'That passphrase is too weak — the strength meter above should read at least "Fair" before you continue.';
       return;
     }
     if (!draftPassConfirmed) {
@@ -160,7 +161,7 @@
             A <strong>6-word passphrase</strong> is far stronger than a short password and easy to write down.
             If you forget it, this draft can't be recovered — keep the encrypted export as your backup.
           </p>
-          {#if draftErr}<p class="tiny" style="color: var(--warn)">{draftErr}</p>{/if}
+          {#if draftErr}<Callout text={draftErr} />{/if}
           <div class="row" style="gap:8px; justify-content: flex-end">
             <button class="btn btn-small btn-ghost" onclick={() => { showProtect = false; draftPass = ''; draftErr = ''; }}>Cancel</button>
             <button class="btn btn-small btn-primary" disabled={draftBusy || !draftPass} onclick={applyProtection}>{draftBusy ? 'Encrypting…' : store?.draftProtected ? 'Change passphrase' : 'Turn on'}</button>

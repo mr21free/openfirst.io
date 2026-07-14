@@ -75,16 +75,9 @@
         </header>
         {#if canEdit && !body.trim()}
           <div class="guide-empty no-print">
-            <svg class="empty-art" width="92" height="92" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path class="art-page" d="M16 8h22l10 10v38a2 2 0 0 1-2 2H16a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" />
-              <path class="art-page" d="M38 8v10h10" />
-              <line class="art-line" x1="22" y1="30" x2="42" y2="30" />
-              <line class="art-line" x1="22" y1="38" x2="42" y2="38" />
-              <line class="art-line" x1="22" y1="46" x2="34" y2="46" />
-              <path class="art-pen" d="M49 33l8 8-13 13-9 1 1-9 13-13z" />
-            </svg>
-            <h3>Nothing here yet</h3>
-            <button class="btn btn-primary" onclick={() => onStartEditing?.()}>Start writing</button>
+            <h3>This page is blank.</h3>
+            <p class="soft small">Write something here for whoever reads this plan.</p>
+            <button class="btn btn-small btn-primary" onclick={() => onStartEditing?.()}>Start writing</button>
             <p class="kbd-hint">or press <kbd>Ctrl</kbd> <kbd>E</kbd></p>
           </div>
         {:else}
@@ -202,21 +195,19 @@
     border-left: 2px solid var(--accent);
     color: var(--ink-soft); font-size: 13px;
   }
-  /* Empty guide (read mode, owner only): a calm "blank page" call-to-action. */
+  /* Empty guide (read mode, owner only): plain text, no illustration —
+     not an app-onboarding card. */
   .guide-empty {
     flex: 1; min-height: 240px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; gap: 6px; padding: 32px 16px;
+    text-align: center; gap: 4px; padding: 32px 16px;
   }
-  .empty-art { color: var(--accent); opacity: 0.9; margin-bottom: 12px; }
-  .empty-art .art-line { stroke: var(--accent); opacity: 0.4; }
-  .empty-art .art-pen { stroke: var(--accent-deep); fill: var(--accent-wash); }
-  .guide-empty h3 { font-size: 19px; font-weight: 500; }
-  .guide-empty .btn { margin-top: 14px; }
+  .guide-empty h3 { font-size: 15px; font-weight: 500; color: var(--ink-soft); }
+  .guide-empty .btn { margin-top: 12px; }
   .kbd-hint { margin-top: 2px; font-size: 12.5px; color: var(--ink-mute); }
   .kbd-hint kbd {
     font: inherit; font-size: 11.5px; color: var(--ink-soft);
     background: var(--bg); border: 1px solid var(--rule); border-bottom-width: 2px;
-    border-radius: 5px; padding: 1px 6px; margin: 0 1px;
+    border-radius: 0; padding: 1px 6px; margin: 0 1px;
   }
 </style>

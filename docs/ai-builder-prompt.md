@@ -5,12 +5,13 @@ capable AI** (Claude, ChatGPT, Gemini, a local model — your choice), describe
 your situation in plain words, and it will produce a **plan file** you import
 into the app with **Open existing plan**.
 
-> **Privacy first.** This runs in *your* AI, not ours — we never see anything.
-> Still: **do not paste real secrets** (no PINs, seed phrases, passwords,
-> private keys, account numbers). Describe the *structure* — "I keep a Trezor at
-> home and a backup at a bank in another country" — and add the real values
-> yourself, locally, in the app afterwards. The structure alone can be sensitive,
-> so keep it general (use a private/local model if you want maximum privacy).
+> **Privacy first.** OpenFirst never receives this information. An external AI
+> provider may process what you enter, so use non-sensitive descriptions and
+> review that provider's privacy terms. A local model avoids that external
+> processing. Still: **do not paste real secrets** (no PINs, seed phrases,
+> passwords, private keys, account numbers). Describe the *structure* — "I keep
+> a Trezor at home and a backup at a bank in another country" — and add the
+> real values yourself, locally, in the app afterwards.
 
 ---
 

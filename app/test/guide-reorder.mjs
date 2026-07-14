@@ -32,6 +32,10 @@ page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + 
 
 const clickText = (t) => page.evaluate((t) => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === t); if (b) { b.click(); return true; } return false; }, t);
 
+// "+ New" opens a menu with Guide/Group sub-options — click it, then the option.
+const newGuide = async () => { await clickText('+ New'); await page.evaluate(() => [...document.querySelectorAll('.newpop button')].find((b) => b.textContent.includes('Guide'))?.click()); };
+const newGroup = async () => { await clickText('+ New'); await page.evaluate(() => [...document.querySelectorAll('.newpop button')].find((b) => b.textContent.includes('Group'))?.click()); };
+
 // Read the guide nav as an ordered list of "guide:<title>" / "group:<name>[g1,g2]".
 const navOrder = () => page.evaluate(() => {
   const out = [];
@@ -83,11 +87,11 @@ try {
   await clickText('Create new plan');
 
   // New plans drop straight into edit mode with General → Start here.
-  await page.waitForFunction(() => [...document.querySelectorAll('nav button')].some((b) => b.textContent.trim() === '+ New guide'), { timeout: 8000 });
+  await page.waitForFunction(() => [...document.querySelectorAll('nav button')].some((b) => b.textContent.trim() === '+ New'), { timeout: 8000 });
   ok('new plan seeds [General[Start here]]', JSON.stringify(await navOrder()) === JSON.stringify(['group:General[Start here]']));
 
   // Add a guide → lands at the top level, after the group.
-  await clickText('+ New guide');
+  await newGuide();
   ok('added guide sits at top level after the group', await waitNav(['group:General[Start here]', 'guide:New Guide']));
 
   // ---- Bug 1: move the top-level guide ABOVE the group (becomes first) ----
@@ -108,7 +112,7 @@ try {
   ok('Bug 1: guide moves to FIRST at top level (above the group)', await waitNav(['guide:New Guide', 'group:General[Start here]']));
 
   // ---- Bug 2: reorder a top-level guide (one below the group, up to the top) ----
-  await clickText('+ New guide'); // → "New Guide (1)" appended at the top level
+  await newGuide(); // → "New Guide (1)" appended at the top level
   ok('second top-level guide appended', await waitNav(['guide:New Guide', 'group:General[Start here]', 'guide:New Guide (1)']));
 
   await dragStartRootGuide('New Guide (1)');
@@ -147,7 +151,7 @@ try {
   // ---- Multi-group: lift a group's ONLY guide out via its own "before" zone ----
   // (Regression: with 2+ groups this used to dump the guide at the very end
   // instead of landing it at the top level just before that group.)
-  await clickText('+ New group'); // → empty "New group" at the end
+  await newGroup(); // → empty "New group" at the end
   await waitNav(['guide:New Guide (1)', 'group:General[Start here]', 'guide:New Guide', 'group:New group[]']);
   await dragStartRootGuide('New Guide');
   await page.evaluate(() => {

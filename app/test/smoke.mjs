@@ -55,8 +55,10 @@ try {
   const startText = await page.evaluate(() => document.querySelector('main article')?.innerText || '');
   ok('reader shows Amanda her personal message first', startText.includes('Amanda,') && startText.includes('I trust you'));
 
-  // Person switcher (top bar) changes who you read as
-  await page.select('.sel-wrap select', '__all');
+  // Person switcher (action rail) changes who you read as
+  await page.evaluate(() => document.querySelector('button[aria-label="Reading as"]')?.click());
+  await page.waitForFunction(() => !!document.querySelector('[aria-label="Choose who you\'re reading as"]'), { timeout: 6000 });
+  await page.evaluate(() => [...document.querySelectorAll('[aria-label="Choose who you\'re reading as"] button')].find((b) => /^Admin/.test(b.textContent))?.click());
   await page.waitForFunction(() => [...document.querySelectorAll('nav .navlink-section')].some((b) => b.textContent.includes('Items')), { timeout: 6000 });
   ok('person switcher changes who you read as', true);
 

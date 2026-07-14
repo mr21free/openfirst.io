@@ -4,7 +4,7 @@
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { mkdtempSync, existsSync, statSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, statSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -34,12 +34,15 @@ async function exportReader(browser, dir, fixture) {
   await page.waitForFunction(() => !!document.querySelector('button[aria-label="Export"]'), { timeout: 8000 });
   await page.evaluate(() => document.querySelector('button[aria-label="Export"]')?.click());
   await page.waitForFunction(() => document.body.innerText.includes('Save a copy to disk'), { timeout: 5000 });
-  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].find((b) => /create reader/i.test(b.textContent))?.click());
-  const out = resolve(dir, 'start-here.html');
+  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].find((b) => b.textContent.trim() === 'Export')?.click());
+  // The reader filename now carries the plan title + date (like the .zip and
+  // .encrypted.json exports), so find it by suffix rather than an exact name.
+  const findOut = () => readdirSync(dir).find((f) => f.endsWith('_start-here.html'));
   let waited = 0;
-  while (!existsSync(out) && waited < 8000) { await new Promise((r) => setTimeout(r, 150)); waited += 150; }
-  const path = existsSync(out) ? resolve(dir, `reader-${Date.now()}.html`) : null;
-  if (path) { writeFileSync(path, readFileSync(out)); rmSync(out); } // rename so the next export is clean
+  while (!findOut() && waited < 8000) { await new Promise((r) => setTimeout(r, 150)); waited += 150; }
+  const found = findOut();
+  const path = found ? resolve(dir, `reader-${Date.now()}.html`) : null;
+  if (path) { writeFileSync(path, readFileSync(resolve(dir, found))); rmSync(resolve(dir, found)); } // rename so the next export is clean
   await page.close();
   return path;
 }

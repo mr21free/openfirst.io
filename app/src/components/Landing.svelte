@@ -3,6 +3,7 @@
   import logo from '../assets/logo.svg';
   import ConfirmDialog from './ConfirmDialog.svelte';
   import UnlockGate from './UnlockGate.svelte';
+  import Callout from './Callout.svelte';
 
   let { onLoaded, newPlan, drafts = [], resumeDraft, discardDraft } = $props();
 
@@ -58,6 +59,18 @@
       error = e?.message || String(e);
     } finally {
       busy = false;
+    }
+  }
+
+  // newPlan is async (it reads existing drafts to pick a unique name) but
+  // takes no result to hand to onLoaded — a plain run() call would forward
+  // its undefined resolution there, so it gets its own thin error catch.
+  async function handleNewPlan() {
+    error = '';
+    try {
+      await newPlan?.();
+    } catch (e) {
+      error = e?.message || String(e);
     }
   }
 
@@ -121,7 +134,7 @@
       <div class="action-grid no-print">
         <div class="action-card">
           <p class="soft small">Start building your plan. Your work autosaves to this browser's storage — nothing is uploaded.</p>
-          <button class="btn btn-primary" onclick={() => newPlan?.()}>Create new plan</button>
+          <button class="btn btn-primary" onclick={handleNewPlan}>Create new plan</button>
         </div>
         <div class="action-card">
           <p class="soft small">Open a <code>.json</code> or <code>.zip</code> backup — or recover an editable plan from a heir <code>start-here.html</code>.</p>
@@ -130,7 +143,7 @@
       </div>
 
       {#if error}
-        <p class="error small">{error}</p>
+        <div class="error-slot"><Callout text={error} /></div>
       {/if}
 
       <input
@@ -146,6 +159,7 @@
   <footer class="screen no-print">
     <div class="container row wrap">
       <span class="tiny">© 2026 OpenFirst™</span>
+      <span class="tiny">Made with ❤ in Switzerland</span>
       <span class="spacer"></span>
       <nav class="row wrap footer-nav">
         <a class="tiny" href="/how-to-use/">How to use</a>
@@ -205,7 +219,7 @@
     font-weight: 650; letter-spacing: -0.025em; line-height: 1.08; max-width: 24ch;
   }
   .lede { margin-top: 18px; max-width: 58ch; font-size: 16.5px; line-height: 1.7; }
-  .error { color: var(--warn); margin-top: 14px; white-space: pre-line; text-align: left; }
+  .error-slot { margin-top: 14px; text-align: left; }
 
   /* Where-plans-live warning above the list (dismissible, teaches once) */
   .storage-note {

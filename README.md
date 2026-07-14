@@ -98,3 +98,6 @@ double-click it from disk — it works offline by design.
 - **Format** (`lifepackage/v1` spec, JSON Schemas, samples):
   [MIT](docs/LICENSE-FORMAT.md). The file your heirs hold — and any tool that
   reads or writes it — owes this project nothing, forever.
+
+Want to contribute code? See [CONTRIBUTING.md](CONTRIBUTING.md) — commits
+need a DCO sign-off.

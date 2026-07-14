@@ -7,7 +7,8 @@
     "created": "2026-07-01",
     "updated": "2026-07-02",
     "languages": [
-      "en"
+      "en",
+      "it"
     ],
     "default_language": "en",
     "map_audience_roles": [
@@ -1242,7 +1243,8 @@
       "order": 0,
       "importance": "high",
       "content": {
-        "en": "## 🧭 First steps for Amanda\n\nAmanda, breathe first. Nothing in this package requires you to make a big financial decision today.\n\n### The first day\n1. Be with Thomas and Jane. Let someone kind sit with you.\n2. Call [[person_eleanor_price]] and say: \"John's life package says you hold the will and should guide me.\"\n3. Take out the [[item_red_folder]] from [[loc_home_safe]].\n4. Read [[guide_do_not_do]] before touching phones, laptops, Bitcoin, broker accounts, or gold.\n5. Use [[item_death_admin_checklist]] as the paper checklist.\n\n### The first week\n- Register the death and request several official death certificate copies.\n- Ask [[person_eleanor_price]] which steps are legal, which are optional, and which can wait.\n- Ask [[person_rachel_green]] to help with tax records, the [[item_stock_broker_account]], the [[item_broker_tax_reports]], and the property records.\n- Ask [[person_luca_bianchi]] to keep the Milan property calm and ordinary: rent collected, repairs handled, tenant reassured.\n\n### The main rule\n**Do not rush the assets. Stabilise the family first.**\nThe estate contains normal assets, property, and Bitcoin. Each needs a different pace."
+        "en": "Amanda, breathe first. Nothing in this package requires you to make a big financial decision today.\n\n### The first day\n1. Be with Thomas and Jane. Let someone kind sit with you.\n2. Call [[person_eleanor_price]] and say: \"John's life package says you hold the will and should guide me.\"\n3. Take out the [[item_red_folder]] from [[loc_home_safe]].\n4. Read [[guide_do_not_do]] before touching phones, laptops, Bitcoin, broker accounts, or gold.\n5. Use [[item_death_admin_checklist]] as the paper checklist.\n\n### The first week\n- Register the death and request several official death certificate copies.\n- Ask [[person_eleanor_price]] which steps are legal, which are optional, and which can wait.\n- Ask [[person_rachel_green]] to help with tax records, the [[item_stock_broker_account]], the [[item_broker_tax_reports]], and the property records.\n- Ask [[person_luca_bianchi]] to keep the Milan property calm and ordinary: rent collected, repairs handled, tenant reassured.\n\n### The main rule\n**Do not rush the assets. Stabilise the family first.**\nThe estate contains normal assets, property, and Bitcoin. Each needs a different pace.",
+        "it": ""
       },
       "audience_roles": [
         "role_primary_heir",
@@ -1276,7 +1278,8 @@
       "order": 1,
       "importance": "high",
       "content": {
-        "en": "## 🚫 What not to do immediately\n\nThis guide exists to protect you from panic decisions.\n\n### Please do not\n- Do **not** sell the [[item_gold_coins]] quickly to the first buyer.\n- Do **not** sell the [[item_stock_broker_account]] portfolio just because markets are moving.\n- Do **not** reset [[item_phone_john]] or [[item_laptop_john]].\n- Do **not** close [[item_main_email_account]] until the estate is fully settled.\n- Do **not** move Bitcoin from [[item_bitcoin_multisig_wallet]] without reading [[guide_bitcoin_recovery]] and involving calm help.\n- Do **not** type seed words, private keys, passphrases, or PINs into any website.\n- Do **not** give [[person_josh_miller]], [[person_eleanor_price]], or any other person all Bitcoin recovery parts at once.\n\n### The safer default\nPhotograph documents, preserve devices, make notes, and ask professionals before acting.\n\n**Delay is usually safer than a rushed irreversible mistake.**"
+        "en": "This guide exists to protect you from panic decisions.\n\n### Please do not\n- Do **not** sell the [[item_gold_coins]] quickly to the first buyer.\n- Do **not** sell the [[item_stock_broker_account]] portfolio just because markets are moving.\n- Do **not** reset [[item_phone_john]] or [[item_laptop_john]].\n- Do **not** close [[item_main_email_account]] until the estate is fully settled.\n- Do **not** move Bitcoin from [[item_bitcoin_multisig_wallet]] without reading [[guide_bitcoin_recovery]] and involving calm help.\n- Do **not** type seed words, private keys, passphrases, or PINs into any website.\n- Do **not** give [[person_josh_miller]], [[person_eleanor_price]], or any other person all Bitcoin recovery parts at once.\n\n### The safer default\nPhotograph documents, preserve devices, make notes, and ask professionals before acting.\n\n**Delay is usually safer than a rushed irreversible mistake.**",
+        "it": ""
       },
       "audience_roles": [
         "role_primary_heir",
@@ -1308,7 +1311,8 @@
       "order": 0,
       "importance": "high",
       "content": {
-        "en": "## 📜 Sample will structure for the demo\n\nThis is a fictional demonstration of how a will might be organised. It is not legal advice and is not the legally binding document. The real signed document is [[item_will_original]] and [[person_eleanor_price]] should guide Amanda.\n\n### 1. Identity\n\"I, John James of Manchester, revoke previous wills and declare this to be my will.\"\n\n### 2. Executors\n\"I appoint my wife [[person_amanda_james]] as my executor. If Amanda cannot act, I ask [[person_eleanor_price]] to help the family appoint a suitable professional executor.\"\n\n### 3. Guardianship wishes\n\"If Amanda cannot care for our children, I ask [[person_sarah_james]] to act as guardian for [[person_thomas_james]] and [[person_jane_james]], subject to the law and the children's best interests.\"\n\n### 4. Personal possessions\n- Jewellery and family items in [[loc_home_safe]] should stay with Amanda unless she chooses otherwise.\n- The [[item_gold_coins]] are a family reserve, not a trophy asset.\n\n### 5. Residuary estate\n\"After debts, taxes, funeral costs, and administration costs, I leave my estate to Amanda. If Amanda has also died, I leave the estate for Thomas and Jane in equal shares, held and managed safely until they are mature enough to receive it.\"\n\n### 6. Digital and Bitcoin note\nThe will should not contain passwords, seed words, PINs, or private keys. The will should point to the separate [[item_letter_of_wishes]], [[item_red_folder]], and this life package.\n\n### 7. Final tone\n\"My intention is simple: protect Amanda, protect the children, avoid rushed decisions, and keep the family peaceful.\""
+        "en": "This is a fictional demonstration of how a will might be organised. It is not legal advice and is not the legally binding document. The real signed document is [[item_will_original]] and [[person_eleanor_price]] should guide Amanda.\n\n### 1. Identity\n\"I, John James of Manchester, revoke previous wills and declare this to be my will.\"\n\n### 2. Executors\n\"I appoint my wife [[person_amanda_james]] as my executor. If Amanda cannot act, I ask [[person_eleanor_price]] to help the family appoint a suitable professional executor.\"\n\n### 3. Guardianship wishes\n\"If Amanda cannot care for our children, I ask [[person_sarah_james]] to act as guardian for [[person_thomas_james]] and [[person_jane_james]], subject to the law and the children's best interests.\"\n\n### 4. Personal possessions\n- Jewellery and family items in [[loc_home_safe]] should stay with Amanda unless she chooses otherwise.\n- The [[item_gold_coins]] are a family reserve, not a trophy asset.\n\n### 5. Residuary estate\n\"After debts, taxes, funeral costs, and administration costs, I leave my estate to Amanda. If Amanda has also died, I leave the estate for Thomas and Jane in equal shares, held and managed safely until they are mature enough to receive it.\"\n\n### 6. Digital and Bitcoin note\nThe will should not contain passwords, seed words, PINs, or private keys. The will should point to the separate [[item_letter_of_wishes]], [[item_red_folder]], and this life package.\n\n### 7. Final tone\n\"My intention is simple: protect Amanda, protect the children, avoid rushed decisions, and keep the family peaceful.\"",
+        "it": ""
       },
       "audience_roles": [
         "role_primary_heir",
@@ -1342,7 +1346,8 @@
       "order": 1,
       "importance": "high",
       "content": {
-        "en": "## 💌 Letter of wishes\n\nAmanda, this letter is not here to control you. It is here to reduce the number of decisions you have to make when you are tired.\n\n### My wishes\n- Keep the Manchester home stable for Thomas and Jane for at least the first year if you can.\n- Do not feel pressure to keep the [[item_milan_property_title]] forever. Treat it as an investment, not a monument.\n- Treat the [[item_bitcoin_multisig_wallet]] as long-term family capital. If it becomes too stressful, get proper help and simplify it safely.\n- Keep some physical reserve if it makes you feel secure, but have [[item_gold_coins]] valued professionally before any sale.\n- Use [[item_charity_wishes]] only after the family is financially safe.\n\n### People I trust for specific things\n- Legal process: [[person_eleanor_price]]\n- Tax and records: [[person_rachel_green]]\n- Milan property: [[person_luca_bianchi]]\n- Bitcoin explanation: [[person_josh_miller]]\n\n### My bigger wish\nPlease choose calm over perfection. The children do not need a perfect estate administration. They need a steady parent, familiar routines, and love."
+        "en": "Amanda, this letter is not here to control you. It is here to reduce the number of decisions you have to make when you are tired.\n\n### My wishes\n- Keep the Manchester home stable for Thomas and Jane for at least the first year if you can.\n- Do not feel pressure to keep the [[item_milan_property_title]] forever. Treat it as an investment, not a monument.\n- Treat the [[item_bitcoin_multisig_wallet]] as long-term family capital. If it becomes too stressful, get proper help and simplify it safely.\n- Keep some physical reserve if it makes you feel secure, but have [[item_gold_coins]] valued professionally before any sale.\n- Use [[item_charity_wishes]] only after the family is financially safe.\n\n### People I trust for specific things\n- Legal process: [[person_eleanor_price]]\n- Tax and records: [[person_rachel_green]]\n- Milan property: [[person_luca_bianchi]]\n- Bitcoin explanation: [[person_josh_miller]]\n\n### My bigger wish\nPlease choose calm over perfection. The children do not need a perfect estate administration. They need a steady parent, familiar routines, and love.",
+        "it": ""
       },
       "audience_roles": [
         "role_primary_heir",
@@ -1371,7 +1376,8 @@
       "order": 2,
       "importance": "high",
       "content": {
-        "en": "## ☎️ Professional contacts and who does what\n\nThe contact details are in [[item_professional_contacts]]. This JSON does not store phone numbers or email addresses.\n\n### Solicitor\n[[person_eleanor_price]] should help with:\n- locating and confirming [[item_will_original]]\n- probate and estate administration\n- communication with institutions\n- confirming what Amanda may access, move, sell, or close\n\n### Accountant\n[[person_rachel_green]] should help with:\n- tax timing\n- broker records\n- dividends, gains, and estate valuations\n- Milan property income records\n\n### Milan property manager\n[[person_luca_bianchi]] should help with:\n- tenant communication\n- rent status\n- repairs\n- local documents inside [[loc_milan_document_cabinet]]\n- keeping [[item_milan_rental_contracts]] organised\n\n### Bitcoin helper\n[[person_josh_miller]] should help explain Bitcoin only. He is not the executor, not the owner, and not the decision maker. See [[guide_josh_scope]]."
+        "en": "The contact details are in [[item_professional_contacts]]. This JSON does not store phone numbers or email addresses.\n\n### Solicitor\n[[person_eleanor_price]] should help with:\n- locating and confirming [[item_will_original]]\n- probate and estate administration\n- communication with institutions\n- confirming what Amanda may access, move, sell, or close\n\n### Accountant\n[[person_rachel_green]] should help with:\n- tax timing\n- broker records\n- dividends, gains, and estate valuations\n- Milan property income records\n\n### Milan property manager\n[[person_luca_bianchi]] should help with:\n- tenant communication\n- rent status\n- repairs\n- local documents inside [[loc_milan_document_cabinet]]\n- keeping [[item_milan_rental_contracts]] organised\n\n### Bitcoin helper\n[[person_josh_miller]] should help explain Bitcoin only. He is not the executor, not the owner, and not the decision maker. See [[guide_josh_scope]].",
+        "it": ""
       },
       "audience_roles": [
         "role_primary_heir",
@@ -1405,7 +1411,8 @@
       "order": 0,
       "importance": "high",
       "content": {
-        "en": "## 🔐 Home safe and physical items\n\nThe [[loc_home_safe]] is important, but it is not a treasure hunt. Open it calmly and make an inventory before moving anything.\n\n### Inside the safe\n- [[item_red_folder]]\n- [[item_home_safe_inventory]]\n- [[item_jewellery]]\n- [[item_gold_coins]]\n- [[item_yubikey]]\n- [[item_seed_backup_uk]]\n- [[item_bitcoin_passphrase_location_note]]\n- [[item_funeral_wishes]]\n- [[item_children_memory_box]]\n\n### Safe handling\n1. Open the safe with Amanda present.\n2. Photograph the contents on a table.\n3. Check the printed [[item_home_safe_inventory]].\n4. Put Bitcoin-related envelopes back unless you are actively following [[guide_bitcoin_recovery]].\n5. Do not discuss gold or Bitcoin holdings publicly.\n\n### Gold coins\nThe [[item_gold_coins]] should be valued by a reputable dealer or auction house. Avoid pressure buyers, cash-only offers, or anyone who says \"today only.\""
+        "en": "The [[loc_home_safe]] is important, but it is not a treasure hunt. Open it calmly and make an inventory before moving anything.\n\n### Inside the safe\n- [[item_red_folder]]\n- [[item_home_safe_inventory]]\n- [[item_jewellery]]\n- [[item_gold_coins]]\n- [[item_yubikey]]\n- [[item_seed_backup_uk]]\n- [[item_bitcoin_passphrase_location_note]]\n- [[item_funeral_wishes]]\n- [[item_children_memory_box]]\n\n### Safe handling\n1. Open the safe with Amanda present.\n2. Photograph the contents on a table.\n3. Check the printed [[item_home_safe_inventory]].\n4. Put Bitcoin-related envelopes back unless you are actively following [[guide_bitcoin_recovery]].\n5. Do not discuss gold or Bitcoin holdings publicly.\n\n### Gold coins\nThe [[item_gold_coins]] should be valued by a reputable dealer or auction house. Avoid pressure buyers, cash-only offers, or anyone who says \"today only.\"",
+        "it": ""
       },
       "audience_roles": [
         "role_primary_heir",
@@ -1439,7 +1446,8 @@
       "order": 1,
       "importance": "high",
       "content": {
-        "en": "## 📈 Banks, broker account, stocks, insurance and pensions\n\nThis part is boring, and boring is good. Slow admin beats emotional trading.\n\n### Main items\n- [[item_bank_accounts_summary]]\n- [[item_life_insurance_policy]]\n- [[item_pension_summary]]\n- [[item_stock_broker_account]]\n- [[item_broker_tax_reports]]\n- [[item_manchester_home_documents]]\n- [[item_exchange_account]]\n\n### Amanda's order of operations\n1. Ask [[person_eleanor_price]] what documents are needed before contacting each institution.\n2. Ask [[person_rachel_green]] to create a valuation snapshot for the date of death.\n3. Contact the broker through the official route, not through links in old emails.\n4. Keep the stock portfolio untouched until you understand tax, probate, cash needs, and market risk.\n5. Check [[item_life_insurance_policy]] early because it may provide practical breathing room.\n6. Keep all letters and statements in [[item_red_folder]].\n\n### Decision principle\nSell assets because the family has a plan, not because grief wants one less thing to think about."
+        "en": "This part is boring, and boring is good. Slow admin beats emotional trading.\n\n### Main items\n- [[item_bank_accounts_summary]]\n- [[item_life_insurance_policy]]\n- [[item_pension_summary]]\n- [[item_stock_broker_account]]\n- [[item_broker_tax_reports]]\n- [[item_manchester_home_documents]]\n- [[item_exchange_account]]\n\n### Amanda's order of operations\n1. Ask [[person_eleanor_price]] what documents are needed before contacting each institution.\n2. Ask [[person_rachel_green]] to create a valuation snapshot for the date of death.\n3. Contact the broker through the official route, not through links in old emails.\n4. Keep the stock portfolio untouched until you understand tax, probate, cash needs, and market risk.\n5. Check [[item_life_insurance_policy]] early because it may provide practical breathing room.\n6. Keep all letters and statements in [[item_red_folder]].\n\n### Decision principle\nSell assets because the family has a plan, not because grief wants one less thing to think about.",
+        "it": ""
       },
       "audience_roles": [
         "role_primary_heir",
@@ -1470,7 +1478,8 @@
       "order": 2,
       "importance": "high",
       "content": {
-        "en": "## 🏠 Milan rental property\n\nThe [[loc_milan_property]] is a rental investment, not an emergency project. Keep it stable first.\n\n### Key items\n- [[item_milan_property_title]]\n- [[item_milan_mortgage_documents]]\n- [[item_milan_rental_contracts]]\n- [[item_milan_property_insurance]]\n- [[item_milan_property_manager_notes]]\n- [[item_seed_backup_milan]]\n\n### First actions\n1. Ask [[person_luca_bianchi]] to confirm the tenant is safe, rent is current, and no urgent repairs are open.\n2. Ask [[person_rachel_green]] to separate rental income, mortgage payments, taxes, and repair costs.\n3. Ask [[person_eleanor_price]] whether any UK estate step affects the Italian property.\n4. Do not sell the property in the first emotional weeks unless there is a clear legal or financial reason.\n\n### Important\n[[item_seed_backup_milan]] is in the Milan document cabinet for geographic separation. It is not a property document. Do not show it to tenants, contractors, or casual helpers."
+        "en": "The [[loc_milan_property]] is a rental investment, not an emergency project. Keep it stable first.\n\n### Key items\n- [[item_milan_property_title]]\n- [[item_milan_mortgage_documents]]\n- [[item_milan_rental_contracts]]\n- [[item_milan_property_insurance]]\n- [[item_milan_property_manager_notes]]\n- [[item_seed_backup_milan]]\n\n### First actions\n1. Ask [[person_luca_bianchi]] to confirm the tenant is safe, rent is current, and no urgent repairs are open.\n2. Ask [[person_rachel_green]] to separate rental income, mortgage payments, taxes, and repair costs.\n3. Ask [[person_eleanor_price]] whether any UK estate step affects the Italian property.\n4. Do not sell the property in the first emotional weeks unless there is a clear legal or financial reason.\n\n### Important\n[[item_seed_backup_milan]] is in the Milan document cabinet for geographic separation. It is not a property document. Do not show it to tenants, contractors, or casual helpers.",
+        "it": ""
       },
       "audience_roles": [
         "role_primary_heir",
@@ -1503,7 +1512,8 @@
       "order": 0,
       "importance": "high",
       "content": {
-        "en": "## 💻 Digital accounts, phone and password manager\n\nDigital access is the bridge to almost everything else. Preserve before you change.\n\n### Protect these first\n- [[item_phone_john]]\n- [[item_laptop_john]]\n- [[item_yubikey]]\n- [[item_main_email_account]]\n- [[item_password_manager]]\n- [[item_emergency_access_sheet]]\n- [[item_subscription_list]]\n- [[item_cloud_photos]]\n\n### Rules\n- Keep John's phone charged and offline from strangers.\n- Do not factory reset devices.\n- Do not close the main email account until the estate is complete.\n- Use the [[item_emergency_access_sheet]] to access the [[item_password_manager]] lawfully.\n- After access is stable, export important non-secret records into [[loc_cloud_storage]] and print critical copies into [[item_red_folder]].\n\n### Family archive\nThe [[item_cloud_photos]] matters emotionally. Give Thomas and Jane access to selected photos later, gently, when Amanda feels ready."
+        "en": "Digital access is the bridge to almost everything else. Preserve before you change.\n\n### Protect these first\n- [[item_phone_john]]\n- [[item_laptop_john]]\n- [[item_yubikey]]\n- [[item_main_email_account]]\n- [[item_password_manager]]\n- [[item_emergency_access_sheet]]\n- [[item_subscription_list]]\n- [[item_cloud_photos]]\n\n### Rules\n- Keep John's phone charged and offline from strangers.\n- Do not factory reset devices.\n- Do not close the main email account until the estate is complete.\n- Use the [[item_emergency_access_sheet]] to access the [[item_password_manager]] lawfully.\n- After access is stable, export important non-secret records into [[loc_cloud_storage]] and print critical copies into [[item_red_folder]].\n\n### Family archive\nThe [[item_cloud_photos]] matters emotionally. Give Thomas and Jane access to selected photos later, gently, when Amanda feels ready.",
+        "it": ""
       },
       "audience_roles": [
         "role_primary_heir",
@@ -1534,7 +1544,8 @@
       "order": 1,
       "importance": "high",
       "content": {
-        "en": "## ₿ Bitcoin overview for Amanda\n\nAmanda, Bitcoin is different from the broker account. There is no customer service desk that can reverse a mistaken self-custody transaction. That is why the plan is slow and structured.\n\n### What exists\n- [[item_bitcoin_multisig_wallet]]: the main family Bitcoin reserve\n- [[item_bitcoin_watch_only_wallet]]: view-only balance checking\n- [[item_coldcard_device]] and [[item_trezor_device]]: signing devices\n- [[item_seed_backup_uk]], [[item_seed_backup_milan]], and [[item_seed_backup_solicitor]]: separated recovery parts\n- [[item_wallet_descriptor_printout]]: map for identifying the wallet\n- [[item_bitcoin_passphrase_location_note]]: sealed note about the passphrase location\n- [[item_bitcoin_node]]: helpful verification tool, not required to inherit\n\n### Simple explanation\nThis setup is designed so that one lost envelope or one dishonest person should not be enough to lose the money. But it also means you should not improvise.\n\n### Your decision power\n[[person_josh_miller]] can explain and help. He should not decide whether to sell, hold, move, or disclose the Bitcoin. That decision belongs to Amanda as executor and primary heir, with professional advice as needed."
+        "en": "Amanda, Bitcoin is different from the broker account. There is no customer service desk that can reverse a mistaken self-custody transaction. That is why the plan is slow and structured.\n\n### What exists\n- [[item_bitcoin_multisig_wallet]]: the main family Bitcoin reserve\n- [[item_bitcoin_watch_only_wallet]]: view-only balance checking\n- [[item_coldcard_device]] and [[item_trezor_device]]: signing devices\n- [[item_seed_backup_uk]], [[item_seed_backup_milan]], and [[item_seed_backup_solicitor]]: separated recovery parts\n- [[item_wallet_descriptor_printout]]: map for identifying the wallet\n- [[item_bitcoin_passphrase_location_note]]: sealed note about the passphrase location\n- [[item_bitcoin_node]]: helpful verification tool, not required to inherit\n\n### Simple explanation\nThis setup is designed so that one lost envelope or one dishonest person should not be enough to lose the money. But it also means you should not improvise.\n\n### Your decision power\n[[person_josh_miller]] can explain and help. He should not decide whether to sell, hold, move, or disclose the Bitcoin. That decision belongs to Amanda as executor and primary heir, with professional advice as needed.",
+        "it": ""
       },
       "audience_roles": [
         "role_primary_heir",
@@ -1566,7 +1577,8 @@
       "order": 2,
       "importance": "high",
       "content": {
-        "en": "## 🧩 Bitcoin recovery process\n\nThis is intentionally a process, not a secret. The secrets live in sealed physical places.\n\n### Before touching anything\nRead [[guide_do_not_do]] and [[guide_josh_scope]]. Then place these on a table:\n\n- [[item_bitcoin_policy_note]]\n- [[item_wallet_descriptor_printout]]\n- [[item_bitcoin_watch_only_wallet]]\n- [[item_seed_backup_uk]]\n- [[item_seed_backup_milan]]\n- [[item_seed_backup_solicitor]]\n- [[item_bitcoin_passphrase_location_note]]\n- [[item_coldcard_device]]\n- [[item_trezor_device]]\n- [[item_laptop_john]]\n\n### Safety rules\n- Never enter seed words into a website.\n- Never photograph seed words.\n- Never send seed words to Josh, a lawyer, a broker, or support.\n- Work offline where possible.\n- Confirm the wallet from [[item_wallet_descriptor_printout]] before attempting any movement.\n- Use a tiny test transaction first if funds must be moved.\n- Keep written notes of each action for the estate file.\n\n### Recommended recovery team\n- Amanda: decision maker and executor\n- Josh: technical explainer\n- Solicitor or accountant: witness/process support if Amanda wants one\n- No one person should hold all recovery material alone.\n\n### If unsure\nStop. Put the envelopes back. Bitcoin can wait longer than grief can think clearly."
+        "en": "This is intentionally a process, not a secret. The secrets live in sealed physical places.\n\n### Before touching anything\nRead [[guide_do_not_do]] and [[guide_josh_scope]]. Then place these on a table:\n\n- [[item_bitcoin_policy_note]]\n- [[item_wallet_descriptor_printout]]\n- [[item_bitcoin_watch_only_wallet]]\n- [[item_seed_backup_uk]]\n- [[item_seed_backup_milan]]\n- [[item_seed_backup_solicitor]]\n- [[item_bitcoin_passphrase_location_note]]\n- [[item_coldcard_device]]\n- [[item_trezor_device]]\n- [[item_laptop_john]]\n\n### Safety rules\n- Never enter seed words into a website.\n- Never photograph seed words.\n- Never send seed words to Josh, a lawyer, a broker, or support.\n- Work offline where possible.\n- Confirm the wallet from [[item_wallet_descriptor_printout]] before attempting any movement.\n- Use a tiny test transaction first if funds must be moved.\n- Keep written notes of each action for the estate file.\n\n### Recommended recovery team\n- Amanda: decision maker and executor\n- Josh: technical explainer\n- Solicitor or accountant: witness/process support if Amanda wants one\n- No one person should hold all recovery material alone.\n\n### If unsure\nStop. Put the envelopes back. Bitcoin can wait longer than grief can think clearly.",
+        "it": ""
       },
       "audience_roles": [
         "role_primary_heir",
@@ -1600,7 +1612,8 @@
       "order": 3,
       "importance": "high",
       "content": {
-        "en": "## 🤝 Josh's role as crypto helper\n\nJosh, thank you for helping. Your job is to reduce confusion, not to take control.\n\n### What you may help with\n- Explain multisig in plain English.\n- Help Amanda identify [[item_bitcoin_watch_only_wallet]].\n- Help verify that [[item_wallet_descriptor_printout]] matches the expected wallet.\n- Help Amanda understand the difference between watching, signing, and broadcasting.\n- Help create a safer long-term plan if Amanda wants to simplify custody.\n\n### What you should not do\n- Do not ask Amanda to send you seed words, passphrases, PINs, screenshots, or private wallet files.\n- Do not hold all recovery parts.\n- Do not make investment recommendations under pressure.\n- Do not move funds without Amanda's clear instruction and written notes for the estate.\n\n### Tone\nAmanda may be grieving and exhausted. Go slowly. Explain every step twice. If anything feels rushed, stop."
+        "en": "Josh, thank you for helping. Your job is to reduce confusion, not to take control.\n\n### What you may help with\n- Explain multisig in plain English.\n- Help Amanda identify [[item_bitcoin_watch_only_wallet]].\n- Help verify that [[item_wallet_descriptor_printout]] matches the expected wallet.\n- Help Amanda understand the difference between watching, signing, and broadcasting.\n- Help create a safer long-term plan if Amanda wants to simplify custody.\n\n### What you should not do\n- Do not ask Amanda to send you seed words, passphrases, PINs, screenshots, or private wallet files.\n- Do not hold all recovery parts.\n- Do not make investment recommendations under pressure.\n- Do not move funds without Amanda's clear instruction and written notes for the estate.\n\n### Tone\nAmanda may be grieving and exhausted. Go slowly. Explain every step twice. If anything feels rushed, stop.",
+        "it": ""
       },
       "audience_person_ids": [
         "person_josh_miller",
@@ -1621,7 +1634,8 @@
       "order": 0,
       "importance": "high",
       "content": {
-        "en": "## 🧸 Supporting Thomas and Jane\n\nThe estate is not the centre of the story. The children are.\n\n### What I want for them\n- Keep school and friends stable where possible.\n- Tell them the truth in simple words.\n- Do not make them carry adult financial details.\n- Let them have photos, stories, and ordinary routines.\n- Use [[item_children_memory_box]] gently over time, not all at once.\n- Keep [[item_cloud_photos]] safe and make a child-friendly album later.\n\n### If Amanda cannot act\nI would want [[person_sarah_james]] to care for [[person_thomas_james]] and [[person_jane_james]], if that is lawful and truly best for them.\n\n### Money for the children\nThe estate should first protect Amanda and the family home. Any later gifts to the children should be structured, boring, and protected from impulsive spending."
+        "en": "The estate is not the centre of the story. The children are.\n\n### What I want for them\n- Keep school and friends stable where possible.\n- Tell them the truth in simple words.\n- Do not make them carry adult financial details.\n- Let them have photos, stories, and ordinary routines.\n- Use [[item_children_memory_box]] gently over time, not all at once.\n- Keep [[item_cloud_photos]] safe and make a child-friendly album later.\n\n### If Amanda cannot act\nI would want [[person_sarah_james]] to care for [[person_thomas_james]] and [[person_jane_james]], if that is lawful and truly best for them.\n\n### Money for the children\nThe estate should first protect Amanda and the family home. Any later gifts to the children should be structured, boring, and protected from impulsive spending.",
+        "it": ""
       },
       "audience_roles": [
         "role_primary_heir",
@@ -1647,7 +1661,8 @@
       "order": 1,
       "importance": "high",
       "content": {
-        "en": "## 🌳 Funeral, cremation and memorial wishes\n\nThese are wishes, not burdens. Amanda may adjust them if reality requires it.\n\n### My preference\nI would like a simple cremation and a small gathering with family and close friends.\n\n### Memorial idea\nIf it feels right, I like the idea that a small part of my ashes could be used with memorial trees for Amanda, Thomas, and Jane. In this way, I can stay close to you in something alive, growing, and peaceful.\n\n### The tone I want\n- No expensive performance.\n- No guilt.\n- Music, food, stories, and children allowed to be children.\n- Use [[item_funeral_wishes]] for any additional notes.\n- If there is disagreement, Amanda decides."
+        "en": "These are wishes, not burdens. Amanda may adjust them if reality requires it.\n\n### My preference\nI would like a simple cremation and a small gathering with family and close friends.\n\n### Memorial idea\nIf it feels right, I like the idea that a small part of my ashes could be used with memorial trees for Amanda, Thomas, and Jane. In this way, I can stay close to you in something alive, growing, and peaceful.\n\n### The tone I want\n- No expensive performance.\n- No guilt.\n- Music, food, stories, and children allowed to be children.\n- Use [[item_funeral_wishes]] for any additional notes.\n- If there is disagreement, Amanda decides.",
+        "it": ""
       },
       "audience_roles": [
         "role_primary_heir",
@@ -1667,7 +1682,8 @@
       "order": 0,
       "importance": "high",
       "content": {
-        "en": "## ❤️ Message for Amanda\n\nAmanda,\n\nIf you are reading this, I am sorry that the plan has become real. I wrote it because I love you, not because I wanted to control what happens after me.\n\nYou do not need to be brave every hour. You only need to take the next small step.\n\nThe house, the Milan property, the broker account, the gold, the Bitcoin — all of it is just scaffolding. The real inheritance is the life we built, the children we raised, and the choices you still get to make.\n\nPlease use this plan as a helper, then ignore anything that does not fit real life.\n\nI trust you.  \nJohn"
+        "en": "Amanda,\n\nIf you are reading this, I am sorry that the plan has become real. I wrote it because I love you, not because I wanted to control what happens after me.\n\nYou do not need to be brave every hour. You only need to take the next small step.\n\nThe house, the Milan property, the broker account, the gold, the Bitcoin — all of it is just scaffolding. The real inheritance is the life we built, the children we raised, and the choices you still get to make.\n\nPlease use this plan as a helper, then ignore anything that does not fit real life.\n\nI trust you.  \nJohn",
+        "it": ""
       },
       "audience_person_ids": [
         "person_amanda_james"
@@ -1681,7 +1697,8 @@
       "order": 1,
       "importance": "high",
       "content": {
-        "en": "## 💛 Message for Thomas and Jane\n\nThomas and Jane,\n\nI love you more than any object in this plan.\n\nYou may hear adults talk about houses, money, coins, Bitcoin, documents, and decisions. Those things matter, but they are not the most important thing. You are.\n\nWhat I want you to remember:\n- Be kind to your mum.\n- Ask questions when you are ready.\n- Keep some of our stories alive.\n- Do not measure love by money.\n- Learn how to handle money slowly, with patience and humility.\n\nThere is a [[item_children_memory_box]] for you. Open it with Amanda when the time feels right.\n\nLove,  \nDad"
+        "en": "Thomas and Jane,\n\nI love you more than any object in this plan.\n\nYou may hear adults talk about houses, money, coins, Bitcoin, documents, and decisions. Those things matter, but they are not the most important thing. You are.\n\nWhat I want you to remember:\n- Be kind to your mum.\n- Ask questions when you are ready.\n- Keep some of our stories alive.\n- Do not measure love by money.\n- Learn how to handle money slowly, with patience and humility.\n\nThere is a [[item_children_memory_box]] for you. Open it with Amanda when the time feels right.\n\nLove,  \nDad",
+        "it": ""
       },
       "audience_roles": [
         "role_beneficiary",
@@ -1701,7 +1718,8 @@
       "order": 2,
       "importance": "high",
       "content": {
-        "en": "## ₿ Message for Josh\n\nJosh,\n\nIf Amanda asks you for help, please help her slowly.\n\nYou know enough to understand why this matters. You also know enough to understand how badly it can go if someone rushes. Please be the calm technical friend, not the hero.\n\nHelp her understand [[item_bitcoin_multisig_wallet]], [[item_bitcoin_watch_only_wallet]], and [[item_wallet_descriptor_printout]]. Do not ask for all recovery parts. Do not make the financial decision for her.\n\nThe best outcome is not \"Josh recovered the Bitcoin.\"  \nThe best outcome is \"Amanda understood what happened and stayed in control.\"\n\nThank you,  \nJohn"
+        "en": "Josh,\n\nIf Amanda asks you for help, please help her slowly.\n\nYou know enough to understand why this matters. You also know enough to understand how badly it can go if someone rushes. Please be the calm technical friend, not the hero.\n\nHelp her understand [[item_bitcoin_multisig_wallet]], [[item_bitcoin_watch_only_wallet]], and [[item_wallet_descriptor_printout]]. Do not ask for all recovery parts. Do not make the financial decision for her.\n\nThe best outcome is not \"Josh recovered the Bitcoin.\"  \nThe best outcome is \"Amanda understood what happened and stayed in control.\"\n\nThank you,  \nJohn",
+        "it": ""
       },
       "audience_person_ids": [
         "person_josh_miller"
@@ -1722,7 +1740,8 @@
       "order": 0,
       "importance": "medium",
       "content": {
-        "en": "## 🛠️ How John should maintain this plan\n\nThis is the living part of the demo. A plan that is not updated becomes theatre.\n\n### Review every 6 months\n- Are [[person_amanda_james]], [[person_josh_miller]], [[person_eleanor_price]], [[person_rachel_green]], and [[person_luca_bianchi]] still the right people?\n- Did any location change, especially [[loc_home_safe]], [[loc_solicitor_office]], or [[loc_milan_document_cabinet]]?\n- Are [[item_password_manager]], [[item_main_email_account]], and [[item_yubikey]] still accurate?\n- Does [[item_bitcoin_multisig_wallet]] still match [[item_wallet_descriptor_printout]]?\n- Are [[item_stock_broker_account]] and [[item_milan_mortgage_documents]] up to date?\n- Are Thomas and Jane still minors? If not, update their guide access.\n\n### Annual drill\nWithout exposing secrets, ask Amanda to find:\n- the red folder\n- the will location\n- the professional contacts sheet\n- the watch-only Bitcoin wallet\n- the Milan property file\n\nIf she cannot find the map in ten minutes, the plan is too complicated."
+        "en": "This is the living part of the demo. A plan that is not updated becomes theatre.\n\n### Review every 6 months\n- Are [[person_amanda_james]], [[person_josh_miller]], [[person_eleanor_price]], [[person_rachel_green]], and [[person_luca_bianchi]] still the right people?\n- Did any location change, especially [[loc_home_safe]], [[loc_solicitor_office]], or [[loc_milan_document_cabinet]]?\n- Are [[item_password_manager]], [[item_main_email_account]], and [[item_yubikey]] still accurate?\n- Does [[item_bitcoin_multisig_wallet]] still match [[item_wallet_descriptor_printout]]?\n- Are [[item_stock_broker_account]] and [[item_milan_mortgage_documents]] up to date?\n- Are Thomas and Jane still minors? If not, update their guide access.\n\n### Annual drill\nWithout exposing secrets, ask Amanda to find:\n- the red folder\n- the will location\n- the professional contacts sheet\n- the watch-only Bitcoin wallet\n- the Milan property file\n\nIf she cannot find the map in ten minutes, the plan is too complicated.",
+        "it": ""
       },
       "audience_roles": [
         "role_owner"
@@ -1750,7 +1769,8 @@
           "item_milan_mortgage_documents"
         ]
       },
-      "updated": "2026-06-10"
+      "updated": "2026-06-10",
+      "draft": true
     },
     {
       "id": "guide_best_practices_demo",
@@ -1759,7 +1779,8 @@
       "order": 1,
       "importance": "low",
       "content": {
-        "en": "## 📚 Best-practice notes for the demo\n\nThis demo is built around a few practical principles:\n\n- A will should identify beneficiaries, executors, guardianship wishes for children, and what should happen if beneficiaries die first.\n- Executors or personal representatives need a clear map of money, property, possessions, and professional contacts.\n- Sensitive digital material should be mapped but not stored directly in this package.\n- Passwords, PINs, seed phrases, private keys, and account numbers should stay out of the JSON and out of any public or easily copied document.\n- Bitcoin inheritance should separate instructions from secrets, avoid one-person control, and use a calm recovery process rather than improvisation.\n- The owner should review the plan regularly because stale inheritance instructions can be worse than no instructions.\n\nThis guide is deliberately general. Real families should adapt the structure with a qualified solicitor, accountant, and technical helper."
+        "en": "This demo is built around a few practical principles:\n\n- A will should identify beneficiaries, executors, guardianship wishes for children, and what should happen if beneficiaries die first.\n- Executors or personal representatives need a clear map of money, property, possessions, and professional contacts.\n- Sensitive digital material should be mapped but not stored directly in this package.\n- Passwords, PINs, seed phrases, private keys, and account numbers should stay out of the JSON and out of any public or easily copied document.\n- Bitcoin inheritance should separate instructions from secrets, avoid one-person control, and use a calm recovery process rather than improvisation.\n- The owner should review the plan regularly because stale inheritance instructions can be worse than no instructions.\n\nThis guide is deliberately general. Real families should adapt the structure with a qualified solicitor, accountant, and technical helper.",
+        "it": ""
       },
       "audience_roles": [
         "role_owner",

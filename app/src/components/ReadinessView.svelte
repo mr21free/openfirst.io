@@ -234,6 +234,9 @@
   .vh { font-size: clamp(22px, 3vw, 30px); }
   .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .head-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  /* The mobile nav toggle bar already names the current section — this
+     heading just repeats it and eats space that could go to the list. */
+  @media (max-width: 820px) { .vh { display: none; } }
   .tabs { display: flex; align-items: center; gap: 28px; border-bottom: 1px solid var(--rule); margin-top: -4px; }
   .tabs button { position: relative; padding: 0 0 10px; color: var(--ink-soft); font-size: 14px; }
   .tabs button.on { color: var(--accent-deep); }

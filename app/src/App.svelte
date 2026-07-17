@@ -8,6 +8,7 @@ import { decryptAndLoad, loadSample } from './lib/load.js';
 import { PACKAGE_SCHEMA } from './lib/format.js';
 import { deriveDraftKey, decryptString, decryptToBlob } from './lib/draftcrypto.js';
 import { templateSeed } from './lib/templates.js';
+import { lockBodyScroll } from './lib/scrollLock.js';
 
   const store = new Store();
 
@@ -52,16 +53,36 @@ import { templateSeed } from './lib/templates.js';
   // it completes the security story (see DESIGN/strategy notes).
   const IDLE_LOCK_MS = 10 * 60 * 1000;
   let lockedNotice = $state(false);
+  let lockedDraftKey = $state(null);
+  let lockedReason = $state('idle'); // 'idle' | 'manual' — which copy the notice shows
+  $effect(() => { if (lockedNotice) return lockBodyScroll(); });
   $effect(() => {
     if (readerMode || !store.pkg || !store.draftProtected) return;
     let t;
-    const lock = async () => { await store.lockDraft(); lockedNotice = true; };
+    const lock = async () => {
+      const key = store.data?.package?.id || 'current';
+      await store.lockDraft();
+      lockedDraftKey = key;
+      lockedReason = 'idle';
+      lockedNotice = true;
+    };
     const arm = () => { clearTimeout(t); t = setTimeout(lock, IDLE_LOCK_MS); };
     const evs = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
     for (const e of evs) window.addEventListener(e, arm, { passive: true });
     arm();
     return () => { clearTimeout(t); for (const e of evs) window.removeEventListener(e, arm); };
   });
+
+  // The Reader's Lock button: same "locked" confirmation as the idle timeout,
+  // but the key must be captured before store.lockDraft() resets the store.
+  async function manualLock() {
+    const key = store.data?.package?.id || 'current';
+    await store.lockDraft();
+    lockedDraftKey = key;
+    lockedReason = 'manual';
+    lockedNotice = true;
+    close();
+  }
 
   function base64ToBytes(b64) {
     const bin = atob(b64);
@@ -110,6 +131,11 @@ import { templateSeed } from './lib/templates.js';
       // Ctrl+E) instead of landing on a heir's locked-down view with no way out.
       booted = true;
       demoAdmin = true;
+      const params = new URLSearchParams(location.search);
+      const guideId = params.get('guide');
+      if (guideId) templateView = guideId;
+      const dryRunPersonId = params.get('dryrun');
+      if (dryRunPersonId) demoDryRunPerson = dryRunPersonId;
       (async () => {
         const loaded = await loadSample();
         store.load(loaded);
@@ -136,11 +162,9 @@ import { templateSeed } from './lib/templates.js';
           return;
         }
         const seed = templateSeed(templateId);
+        if (seed?.guides?.[0]) templateView = seed.guides[0].id;
         await newPlan(seed);
-        if (seed?.guides?.[0]) {
-          store.stopEditing();
-          templateView = seed.guides[0].id;
-        }
+        if (seed?.guides?.[0]) store.stopEditing();
       })();
       return;
     }
@@ -169,6 +193,7 @@ import { templateSeed } from './lib/templates.js';
 
   let demoAdmin = $state(false);
   let templateView = $state(null); // guide id a /build/?template= link opens on
+  let demoDryRunPerson = $state(null); // person id a /demo/?dryrun= link opens a dry run for
 
   // ?template= has done its job once the user starts editing the seeded plan —
   // drop it, so a refresh resumes the (now autosaving) draft instead of
@@ -318,6 +343,7 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
   }
 </script>
 
+<svelte:window onkeydown={(e) => { if (e.key === 'Escape' && lockedNotice) lockedNotice = false; }} />
 {#if readerMode}
   {#if store.pkg}
     <Reader {store} readOnly onClose={() => {}} />
@@ -325,27 +351,38 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
     <UnlockGate hint={gateEnvelope.hint} onUnlock={unlockEmbedded} />
   {/if}
 {:else if store.pkg}
-  <Reader {store} onClose={close} initialAdmin={demoAdmin} initialView={templateView} />
+  <Reader {store} onClose={close} onLock={manualLock} initialAdmin={demoAdmin} initialView={templateView} initialDryRunPerson={demoDryRunPerson} />
 {:else if draftGate}
-  <UnlockGate hint="Your draft passphrase (not the export password)." onUnlock={unlockDraft} onCancel={() => { draftGate = null; refreshDrafts(); }} />
+  <UnlockGate hint="Your plan passphrase (not the export password)." onUnlock={unlockDraft} onCancel={() => { draftGate = null; refreshDrafts(); }} />
 {:else}
   {#if lockedNotice}
-    <div class="locked-note no-print" role="status">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-      Locked after 10 minutes of inactivity. Your encrypted draft is saved — resume to continue.
-      <button class="iconbtn locked-x" data-tip="Dismiss" data-tip-pos="left" aria-label="Dismiss" onclick={() => (lockedNotice = false)}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></button>
+    <div class="scrim no-print" role="presentation" onclick={() => (lockedNotice = false)}></div>
+    <div class="modal card locked-modal no-print" role="alertdialog" aria-modal="true" aria-label="Plan locked" tabindex="-1">
+      <div class="row locked-modal-title">
+        <span class="locked-modal-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>
+        <h3>{lockedReason === 'manual' ? 'Plan locked' : 'Locked after 10 minutes of inactivity'}</h3>
+      </div>
+      <p class="tiny muted">Your encrypted plan is saved — resume to continue.</p>
+      <div class="row" style="gap:10px; margin-top:6px; justify-content:flex-end">
+        <button class="btn btn-primary" onclick={() => { lockedNotice = false; lockedDraftKey = null; }}>Close</button>
+        <button class="btn btn-ghost" onclick={async () => { const key = lockedDraftKey; lockedNotice = false; lockedDraftKey = null; if (key) await resumeDraft(key); }}>Resume</button>
+      </div>
     </div>
   {/if}
   <Landing {onLoaded} {newPlan} {drafts} {resumeDraft} {discardDraft} />
 {/if}
 
 <style>
-  .locked-note {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 18px; font-size: 13px;
-    background: var(--accent-wash); color: var(--ink-soft);
-    border-bottom: 1px solid var(--rule);
+  .scrim { position: fixed; inset: 0; background: var(--scrim); z-index: var(--z-scrim); }
+  .locked-modal {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    z-index: var(--z-modal); width: min(420px, 94vw);
+    border-left: 2px solid var(--accent);
+    display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+    box-shadow: 0 24px 60px oklch(0.2 0.03 255 / 0.18);
+    padding: 30px 32px;
   }
-  .locked-note svg:first-child { flex: none; color: var(--accent-deep); }
-  .locked-x { width: 28px; height: 28px; margin-left: auto; }
+  .locked-modal-title { gap: 10px; }
+  .locked-modal-ico { display: inline-flex; color: var(--ink-soft); }
+  .locked-modal h3 { font-size: 19px; margin: 0; }
 </style>

@@ -26,7 +26,7 @@
       return;
     }
     if (!draftPassConfirmed) {
-      draftErr = 'Repeat the passphrase below to confirm it — a forgotten draft passphrase cannot be recovered.';
+      draftErr = 'Repeat the passphrase below to confirm it — a forgotten plan passphrase cannot be recovered.';
       return;
     }
     draftBusy = true;
@@ -43,9 +43,9 @@
 
   async function turnOffProtection() {
     const ok = await requestConfirm?.({
-      title: 'Turn off draft protection?',
-      message: 'The working draft in this browser will be stored unencrypted again. Your exported files are not affected.',
-      confirmLabel: 'Turn off',
+      title: 'Disable plan protection?',
+      message: 'The plan in progress in this browser will be stored unencrypted again. Your exported files are not affected.',
+      confirmLabel: 'Disable',
       tone: 'danger'
     });
     if (!ok) return;
@@ -139,32 +139,34 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
         </span>
         <div class="protect-main">
-          <span class="lbl" style="margin:0">Draft protection<InfoHint text="Encrypts the auto-saved draft in this browser's storage (the plan JSON and any files) with a passphrase. Protects a copied disk or profile — not a live-compromised browser or your unlocked screen. The encrypted export stays your durable backup." /></span>
+          <span class="lbl" style="margin:0">Plan protection<InfoHint text="Encrypts the auto-saved plan in this browser's storage (the plan JSON and any files) with a passphrase. Protects a copied disk or profile — not a live-compromised browser or your unlocked screen. The encrypted export stays your durable backup." /></span>
           <p class="tiny muted protect-desc">
-            {#if store?.draftProtected}This draft is encrypted at rest in this browser's storage on this computer.{:else}The working draft is saved unencrypted in this browser's storage on this computer.{/if}
+            {#if store?.draftProtected}This plan is encrypted at rest in this browser's storage on this computer.{:else}The plan in progress is saved unencrypted in this browser's storage on this computer.{/if}
           </p>
           {#if store?.draftProtected && !showProtect}
             <button class="btn-link" onclick={() => (showProtect = true)}>Change passphrase…</button>
           {/if}
         </div>
         <Switch
-          checked={!!store?.draftProtected}
-          label="Draft protection"
+          checked={!!store?.draftProtected || showProtect}
+          label="Plan protection"
           disabled={draftBusy}
           onToggle={(next) => { if (next) { showProtect = true; } else { turnOffProtection(); } }}
         />
       </div>
       {#if showProtect}
         <div class="protect-form">
-          <PassphraseField bind:value={draftPass} bind:confirmOk={draftPassConfirmed} placeholder={store?.draftProtected ? 'New draft passphrase' : 'Draft passphrase'} onEnter={applyProtection} />
-          <p class="tiny muted">
-            A <strong>6-word passphrase</strong> is far stronger than a short password and easy to write down.
-            If you forget it, this draft can't be recovered — keep the encrypted export as your backup.
-          </p>
+          <PassphraseField
+            bind:value={draftPass}
+            bind:confirmOk={draftPassConfirmed}
+            placeholder={store?.draftProtected ? 'New plan passphrase' : 'Plan passphrase'}
+            onEnter={applyProtection}
+            strengthHint="A 6-word passphrase is far stronger than a short password and easy to write down. If you forget it, this plan can't be recovered — keep the encrypted export as your backup."
+          />
           {#if draftErr}<Callout text={draftErr} />{/if}
           <div class="row" style="gap:8px; justify-content: flex-end">
             <button class="btn btn-small btn-ghost" onclick={() => { showProtect = false; draftPass = ''; draftErr = ''; }}>Cancel</button>
-            <button class="btn btn-small btn-primary" disabled={draftBusy || !draftPass} onclick={applyProtection}>{draftBusy ? 'Encrypting…' : store?.draftProtected ? 'Change passphrase' : 'Turn on'}</button>
+            <button class="btn btn-small btn-primary" disabled={draftBusy || !draftPass} onclick={applyProtection}>{draftBusy ? 'Encrypting…' : store?.draftProtected ? 'Change passphrase' : 'Enable'}</button>
           </div>
         </div>
       {/if}

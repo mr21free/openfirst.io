@@ -5,9 +5,12 @@
     follow-up" rather than one more thing to configure before saving.
   */
   import { downloadReviewIcs, googleCalendarUrl } from '../lib/calendar.js';
+  import { lockBodyScroll } from '../lib/scrollLock.js';
   import Callout from './Callout.svelte';
 
   let { name = '', fileName = '', onClose } = $props();
+
+  $effect(() => lockBodyScroll());
 
   // Ask first, show the cadence/calendar picker only once they opt in — the
   // full setup is a lot to read right after "your export is done."
@@ -118,4 +121,13 @@
   .rem-field select:focus { outline: none; border-color: var(--accent-deep); }
   .rem-providers { display: flex; flex-direction: column; gap: 8px; }
   .rem-provider-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  /* Three fields side by side no longer fit past this width (the third
+     dropdown runs off the modal's edge) — stack them instead, one per line.
+     A fixed-width, right-aligned label column keeps every dropdown starting
+     at the same x, so the stack still reads as one aligned form. */
+  @media (max-width: 480px) {
+    .rem-row { flex-direction: column; align-items: stretch; gap: 8px; }
+    .rem-lbl { flex: none; width: 50px; text-align: right; }
+  }
 </style>

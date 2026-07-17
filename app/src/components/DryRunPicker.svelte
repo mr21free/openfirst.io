@@ -6,8 +6,11 @@
     button's own "anyDryRunPeople" gate.
   */
   import Icon from './Icon.svelte';
+  import { lockBodyScroll } from '../lib/scrollLock.js';
 
   let { pkg, primary = [], rest = [], onPick, onCancel } = $props();
+
+  $effect(() => lockBodyScroll());
 
   function onKeydown(e) { if (e.key === 'Escape') onCancel?.(); }
 </script>

@@ -9,7 +9,10 @@
   */
   import logo from '../assets/logo.svg';
   import Callout from './Callout.svelte';
+  import { lockBodyScroll } from '../lib/scrollLock.js';
   let { hint = '', onUnlock, onCancel = null, modal = false } = $props();
+
+  $effect(() => { if (modal) return lockBodyScroll(); });
 
   let password = $state('');
   let show = $state(false);
@@ -84,7 +87,11 @@
 <style>
   .gate-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
   .gate {
-    width: min(440px, 94vw); border-left: 2px solid var(--accent);
+    /* .gate-page below already insets 24px on each side, so a raw vw cap here
+       double-counts that margin on narrow viewports and pushes the card past
+       the right edge; subtracting the same 24px*2 keeps both this full-page
+       shell and the raw-viewport .modal-card variant symmetric. */
+    width: min(440px, calc(100vw - 48px)); border-left: 2px solid var(--accent);
     display: flex; flex-direction: column; gap: 12px;
     box-shadow: 0 24px 60px oklch(0.2 0.03 255 / 0.14);
     padding: 30px 32px; /* dialogs get more air than inline cards */

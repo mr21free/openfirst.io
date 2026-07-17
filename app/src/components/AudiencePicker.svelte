@@ -5,8 +5,11 @@
     reading view isn't limited to people with readiness checks.
   */
   import Icon from './Icon.svelte';
+  import { lockBodyScroll } from '../lib/scrollLock.js';
 
   let { pkg, primary = [], rest = [], adminLabel, onPick, onAdmin, onCancel } = $props();
+
+  $effect(() => lockBodyScroll());
 
   function onKeydown(e) { if (e.key === 'Escape') onCancel?.(); }
 </script>

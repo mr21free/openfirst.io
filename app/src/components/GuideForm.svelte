@@ -2,12 +2,13 @@
   import EntityPicker from './EntityPicker.svelte';
   import TagSelect from './TagSelect.svelte';
 
-  let { pkg, raw, onDelete } = $props();
+  let { pkg, raw, store = null, onDelete } = $props();
 
   const roleOptions = $derived(pkg.roleOptions());
-  const today = () => new Date().toISOString().slice(0, 10);
 
-  $effect(() => { if (!raw) return; if (!raw.content) raw.content = {}; if (!raw.references) raw.references = {}; });
+  // Editor writes go through the store (which owns the data) so this form
+  // never mutates a prop it doesn't own — see store.svelte.js ensureGuideShape.
+  $effect(() => { if (raw) store?.ensureGuideShape?.(raw.id); });
 
   // Auto-stamp "updated" when the guide actually changes (not on mere open).
   let baselineId = null, baseline = null;
@@ -15,7 +16,7 @@
     if (!raw) return;
     const key = JSON.stringify({ ...$state.snapshot(raw), updated: undefined });
     if (raw.id !== baselineId) { baselineId = raw.id; baseline = key; return; }
-    if (key !== baseline) { baseline = key; const t = today(); if (raw.updated !== t) raw.updated = t; }
+    if (key !== baseline) { baseline = key; store?.touchGuide?.(raw.id); }
   });
 </script>
 
@@ -31,7 +32,7 @@
     <p class="tiny muted">Edit the guide’s content directly on the guide page.</p>
 
     <label class="f"><span class="lbl">Importance</span>
-      <select bind:value={raw.importance}><option value={undefined}>—</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
+      <select value={raw.importance} onchange={(e) => store?.setGuideImportance?.(raw.id, e.target.value || undefined)}><option value={undefined}>—</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
     </label>
 
     <div class="form-foot"><button class="btn btn-ghost form-danger" onclick={() => onDelete?.()}>Delete</button></div>

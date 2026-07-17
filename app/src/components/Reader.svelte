@@ -19,8 +19,9 @@
   import DryRunPicker from './DryRunPicker.svelte';
   import AudiencePicker from './AudiencePicker.svelte';
   import { langValue } from '../lib/package.js';
+  import { lockBodyScroll } from '../lib/scrollLock.js';
 
-  let { store, onClose, readOnly = false, initialAudience = null, initialAdmin = false, initialView = null } = $props();
+  let { store, onClose, onLock = null, readOnly = false, initialAudience = null, initialAdmin = false, initialView = null, initialDryRunPerson = null } = $props();
 
   const pkg = $derived(store.pkg);
   const editing = $derived(!readOnly && store.mode === 'edit');
@@ -30,6 +31,7 @@
   // straight to the admin's own read view so the Edit button is visible.
   $effect(() => {
     if (chosen) return;
+    if (initialDryRunPerson && pkg) { startDryRun(initialDryRunPerson); return; }
     if (initialAdmin) { audience = null; chosen = true; return; }
     if (initialAudience && audiences.some((p) => p.id === initialAudience)) {
       chooseAudience(initialAudience);
@@ -78,13 +80,16 @@
   function addGuide() {
     const id = store.addGuide();
     closeDrawer();
+    mobileNavOpen = false;
     const g = pkg.guides.find((x) => x.id === id);
     view = g ? guideTarget(g) : id;
     focusNewGuideTitle = true;
     window.scrollTo({ top: 0 });
   }
   function openSettings() { store.startSettings(); setDrawer('__meta'); }
-  async function lockDraft() { await store.lockDraft(); onClose?.(); }
+  // The parent owns the lock sequence (it needs the plan id before the store
+  // resets, to show a "locked" confirmation and offer Resume).
+  async function lockDraft() { await onLock?.(); }
   function openMapSettings() { setDrawer('__map'); }
   function editEntity(id) { setDrawer(id); }
   function rowClick(id) { if (editing) setDrawer(id); else openEntity(id); }
@@ -246,6 +251,8 @@
   let showDryRunPicker = $state(false);
   let showAudiencePicker = $state(false);
   let showNewMenu = $state(false);
+  let mobileNavOpen = $state(false);
+  $effect(() => { if (mobileNavOpen) return lockBodyScroll(); });
   // The horizontal (narrow-viewport) nav scrolls (overflow-x: auto), which per
   // the CSS spec forces overflow-y to auto too — an absolutely-positioned
   // popover anchored inside it gets clipped. Fixed-position + a rect computed
@@ -581,6 +588,33 @@
   const currentGuide = $derived(view === 'start' ? homeGuide : pkg.guides.find((g) => g.id === view) || null);
   // Language only matters where there are translations — i.e. when viewing a guide.
   const inGuideView = $derived(!!currentGuide);
+  // Names the current section for the mobile off-canvas nav's toggle bar.
+  const mobileNavLabel = $derived(
+    currentGuide ? langValue(currentGuide.title, currentGuide.title_i18n, lang)
+    : view === 'map' ? 'Map'
+    : view === 'readiness' ? 'Readiness'
+    : view === 'people' ? 'People'
+    : view === 'roles' ? 'Roles'
+    : view === 'locations' ? 'Locations'
+    : view === 'items' ? 'Items'
+    : view === 'files' ? 'Files'
+    : view === 'access' ? 'Your access path'
+    : 'Menu'
+  );
+  // Icon shown before the toggle bar's label — matches the icon each section
+  // uses in the nav below. Guides carry their own emoji in the title, so they
+  // get none; access path reuses the clock glyph from its own nav row.
+  const mobileNavIconKind = $derived(
+    currentGuide ? null
+    : view === 'map' ? 'map'
+    : view === 'readiness' ? 'readiness'
+    : view === 'people' ? 'people'
+    : view === 'roles' ? 'role'
+    : view === 'locations' ? 'location'
+    : view === 'items' ? 'item'
+    : view === 'files' ? 'file'
+    : null
+  );
   const locTree = $derived(pkg.locationTreeFlat());
   const locationRows = $derived.by(() => {
     const facetOn = locationFacets.some((f) => (filters[f.key] || []).length);
@@ -632,6 +666,7 @@
     if (v === 'readiness' && !canSeeReadiness) return;
     view = v;
     closeDrawer();
+    mobileNavOpen = false;
     query = '';
     selectedIds = [];
     anchorIndex = null;
@@ -840,13 +875,6 @@
       <div class="bar-actions">
         {#if editing && !showGate}<span class="sr-only" aria-live="polite">{store.savedAt ? 'Auto-saved to this device' : 'Saving…'}</span>{/if}
         {#if !showGate}
-          {#if !readOnly && !previewingHeir && store.draftProtected}
-            <button class="iconbtn" data-tip-pos="left" data-tip="Lock the draft and return to start" aria-label="Lock draft" onclick={lockDraft}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-            </button>
-          {/if}
           {#if pkg.languages.length > 1}
             <select class="sel lang" bind:value={lang} aria-label="Language" title="Language">
               {#each pkg.languages as l}<option value={l}>{l.toUpperCase()}</option>{/each}
@@ -928,6 +956,12 @@
             {/if}
           </button>
         {:else}
+          {#if store.draftProtected}
+            <button class="abtn" onclick={lockDraft} aria-label="Lock plan" data-tip="Lock the plan and return to start" data-tip-pos="right">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+              <span>Lock</span>
+            </button>
+          {/if}
           <button class="abtn" onclick={openSettings} aria-label="Settings">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" /><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6l-.08.1a2 2 0 0 1-3.84 0L10 20a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1l-.1-.08a2 2 0 0 1 0-3.84L4 10a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6l.08-.1a2 2 0 0 1 3.84 0L14 4a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.08.36.28.7.6 1l.1.08a2 2 0 0 1 0 3.84L20 14c-.32.3-.52.64-.6 1Z" /></svg>
             <span>Settings</span>
@@ -941,9 +975,26 @@
           onChoose={chooseAudience} onAdmin={() => { audience = null; chosen = true; }} />
       </div>
     {:else}
+      <!-- Mobile-only nav toggle: below 820px the rail becomes an off-canvas
+           drawer (Productboard's own mobile pattern) instead of a horizontal
+           scroll strip, so this bar names the current section and opens it. -->
+      <button class="mobilenav-toggle no-print" onclick={() => (mobileNavOpen = true)} aria-label="Open menu" aria-expanded={mobileNavOpen}>
+        <span class="mobilenav-burger" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span class="mobilenav-current">
+          {#if view === 'access' && !currentGuide}
+            <svg class="mobilenav-current-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+          {:else if mobileNavIconKind}
+            <span class="mobilenav-current-ico" aria-hidden="true"><Icon kind={mobileNavIconKind} size={14} /></span>
+          {/if}
+          <span class="mobilenav-current-label">{mobileNavLabel}</span>
+        </span>
+      </button>
+      {#if mobileNavOpen}
+        <div class="mobilenav-scrim no-print" onclick={() => (mobileNavOpen = false)} role="presentation"></div>
+      {/if}
       <!-- Navigation rail: a full-height pane that shares its right border
            with the content pane — frames touch, Productboard-style. -->
-      <div class="railcol no-print">
+      <div class="railcol no-print" class:mobilenav-open={mobileNavOpen}>
       <nav class="nav" class:editing>
         {#snippet draftMark()}
           <span class="draft-mark" title="Draft — left out of the heir reader (.html)" aria-label="Draft">
@@ -1130,7 +1181,7 @@
           {/if}
         {/snippet}
         {#if currentGuide}
-          <GuideView {pkg} guide={currentGuide} {lang} onOpen={openEntity} onTag={openTag} onView={(v) => go(v)} {editing} canEdit={!readOnly && !previewingHeir} onStartEditing={toggleEdit} onEdit={() => editEntity(currentGuide.id)} onDelete={() => removeEntity(currentGuide.id)} onToggleDraft={() => store.toggleGuideDraft(currentGuide.id)} onContent={(l, v) => store.setGuideContent(currentGuide.id, l, v)} onAddRef={(k, id) => store.addGuideRef(currentGuide.id, k, id)} onUploadMedia={(file) => uploadGuideMedia(currentGuide.id, file)} onTitle={(l, v) => store.setGuideTitle(currentGuide.id, l, v)} focusTitle={focusNewGuideTitle} onTitleFocused={() => (focusNewGuideTitle = false)} />
+          <GuideView {pkg} guide={currentGuide} {lang} onOpen={openEntity} onTag={openTag} onView={(v) => go(v)} {editing} canEdit={!readOnly && !previewingHeir} onStartEditing={toggleEdit} onEdit={() => editEntity(currentGuide.id)} onDelete={() => removeEntity(currentGuide.id)} onToggleDraft={() => store.toggleGuideDraft(currentGuide.id)} onContent={(l, v) => store.setGuideContent(currentGuide.id, l, v)} onAddRef={(k, id) => store.addGuideRef(currentGuide.id, k, id)} onUploadMedia={(file) => uploadGuideMedia(currentGuide.id, file)} onTitle={(l, v) => store.setGuideTitle(currentGuide.id, l, v)} onTouched={() => store.touchGuide(currentGuide.id)} focusTitle={focusNewGuideTitle} onTitleFocused={() => (focusNewGuideTitle = false)} />
         {:else if view === 'start' && editing && pkg.guides.length === 0}
           <div class="card empty-hint">
             <span class="eyebrow">New plan</span>
@@ -1322,7 +1373,7 @@
                 </button>
                 <span class="ulist-aside">
                   {#if pkg.attachmentsByItem.has(it.id)}<span class="clip-ico" title="Has attachments" aria-label="Has attachments"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg></span>{/if}
-                  {#if it.price}<span class="muted small">{it.price}</span>{/if}
+                  {#if it.price}<span class="muted small ulist-price" title={it.price}>{it.price}</span>{/if}
                   <Importance level={it.importance} compact />
                   {#if editing}<button class="rowdel" title="Delete" onclick={() => removeEntity(it.id)}><TrashIcon /></button>{/if}
                 </span>
@@ -1560,6 +1611,11 @@
      flush paper pane, same rhythm as .content once a person is chosen. */
   .gatewrap { grid-column: 2 / -1; min-width: 0; display: flex; flex-direction: column; background: var(--paper); }
   .railcol { background: var(--paper); border-right: 1px solid var(--rule-soft); }
+  /* Toggle bar + scrim for the mobile off-canvas nav — hidden here, shown only
+     under the 820px breakpoint below, where .railcol becomes a slide-in panel
+     instead of the desktop's static sidebar column. */
+  .mobilenav-toggle { display: none; }
+  .mobilenav-scrim { display: none; }
   /* The action rail: the leftmost pane, verbs only. */
   .actionbar { background: var(--paper); border-right: 1px solid var(--rule-soft); }
   /* z-index (not just position: sticky) — .nav in the next column over is
@@ -1580,6 +1636,12 @@
     color: var(--ink-soft);
     transition: background .12s, color .12s;
   }
+  /* A two-word label ("Reading as", "Dry run") makes this button's own content
+     wider than a one-word one ("Edit", "Settings"...) — without this, a
+     cramped rail shrinks the icon along with the button to make room for the
+     longer label, so the wordier buttons end up with visibly smaller icons
+     than their neighbours. The icon holds its size; the label wraps instead. */
+  .abtn svg { flex-shrink: 0; }
   .abtn span { font-family: var(--mono, inherit); font-size: 9.5px; letter-spacing: 0.04em; }
   /* The chosen heir's name, unlike the other rail labels, is a proper name —
      set it in the sans voice so it doesn't read as a machine-generated tag. */
@@ -1747,7 +1809,17 @@
   .content { min-width: 0; display: flex; flex-direction: column; gap: 22px; padding: var(--reader-section-gap) 28px 90px; background: var(--paper); }
   .vh { font-size: clamp(22px, 3vw, 30px); }
   .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .head-actions { display: flex; align-items: center; gap: 8px; }
+  .head-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  /* The mobile nav toggle bar already names the current section — this
+     heading just repeats it and eats space that could go to the list. */
+  @media (max-width: 820px) {
+    .vh { display: none; }
+    /* With the heading hidden, .section-head is often empty (read mode: no
+       head-actions either) — as a flex item it still claims a full .content
+       gap, doubling the space before the search bar. display:contents drops
+       the empty box from layout so only visible children keep their gap. */
+    .section-head { display: contents; }
+  }
   .del-selected { color: var(--warn); border: 1px solid oklch(0.85 0.06 50); background: var(--paper); }
   .del-selected:hover { background: var(--warn-wash); }
   .rowcheck { flex: none; width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent-deep); }
@@ -1844,40 +1916,90 @@
     .body, .with-actions .body { grid-template-columns: minmax(0, 1fr); gap: 0; min-height: 0; }
     .gatewrap { grid-column: 1 / -1; }
     .railcol { min-width: 0; }
-    /* The action rail folds to a flush strip above the nav strip. */
-    .actionbar { border-right: 0; border-bottom: 1px solid var(--rule-soft); }
-    .actionbar-in { position: static; height: auto; flex-direction: row; padding: 4px 10px; gap: 2px; }
-    .abtn { flex-direction: row; gap: 7px; padding: 7px 10px; }
-    /* The invisible (opacity-0) tooltip bubble would poke past the right
-       viewport edge in the horizontal strip — labels are visible here anyway. */
+    /* The action rail drops to an iOS-native bottom tab bar, fixed under the
+       content — the top of the screen was getting crowded (title, search,
+       verbs, section toggle all stacked before any actual content showed).
+       Icon-over-label, evenly spaced, same overflow-x-scroll fallback as the
+       nav drawer if the button count ever outgrows the width. */
+    .actionbar {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-topbar);
+      border-right: 0; border-top: 1px solid var(--rule-soft);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .actionbar-in { position: static; height: auto; flex-direction: row; justify-content: space-around; padding: 4px 6px; gap: 0; overflow-x: auto; }
+    .abtn { flex: none; flex-direction: column; gap: 3px; padding: 7px 10px; }
+    /* Meaningful in the vertical rail (pushes Settings to the bottom); in an
+       evenly-spaced horizontal bar it would just open a gap in the middle. */
+    .aspacer { display: none; }
+    /* The invisible (opacity-0) tooltip bubble would poke past the top of the
+       viewport in the bottom bar — labels are visible here anyway. */
     .actionbar :global([data-tip])::after { display: none; }
-    /* Stacked single-column bar: each row now owns the full width, so the
-       desktop trick of zeroing the left pad (to let the rail-width logo carry
-       it) no longer applies — restore a normal, symmetric gutter. */
-    .bar, .with-actions .bar { grid-template-columns: minmax(0, 1fr); gap: 8px; padding-left: 16px; }
+    /* Stacked bar: the title keeps its own full-width row, so the desktop
+       trick of zeroing the left pad (to let the rail-width logo carry it) no
+       longer applies — restore a normal, symmetric gutter. Search and the
+       bar's remaining actions (language select, draft lock) share the next
+       row — the fr column lets search fill whatever the actions don't need,
+       so it stretches edge-to-edge when that cell is empty (e.g. one
+       language, draft protection off). */
+    /* padding matches .content and .mobilenav-toggle (all --mobile-gutter) so
+       the search box, the toggle bar and the guide title all share one edge. */
+    .bar, .with-actions .bar { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 10px; padding-left: var(--mobile-gutter); padding-right: var(--mobile-gutter); }
+    .bar-plan, .with-actions .bar-plan { grid-column: 1 / -1; }
     .with-actions .brand-home { width: auto; justify-content: flex-start; margin-right: 0; }
-    .bar-actions { justify-content: flex-start; flex-wrap: wrap; gap: 8px; }
-    /* The rail folds to a horizontal strip under the top bar — still flush. */
-    .railcol { border-right: 0; border-bottom: 1px solid var(--rule-soft); }
-    .nav { position: static; max-height: none; flex-direction: row; overflow-x: auto; gap: 6px; padding: 6px 12px; }
-    .content { padding: var(--reader-section-gap) 14px 60px; }
+    /* .brand-home's 2px hit-target padding otherwise pushes the visible glyph
+       2px right of the search box / toggle / title's shared 14px edge. */
+    .brand-home { margin-left: -2px; }
+    .bar-actions { justify-content: flex-end; flex-wrap: nowrap; gap: 8px; }
+    /* Below this width the rail becomes an off-canvas drawer (Productboard's
+       own mobile pattern) instead of a horizontal scroll strip: the toggle bar
+       names the current section, tapping it slides the full desktop sidebar
+       in from the left — same groups, guides and counts, unchanged. */
+    .mobilenav-toggle {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      background: var(--paper); border: 0; border-bottom: 1px solid var(--rule-soft);
+      padding: 12px var(--mobile-gutter); font: inherit; font-size: 14px;
+      text-align: left; cursor: pointer;
+    }
+    .mobilenav-burger { display: inline-flex; flex-direction: column; gap: 3px; flex: none; }
+    .mobilenav-burger span { width: 17px; height: 2px; background: var(--ink-soft); border-radius: 1px; }
+    /* The current section reads as "selected", so it borrows the same accent
+       color + weight as .navlink.active in the menu below, instead of a
+       plain dark bold title that looked like an unrelated style. */
+    .mobilenav-current { display: inline-flex; align-items: center; gap: 8px; min-width: 0; color: var(--accent-deep); font-weight: 500; }
+    .mobilenav-current-ico { flex: none; display: inline-flex; }
+    .mobilenav-current-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mobilenav-scrim { display: block; position: fixed; inset: 0; background: var(--scrim); z-index: var(--z-scrim); }
+    .railcol {
+      position: fixed; top: 0; bottom: 0; left: 0; z-index: var(--z-drawer);
+      width: min(82vw, 320px);
+      border-right: 1px solid var(--rule); box-shadow: 8px 0 30px oklch(0.2 0.03 255 / 0.16);
+      transform: translateX(-100%); transition: transform .22s ease;
+      overflow-y: auto;
+    }
+    .railcol.mobilenav-open { transform: translateX(0); }
+    .nav { position: static; max-height: none; padding: 14px; }
+    /* Clears the fixed bottom tab bar (its own height plus the home-indicator
+       safe area) so the last bit of content isn't hidden underneath it. */
+    .content { padding: var(--reader-section-gap) var(--mobile-gutter) calc(var(--actionbar-h) + env(safe-area-inset-bottom) + 16px); }
     .map-row { display: flex; flex-direction: column-reverse; }
     .map-side { position: static; flex-direction: row; justify-content: flex-end; margin-bottom: 6px; }
-    .navgroup { flex: none; flex-direction: row; align-items: center; gap: 6px; margin: 0; }
-    .navgroup-title { padding: 9px 0 9px 8px; white-space: nowrap; }
-    .navgroup-items { flex-direction: row; gap: 6px; }
-    .navsep { display: none; }
-    .nav-add-row { flex: none; padding: 0; }
-    .nav-add-row .btn { white-space: nowrap; }
-    .nav-mapband { flex: none; flex-direction: row; margin: 0; padding: 0; border: 0; background: transparent; }
-    .navlink { white-space: nowrap; }
-    .navlink-child { padding-left: 12px; }
-    .nav.editing > .navrow { padding-left: 0; } /* horizontal nav: no insets */
-    .nav.editing .navgroup-items .navrow { padding-left: 16px; }
-    .shell { --reader-section-gap: 12px; }
+    /* One shared side gutter for the whole mobile shell (bar, content, nav
+       toggle) — wider than the old 14px so the edges breathe a bit more,
+       Productboard-style, instead of controls sitting flush on the glass. */
+    .shell { --reader-section-gap: 12px; --actionbar-h: 58px; --mobile-gutter: var(--gutter-mobile); }
+    /* .content's 22px inter-section gap (set for desktop) is what was making
+       the rule below the search bar sit further away than the padding-top
+       rule above it — shrink it to match --reader-section-gap instead of
+       growing the padding to match the gap, so both land small. */
+    .content { gap: 12px; }
     /* Each bar item is its own full-width row here (single-column grid), so
        the title no longer shares a row with search/actions — drop the
        desktop 38vw cap that was sized for the three-across layout. */
     .plan-title, .plan-title-input { max-width: none; width: auto; }
+    /* Same anti-zoom 16px bump applies here — trim the padding back so the
+       language select doesn't grow past its desktop size on top of that. A
+       softer border matches the search box's mobile treatment, so neither
+       reads heavier than the bare .iconbtn controls beside them. */
+    .sel { padding: 4px 22px 4px 10px; background-position: right 7px center; border-color: var(--rule-soft); }
   }
 </style>

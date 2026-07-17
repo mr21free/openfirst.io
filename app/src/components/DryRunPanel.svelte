@@ -2,9 +2,12 @@
   import Prose from './Prose.svelte';
   import StatusIcon from './StatusIcon.svelte';
   import Callout from './Callout.svelte';
+  import { lockBodyScroll } from '../lib/scrollLock.js';
 
   let { pkg, store, runId, personId = null, adminLabel = 'Admin', onSubmit = null, onCancel = null } = $props();
   let full = $state(false);
+
+  $effect(() => lockBodyScroll());
 
   const person = $derived(personId ? pkg.entity(personId)?.obj : null);
   const run = $derived((store.data?.readiness_runs || []).find((r) => r.id === runId) || null);
@@ -135,14 +138,20 @@
     padding: 8px;
   }
   @media (max-width: 860px) {
+    /* Base rule pins top/bottom with no explicit height, so leaving `top`
+       unset here (as a bottom-sheet-style panel would) sizes the box to its
+       content, gets capped by max-height, and settles ~30vh down the screen
+       — overlapping the topbar/guide instead of opening from the corner.
+       Anchoring top:0 with the same bottom:0 as desktop keeps it full-height
+       and flush with the viewport's top-right, just without the side border. */
     .dryrun {
       left: 0;
       right: 0;
       width: auto;
-      top: auto;
-      max-height: 70vh;
+      top: 0;
+      max-height: none;
       border-left: none;
-      border-top: 1px solid var(--rule);
+      border-top: none;
     }
   }
 </style>

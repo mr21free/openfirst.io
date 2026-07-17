@@ -43,6 +43,7 @@
       color: var(--ink); font-family: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
       font-weight: 400; line-height: 1.6; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
       min-height: 100vh;
+      overflow-x: hidden; /* safety net: no single element should be able to widen the page past the viewport on mobile */
     }
     body { display: flex; flex-direction: column; min-height: 100vh; }
     a { color: var(--accent-deep); text-decoration: none; }
@@ -60,7 +61,7 @@
       background: color-mix(in oklch, var(--paper) 86%, transparent);
       backdrop-filter: blur(12px); border-bottom: 1px solid var(--rule-soft);
     }
-    .topbar .row { height: 60px; }
+    .topbar > .container { height: 60px; }
     .brand { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 500; gap: 10px; color: var(--ink); }
     .brand-name b { color: var(--accent-deep); font-weight: 500; }
     .brand:hover { text-decoration: none; }
@@ -70,7 +71,7 @@
     .topnav a:hover { color: var(--ink); text-decoration: none; }
     /* Small screens: nav drops to its own line under the logo (freedomclock-style). */
     @media (max-width: 760px) {
-      .topbar .row { height: auto; flex-wrap: wrap; row-gap: 2px; padding-top: 10px; padding-bottom: 12px; }
+      .topbar > .container { height: auto; flex-wrap: wrap; row-gap: 2px; padding-top: 13px; padding-bottom: 9px; }
       .brand { flex: 1 0 100%; }
       .topnav { flex: 1 0 100%; gap: 18px; }
       .topnav a.btn-primary { margin-left: auto; min-height: 34px; padding: 6px 14px; font-size: 13px; }
@@ -116,26 +117,31 @@
     .topnav .btn { min-height: 38px; padding: 8px 18px; font-size: 14px; }
     .topnav a.btn-primary { color: #fff; }
     .topbar .container, .screen .container { max-width: 1160px; padding-left: 40px; padding-right: 40px; }
-    @media (max-width: 640px) { .topbar .container, .screen .container { padding-left: 22px; padding-right: 22px; } }
+    @media (max-width: 640px) { .topbar .container, .screen .container { padding-left: 18px; padding-right: 18px; } }
     .home-main { max-width: 1160px; margin: 0 auto; padding: 40px 40px 80px; width: 100%; }
     @media (max-width: 640px) { .home-main { padding: 28px 22px 64px; } }
-    .guides-head { max-width: 680px; margin: 8px 0 0; }
+    .guides-head { max-width: 680px; }
     .guides-head h1 { font-size: clamp(30px, 4vw, 46px); font-weight: 650; letter-spacing: -0.025em; margin: 12px 0 0; }
     .guides-head .lede { margin-top: 16px; }
     .g-list { display: flex; flex-direction: column; margin-top: 48px; }
-    .g-card { border-top: 1px solid var(--rule); padding: 30px 0; display: grid; grid-template-columns: 1fr auto; column-gap: 32px; align-items: start; }
+    .g-card { position: relative; border-top: 1px solid var(--rule); padding: 30px 24px; margin: 0 -24px; transition: background .15s; }
     .g-card:first-of-type { border-top: none; padding-top: 8px; }
+    .g-card:not(.g-coming):hover { background: var(--accent-wash); }
+    /* The card's full-bleed hover wash cancels out .home-main's own padding —
+       the negative margin must match it exactly or the card bleeds past the
+       viewport edge (desktop: 40px both; phones: 22px both). Must come after
+       the base .g-card rule above: same specificity, so source order decides
+       which margin wins at mobile widths. */
+    @media (max-width: 640px) { .g-card { margin: 0 -22px; padding: 30px 22px; } }
     .g-kind { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-deep); font-weight: 600; }
     .g-card h3 { font-size: 20px; font-weight: 500; margin: 6px 0 8px; letter-spacing: -0.01em; }
+    .g-card h3 a { color: var(--ink); }
+    .g-card h3 a::after { content: ''; position: absolute; inset: 0; }
     .g-card p { color: var(--ink-soft); font-size: 14.5px; line-height: 1.55; margin: 0; max-width: 56ch; }
-    .g-actions { grid-row: 1 / span 3; grid-column: 2; display: flex; gap: 10px; align-items: center; }
-    @media (max-width: 620px) { .g-card { grid-template-columns: 1fr; } .g-actions { grid-row: auto; grid-column: 1; margin-top: 16px; } }
-    .g-actions .btn { min-height: 40px; padding: 9px 16px; font-size: 14px; }
-    .read-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex: none; color: var(--ink-soft); border: 1px solid var(--rule); border-radius: 8px; }
-    .read-btn:hover { color: var(--accent-deep); border-color: var(--accent-deep); text-decoration: none; }
+    .g-cta { position: relative; z-index: 1; margin-top: 16px; min-height: 40px; padding: 9px 16px; font-size: 14px; }
     .g-coming { opacity: 0.6; }
     .g-coming .g-card, .g-coming { border-top-color: var(--rule); }
-    .g-soon { grid-row: 1 / span 3; grid-column: 2; align-self: center; font-size: 12px; color: var(--ink-mute); white-space: nowrap; }
+    .g-soon { display: inline-block; margin-top: 16px; font-size: 12px; color: var(--ink-mute); }
   </style>
 </head>
 <body>
@@ -155,47 +161,35 @@
     <div class="guides-head">
       <span class="eyebrow">Guides &amp; templates</span>
       <h1>Borrow our homework.</h1>
-      <p class="lede">Free to read, free to copy, free to print. Every template opens straight in the app as a ready-made plan you fill in — no account, no data leaves your device.</p>
+      <p class="lede">Free to read, copy, or print. Every template opens straight in the app as a ready-made plan you fill in — no account, no data leaves your device.</p>
     </div>
     <div class="g-list">
       <div class="g-card">
         <span class="g-kind">Template · for your heir</span>
-        <h3>The First 72 Hours</h3>
+        <h3><a href="/guides/first-72-hours/">The First 72 Hours</a></h3>
         <p>What to do — and what not to touch — in the first three days. Separates the truly urgent from everything that can wait, so grief doesn't have to make decisions.</p>
-        <div class="g-actions">
-          <a class="read-btn" href="/guides/first-72-hours/" aria-label="Read the guide" title="Read the guide"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></a>
-          <a class="btn btn-primary" href="/build/?template=first-72-hours">Open in the app</a>
-        </div>
+        <a class="btn btn-primary g-cta" href="/build/?template=first-72-hours">Open in the app</a>
       </div>
 
       <div class="g-card">
         <span class="g-kind">Template · Bitcoin</span>
-        <h3>The Bitcoin Inheritance Runbook</h3>
+        <h3><a href="/guides/bitcoin-inheritance-runbook/">The Bitcoin Inheritance Runbook</a></h3>
         <p>Self-custody that outlives you. What to document (and what never to write down), whom to involve, and the irreversible mistakes to design out.</p>
-        <div class="g-actions">
-          <a class="read-btn" href="/guides/bitcoin-inheritance-runbook/" aria-label="Read the guide" title="Read the guide"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></a>
-          <a class="btn btn-primary" href="/build/?template=bitcoin-inheritance-runbook">Open in the app</a>
-        </div>
+        <a class="btn btn-primary g-cta" href="/build/?template=bitcoin-inheritance-runbook">Open in the app</a>
       </div>
 
       <div class="g-card">
         <span class="g-kind">Method · for you</span>
-        <h3>How to Run a Dry Run</h3>
+        <h3><a href="/guides/dry-run/">How to Run a Dry Run</a></h3>
         <p>A plan you never tested is a hope. The 45-minute test that shows whether the person you love can actually use what you built — before it matters.</p>
-        <div class="g-actions">
-          <a class="read-btn" href="/guides/dry-run/" aria-label="Read the guide" title="Read the guide"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></a>
-          <a class="btn btn-primary" href="/build/?template=dry-run">Open in the app</a>
-        </div>
+        <a class="btn btn-primary g-cta" href="/build/?template=dry-run">Open in the app</a>
       </div>
 
       <div class="g-card">
         <span class="g-kind">Template · anti-scam</span>
-        <h3>The Trusted-Helper Protocol</h3>
+        <h3><a href="/guides/trusted-helper-protocol/">The Trusted-Helper Protocol</a></h3>
         <p>Grief attracts predators. How your heir verifies that a helper is really who they say they are — and the one rule that stops nearly every crypto scam.</p>
-        <div class="g-actions">
-          <a class="read-btn" href="/guides/trusted-helper-protocol/" aria-label="Read the guide" title="Read the guide"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></a>
-          <a class="btn btn-primary" href="/build/?template=trusted-helper-protocol">Open in the app</a>
-        </div>
+        <a class="btn btn-primary g-cta" href="/build/?template=trusted-helper-protocol">Open in the app</a>
       </div>
 
       <div class="g-card g-coming">

@@ -1,9 +1,10 @@
 <script>
   import TrashIcon from './TrashIcon.svelte';
+  import { deferFocus } from '../lib/autofocus.js';
   let { pkg, store, raw, onDelete } = $props();
 
   let firstInput = $state(null);
-  $effect(() => { if (firstInput) firstInput.focus(); });
+  $effect(() => deferFocus(firstInput));
 
   const byName = (a, b) => pkg.name(a.id).localeCompare(pkg.name(b.id), undefined, { numeric: true, sensitivity: 'base' });
   const assignedPeople = $derived((store?.data?.people || []).filter((p) => (p.roles || []).includes(raw?.id)).sort(byName));

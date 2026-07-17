@@ -12,8 +12,11 @@
   import Prose from './Prose.svelte';
   import StatusIcon from './StatusIcon.svelte';
   import TrashIcon from './TrashIcon.svelte';
+  import { lockBodyScroll } from '../lib/scrollLock.js';
 
   let { pkg, id, onOpen, onClose, onBack = null, canBack = false, store = null, editing = false, showReadiness = false, onDelete = null, onTag = null, onView = null, requestConfirm = null, requestNotice = null } = $props();
+
+  $effect(() => lockBodyScroll());
 
   let full = $state(false); // expand the side panel to near full-screen (e.g. to read a PDF)
   let openSections = $state({});
@@ -252,7 +255,7 @@
   {/snippet}
   {#if id === '__meta'}
     <div class="dhead">
-      <div><span class="eyebrow">Settings</span><h2>Settings</h2></div>
+      <div><span class="eyebrow">Settings</span><h2>Plan settings</h2></div>
       {@render headActions()}
     </div>
     <MetaForm {pkg} {store} raw={store?.data?.package} {requestConfirm} {requestNotice} />
@@ -342,7 +345,7 @@
       {:else if e.kind === 'item'}
         <ItemForm {pkg} raw={store?.rawById(id)} onDelete={() => onDelete?.(id)} />
       {:else if e.kind === 'guide'}
-        <GuideForm {pkg} raw={store?.rawById(id)} onDelete={() => onDelete?.(id)} />
+        <GuideForm {pkg} {store} raw={store?.rawById(id)} onDelete={() => onDelete?.(id)} />
       {:else if e.kind === 'attachment'}
         <AttachmentForm {pkg} raw={store?.rawById(id)} onDelete={() => onDelete?.(id)} />
       {:else if e.kind === 'role'}
@@ -695,6 +698,9 @@
   .dhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .dhead-main { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
   .dhead h2 { margin-top: 4px; font-size: 24px; }
+  /* The drawer is nearly full-width on phones (380px min, ~336px after its own
+     padding) — 24px bold tips a mid-length title onto a second line. */
+  @media (max-width: 480px) { .dhead h2 { font-size: 20px; } }
   .back { width: 32px; height: 32px; margin-top: 2px; }
   /* One consistent text size across the whole panel body (values, list rows,
      breadcrumbs…). The header title and the small uppercase field labels keep

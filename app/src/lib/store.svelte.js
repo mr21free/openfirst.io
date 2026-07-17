@@ -399,6 +399,28 @@ export class Store {
     g.title_i18n[lang] = value;
   }
 
+  /** Guarantee the shape editors expect (content/references maps), so a
+   *  guide imported without them doesn't need each editor to init it itself. */
+  ensureGuideShape(id) {
+    const g = this.data?.guides?.find((x) => x.id === id);
+    if (!g) return;
+    if (!g.content) g.content = {};
+    if (!g.references) g.references = {};
+  }
+  setGuideImportance(id, value) {
+    const g = this.data?.guides?.find((x) => x.id === id);
+    if (!g) return;
+    if (value) g.importance = value; else delete g.importance;
+  }
+  /** Stamp "updated" today — callers only invoke this on a real change, not on
+   *  mere open, since they diff against a baseline first. */
+  touchGuide(id) {
+    const g = this.data?.guides?.find((x) => x.id === id);
+    if (!g) return;
+    const t = today();
+    if (g.updated !== t) g.updated = t;
+  }
+
   /** Set a guide-group name for a language (primary `name` / `name_i18n`). */
   setGroupName(id, lang, value) {
     const grp = this.data?.guide_groups?.find((x) => x.id === id);

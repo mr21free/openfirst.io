@@ -17,6 +17,12 @@ const pause = (ms = 300) => new Promise((r) => setTimeout(r, ms));
 const rows = () => page.evaluate(() => document.querySelectorAll('main .ulist .ulist-row').length);
 const goSection = (label) => page.evaluate((label) => [...document.querySelectorAll('nav .navlink-section')].find((b) => b.textContent.includes(label))?.click(), label);
 const openFilter = () => page.evaluate(() => document.querySelector('.filterbtn')?.click());
+// Sort is a button + popover (same pattern as Filter) — open it, then click the option by label.
+const openSort = () => page.evaluate(() => document.querySelector('.sortbtn')?.click());
+const pickSort = (label) => page.evaluate((label) => {
+  const opt = [...document.querySelectorAll('.sort-opt')].find((x) => x.querySelector('.sort-name')?.textContent.trim() === label);
+  opt?.click();
+}, label);
 // Tick an option (by visible name) inside the facet whose label matches.
 const tick = (facet, opt) => page.evaluate(({ facet, opt }) => {
   const f = [...document.querySelectorAll('.filterpop .facet')].find((x) => x.querySelector('.facet-label')?.textContent.trim() === facet);
@@ -74,7 +80,8 @@ try {
   ok('clear all restores the full list', (await rows()) === total && (await page.evaluate(() => document.querySelectorAll('.filterpills .fpill').length)) === 0);
 
   // ---- Sort by name ----
-  await page.select('.sortsel', 'name'); await pause(250);
+  await openSort(); await pause(150);
+  await pickSort('Name (A→Z)'); await pause(250);
   const names = await page.evaluate(() => [...document.querySelectorAll('main .ulist .ulist-name')].map((n) => n.textContent.replace(/\s*●.*$/, '').trim()));
   const sorted = [...names].sort((a, b) => a.localeCompare(b));
   ok('sort by name orders the list A→Z', JSON.stringify(names) === JSON.stringify(sorted) && names.length === total);
@@ -96,7 +103,7 @@ try {
   // ---- Locations: a filter (Contents), but no sort (tree order is meaningful) ----
   await goSection('Locations'); await pause();
   const locTotal = await rows();
-  ok('locations have a Filter but no Sort', await page.evaluate(() => !!document.querySelector('.filterbtn') && !document.querySelector('.sortsel')));
+  ok('locations have a Filter but no Sort', await page.evaluate(() => !!document.querySelector('.filterbtn') && !document.querySelector('.sortbtn')));
   await openFilter(); await pause(150);
   ok('locations expose a Contents facet', await page.evaluate(() => [...document.querySelectorAll('.filterpop .facet-label')].some((f) => f.textContent.trim() === 'Contents')));
   const empty = await page.evaluate(() => {

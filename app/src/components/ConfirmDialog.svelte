@@ -1,7 +1,11 @@
 <script>
+  import { lockBodyScroll } from '../lib/scrollLock.js';
+
   let { prompt, onResolve } = $props();
 
   const cancelable = $derived(prompt?.cancelLabel !== null);
+
+  $effect(() => { if (prompt) return lockBodyScroll(); });
 
   function close(value) {
     onResolve?.(value);

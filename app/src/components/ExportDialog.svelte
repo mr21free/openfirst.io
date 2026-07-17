@@ -2,12 +2,15 @@
   import { untrack } from 'svelte';
   import { exportPackageZip, exportEncryptedPackage, exportSelfContainedReader, draftCount } from '../lib/export.js';
   import { estimateBits } from '../lib/passphrase.js';
+  import { lockBodyScroll } from '../lib/scrollLock.js';
   import PassphraseField from './PassphraseField.svelte';
   import Callout from './Callout.svelte';
   import InfoHint from './InfoHint.svelte';
   import ReviewReminderDialog from './ReviewReminderDialog.svelte';
 
   let { data, blobs, onClose } = $props();
+
+  $effect(() => lockBodyScroll());
 
   let name = $state(untrack(() => data.package?.title) || 'My plan');
   let asReader = $state(true);
@@ -91,8 +94,8 @@
   <label class="toggle">
     <input type="checkbox" bind:checked={asReader} />
     <span>Self-contained reader</span>
-    {#if asReader}<span class="tiny muted">— export will be ~{estMb} MB</span>{/if}
   </label>
+  {#if asReader}<p class="size-note tiny muted">export will be ~{estMb} MB</p>{/if}
   {#if asReader && drafts > 0}
     <p class="reader-note tiny muted">{drafts} draft {drafts === 1 ? 'guide is' : 'guides are'} not included.</p>
   {/if}
@@ -149,7 +152,10 @@
   .modal h3 { font-size: 19px; }
   .namefield { display: flex; flex-direction: column; gap: 6px; }
   .nlbl { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-mute); }
-  .namefield code { background: var(--accent-wash); padding: 0 4px; border-radius: 4px; word-break: break-all; }
+  /* overflow-wrap (not word-break: break-all) — it only breaks mid-word as a
+     last resort, so a long filename wraps after a hyphen/underscore instead
+     of splitting a word like "html" into "htm" + "l". */
+  .namefield code { background: var(--accent-wash); padding: 0 4px; border-radius: 4px; overflow-wrap: break-word; }
   .toggle { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; cursor: pointer; }
   .pw-block { display: flex; flex-direction: column; gap: 10px; }
   .inp {
@@ -160,5 +166,5 @@
   /* Strength bar + label row, with the suggest link on the right */
   .pw-gen-link:hover { color: var(--ink); }
   .hint-field { display: flex; align-items: center; }
-  .reader-note { margin: -6px 0 0 27px; color: var(--ink-mute); }
+  .reader-note, .size-note { margin: -6px 0 0 27px; color: var(--ink-mute); }
 </style>

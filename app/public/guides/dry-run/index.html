@@ -43,6 +43,7 @@
       color: var(--ink); font-family: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
       font-weight: 400; line-height: 1.6; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
       min-height: 100vh;
+      overflow-x: hidden; /* safety net: no single element should be able to widen the page past the viewport on mobile */
     }
     body { display: flex; flex-direction: column; min-height: 100vh; }
     a { color: var(--accent-deep); text-decoration: none; }
@@ -60,7 +61,7 @@
       background: color-mix(in oklch, var(--paper) 86%, transparent);
       backdrop-filter: blur(12px); border-bottom: 1px solid var(--rule-soft);
     }
-    .topbar .row { height: 60px; }
+    .topbar > .container { height: 60px; }
     .brand { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 500; gap: 10px; color: var(--ink); }
     .brand-name b { color: var(--accent-deep); font-weight: 500; }
     .brand:hover { text-decoration: none; }
@@ -70,14 +71,14 @@
     .topnav a:hover { color: var(--ink); text-decoration: none; }
     /* Small screens: nav drops to its own line under the logo (freedomclock-style). */
     @media (max-width: 760px) {
-      .topbar .row { height: auto; flex-wrap: wrap; row-gap: 2px; padding-top: 10px; padding-bottom: 12px; }
+      .topbar > .container { height: auto; flex-wrap: wrap; row-gap: 2px; padding-top: 13px; padding-bottom: 9px; }
       .brand { flex: 1 0 100%; }
       .topnav { flex: 1 0 100%; gap: 18px; }
       .topnav a.btn-primary { margin-left: auto; min-height: 34px; padding: 6px 14px; font-size: 13px; }
     }
     /* Header + footer align to the same 1160/40 column as the rest of the site. */
     .topbar .container, .screen .container { max-width: 1160px; padding-left: 40px; padding-right: 40px; }
-    @media (max-width: 640px) { .topbar .container, .screen .container { padding-left: 22px; padding-right: 22px; } }
+    @media (max-width: 640px) { .topbar .container, .screen .container { padding-left: 18px; padding-right: 18px; } }
 
     .content { max-width: 1160px; margin: 0 auto; padding: 40px 40px 72px; width: 100%; }
     .content > * { max-width: 820px; }
@@ -151,7 +152,7 @@
 
     <div class="g-actions">
       <a class="btn btn-primary" href="/build/?template=dry-run">Open this template in the app</a>
-      <a class="btn" href="/demo/">Try one inside the demo</a>
+      <a class="btn" href="/demo/?dryrun=person_amanda_james">Try one inside the demo</a>
     </div>
 
     <h2>The rule of the game</h2>

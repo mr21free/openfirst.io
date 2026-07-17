@@ -4,7 +4,7 @@
   import TrashIcon from './TrashIcon.svelte';
   import { langValue } from '../lib/package.js';
 
-  let { pkg, guide, lang, onOpen, onTag = null, onView = null, editing = false, canEdit = false, onStartEditing = null, onEdit, onDelete, onToggleDraft, onContent, onAddRef, onUploadMedia = null, onTitle, focusTitle = false, onTitleFocused = null } = $props();
+  let { pkg, guide, lang, onOpen, onTag = null, onView = null, editing = false, canEdit = false, onStartEditing = null, onEdit, onDelete, onToggleDraft, onContent, onAddRef, onUploadMedia = null, onTitle, onTouched = null, focusTitle = false, onTitleFocused = null } = $props();
 
   // The draft explainer is a teaching banner: once dismissed, the user knows
   // what a draft is — never show it again (the dashed frame + amber eye-off
@@ -33,13 +33,12 @@
   const body = $derived(content[shownLang] || '');
 
   // Auto-stamp "updated" on a real change (inline edits), never on mere open.
-  const today = () => new Date().toISOString().slice(0, 10);
   let baselineId = null, baseline = null;
   $effect(() => {
     if (!editing || !guide) return;
     const key = JSON.stringify({ ...$state.snapshot(guide), updated: undefined });
     if (guide.id !== baselineId) { baselineId = guide.id; baseline = key; return; }
-    if (key !== baseline) { baseline = key; const t = today(); if (guide.updated !== t) guide.updated = t; }
+    if (key !== baseline) { baseline = key; onTouched?.(); }
   });
 </script>
 
@@ -133,8 +132,11 @@
   .guide-row { position: relative; flex: 1; display: flex; flex-direction: column; }
   .guide-col { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 22px; }
   /* The content pane IS the sheet now (white, joined to the rail) — the guide
-     itself carries no frame. The dashed draft cue below keeps an explicit one. */
-  .guide { flex: 1; display: flex; flex-direction: column; border-radius: 0; border: 0; }
+     itself carries no frame. The dashed draft cue below keeps an explicit one.
+     padding: 0 overrides the global .card's 22px — .guide-page below is the
+     one page gutter; without this the two stacked, pushing the title in
+     ~37px further than the search box and nav toggle beside it. */
+  .guide { flex: 1; display: flex; flex-direction: column; border-radius: 0; border: 0; padding: 0; }
   .editor-host :global(.ce) { flex: 1; }
   /* Edit tools sit in a reserved gutter at the pane's right edge — always
      beside the guide. Only on phone widths does the rail fold into a row. */
@@ -162,7 +164,17 @@
   /* The dashed frame is a screen-only "draft" cue — never print it. */
   @media print { .is-draft.guide { border: none; } }
   .ghead { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 22px; }
-  .ghead h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 650; letter-spacing: -0.022em; }
+  .ghead h2 { min-width: 0; font-size: clamp(28px, 4vw, 40px); font-weight: 650; letter-spacing: -0.022em; }
+  /* The title wraps freely, but "Updated <date>" reads worse split across two
+     lines than it does squeezed — keep it on one line and let it hold its width. */
+  .ghead .tiny { flex: none; white-space: nowrap; }
+  /* Side by side, a long emoji'd title has only half the row and wraps to
+     3+ lines. Stack instead: the date sits above (still right-aligned, like
+     a byline), and the title drops below with the full row to itself. */
+  @media (max-width: 820px) {
+    .ghead { flex-direction: column-reverse; align-items: stretch; gap: 10px; }
+    .ghead .tiny { align-self: flex-end; }
+  }
   .gtitle-input {
     display: block; width: 100%;
     font: inherit; font-size: clamp(28px, 4vw, 40px); font-weight: 650; letter-spacing: -0.022em; line-height: 1.3;
@@ -174,6 +186,13 @@
      you're reading or editing it. */
   .guide-page { padding-inline: clamp(0px, 4vw, 44px); padding-block: clamp(18px, 3.5vw, 44px); }
   .guide-write { flex: 1; display: flex; flex-direction: column; }
+  /* Below 820px (Reader's off-canvas-nav breakpoint) .content already carries
+     a 14px gutter — dropping this one's own inline padding lines the title up
+     with the search box and the nav toggle instead of adding a second inset. */
+  /* The date now reads as a byline sitting right above the title (see .ghead
+     above) — the page's own top clamp on top of .content's gutter left too
+     much dead air above it, so trim just the top inset here. */
+  @media (max-width: 820px) { .guide-page { padding-inline: 0; padding-block-start: 6px; } }
   @media print { .guide-page { padding: clamp(12px, 3vw, 32px) clamp(0px, 4vw, 36px); } }
   /* The page supplies the gutter, so the editor sits flush inside it — its
      toolbar and text line up with the read-mode text column. The toolbar still

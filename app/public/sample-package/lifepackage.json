@@ -480,7 +480,7 @@
         "guide_money_broker"
       ],
       "sensitive": true,
-      "price": "Use professional valuation at date of death; do not rely on this file for valuation."
+      "notes": "Use professional valuation at date of death; do not rely on this file for valuation."
     },
     {
       "id": "item_manchester_home_documents",

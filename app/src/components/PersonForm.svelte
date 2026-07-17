@@ -2,6 +2,7 @@
   import EntityPicker from './EntityPicker.svelte';
   import TrashIcon from './TrashIcon.svelte';
   import GuideContentEditor from './GuideContentEditor.svelte';
+  import { deferFocus } from '../lib/autofocus.js';
   let { pkg, raw, onDelete } = $props();
 
   const CONTACT_METHODS = ['email', 'phone', 'signal', 'whatsapp', 'telegram', 'linkedin', 'address', 'url', 'other'];
@@ -9,7 +10,7 @@
   const shownRoles = $derived(pkg.roles || []);
 
   let firstInput = $state(null);
-  $effect(() => { if (firstInput) firstInput.focus(); });
+  $effect(() => deferFocus(firstInput));
 
   function toggleRole(roleId) {
     if (!Array.isArray(raw.roles)) raw.roles = [];

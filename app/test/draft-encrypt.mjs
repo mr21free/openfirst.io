@@ -54,7 +54,7 @@ try {
 
   // Settings → Protect this draft.
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => (b.getAttribute('aria-label') || '') === 'Settings')?.click());
-  await page.waitForFunction(() => /draft protection/i.test(document.body.innerText), { timeout: 5000 });
+  await page.waitForFunction(() => /plan protection/i.test(document.body.innerText), { timeout: 5000 });
   await page.evaluate(() => document.querySelector('.protect [role="switch"]')?.click());
   await page.waitForSelector('.protect input[type=password]', { timeout: 4000 });
   await page.type('.protect input[type=password]', PASS);
@@ -64,7 +64,7 @@ try {
     const inputs = [...document.querySelectorAll('.protect input[type=password]')];
     if (inputs[1]) { const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; setter.call(inputs[1], pw); inputs[1].dispatchEvent(new Event('input', { bubbles: true })); }
   }, PASS);
-  await page.evaluate(() => [...document.querySelectorAll('.protect button')].find((b) => /turn on/i.test(b.textContent))?.click());
+  await page.evaluate(() => [...document.querySelectorAll('.protect button')].find((b) => /enable/i.test(b.textContent))?.click());
   await page.waitForFunction(() => /encrypted at rest/i.test(document.body.innerText), { timeout: 6000 });
   ok('settings confirms the draft is encrypted', true);
   await pause(400);

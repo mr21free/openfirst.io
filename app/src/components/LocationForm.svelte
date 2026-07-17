@@ -1,11 +1,12 @@
 <script>
   import EntityPicker from './EntityPicker.svelte';
   import GuideContentEditor from './GuideContentEditor.svelte';
+  import { deferFocus } from '../lib/autofocus.js';
 
   let { pkg, raw, onDelete } = $props();
 
   let firstInput = $state(null);
-  $effect(() => { if (firstInput) firstInput.focus(); });
+  $effect(() => deferFocus(firstInput));
 </script>
 
 {#if raw}

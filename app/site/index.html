@@ -128,6 +128,11 @@
     /* Stacked hero: words first, picture after — the mockup doesn't explain
        itself without the copy above it. */
     @media (max-width: 940px) { .hero { grid-template-columns: 1fr; gap: 40px; padding: 44px 0 36px; } }
+    /* Phones: match the other pages' mobile top inset (28px, see .home-main
+       on /guides, /security, /how-to-use) instead of the 940px breakpoint's
+       tablet-oriented 44px, which left the hero starting noticeably lower
+       than every other page's heading. */
+    @media (max-width: 640px) { .hero { padding-top: 28px; } }
     /* Laptop-height windows (e.g. a MacBook Air) can leave the CTA sitting at
        the very bottom edge — tighten the vertical rhythm without touching type
        size or the wide-screen composition. */

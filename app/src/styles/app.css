@@ -262,7 +262,11 @@ strong { font-weight: 600; }
 .prose h2 { margin-top: 28px; font-size: clamp(15px, 1.8vw, 19px); font-weight: 500; letter-spacing: 0; }
 .prose h3 { margin-top: 18px; font-size: 15px; }
 .prose h1:first-child, .prose h2:first-child, .prose h3:first-child { margin-top: 0; }
-.prose ul, .prose ol { padding-left: 1.4rem; }
+.prose ul { padding-left: 1.4rem; }
+/* Wider than ul: the mono numeral marker ("1.", "10.") renders wider than a
+   bullet glyph and hangs past a 1.4rem indent, overflowing left of the
+   surrounding text's margin instead of sitting flush with it. */
+.prose ol { padding-left: 2.1rem; }
 .prose li + li { margin-top: 6px; }
 /* A list that hugs the line above it (no blank line — e.g. a "Next steps:" label)
    gets a minimal gap instead of a full paragraph break. */

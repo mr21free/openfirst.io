@@ -213,7 +213,11 @@
   @media (max-width: 760px) {
     .topbar > :global(.container) { height: auto; flex-wrap: wrap; row-gap: 2px; padding-top: 13px; padding-bottom: 9px; }
     .brand { flex: 1 0 100%; }
-    .topnav { flex: 1 0 100%; gap: 18px; }
+    /* min-height matches the mobile "Open the app" button's height on the
+       other pages' topnav (34px) — without it, this page's link-only row is
+       shorter than theirs and its links center higher, sitting visibly
+       closer to the logo than the same links do elsewhere. */
+    .topnav { flex: 1 0 100%; gap: 18px; min-height: 34px; }
   }
   main { flex: 1; width: 100%; }
   .hero { padding: 64px 0 48px; }

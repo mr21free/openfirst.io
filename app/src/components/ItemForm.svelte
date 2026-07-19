@@ -57,6 +57,3 @@
   </div>
 {/if}
 
-<style>
-  .caution-box { display: flex; flex-direction: column; gap: 12px; border: 1px solid oklch(0.85 0.06 50); background: var(--warn-wash); border-radius: 10px; padding: 12px; }
-</style>

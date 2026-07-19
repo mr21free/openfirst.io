@@ -43,9 +43,9 @@
     <h3>Set a review reminder?</h3>
     <p class="tiny muted rem-lede">A calendar file you import once — your own calendar then reminds you to revisit and re-export.</p>
 
-    <div class="row" style="gap:10px; margin-top:6px">
-      <button class="btn btn-primary" onclick={() => (expanded = true)}>Set up a reminder</button>
+    <div class="row" style="gap:10px; margin-top:6px; justify-content:flex-end">
       <button class="btn btn-ghost" onclick={() => onClose?.()}>No thanks</button>
+      <button class="btn btn-primary" onclick={() => (expanded = true)}>Set up a reminder</button>
     </div>
   {:else}
     <span class="eyebrow">Reminder</span>
@@ -128,6 +128,15 @@
      at the same x, so the stack still reads as one aligned form. */
   @media (max-width: 480px) {
     .rem-row { flex-direction: column; align-items: stretch; gap: 8px; }
-    .rem-lbl { flex: none; width: 50px; text-align: right; }
+    .rem-field { width: 100%; }
+    /* Scoped to .rem-field's own label ("Every", "on a", "in the") — the bare
+       .rem-lbl selector used to also catch the "Add to:" label below, forcing
+       it into the same 50px column and wrapping it onto two lines. */
+    .rem-field .rem-lbl { flex: none; width: 50px; text-align: right; }
+    /* The label column is fixed-width, but the select itself was sized to its
+       own content — each dropdown started at the same x but ended wherever
+       its own text stopped. flex:1 stretches every select to the same right
+       edge, so the three read as one aligned column, not three ragged ones. */
+    .rem-field select { flex: 1; min-width: 0; }
   }
 </style>

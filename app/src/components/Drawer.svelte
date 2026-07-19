@@ -228,7 +228,7 @@
 <div class="drawer" class:full role="dialog" aria-modal="true" aria-label="Details" tabindex="-1">
   {#snippet headActions()}
     <div class="dhead-actions">
-      <button class="iconbtn" onclick={() => (full = !full)} data-tip={full ? 'Shrink panel' : 'Expand panel'} data-tip-pos="left" aria-label={full ? 'Shrink panel' : 'Expand panel'}>
+      <button class="iconbtn expand-toggle" onclick={() => (full = !full)} data-tip={full ? 'Shrink panel' : 'Expand panel'} data-tip-pos="left" aria-label={full ? 'Shrink panel' : 'Expand panel'}>
         {#if full}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" /><line x1="14" y1="10" x2="21" y2="3" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
         {:else}
@@ -687,7 +687,12 @@
     background: var(--paper);
     border-left: 1px solid var(--rule);
     box-shadow: -24px 0 60px oklch(0.2 0.03 255 / 0.16);
+    /* overflow-y alone gets browser-forced to overflow-x: auto too (CSS overflow
+       spec), turning the drawer into a horizontal scroll container the moment any
+       descendant lays out wider than it — even an invisible-until-hover tooltip
+       still occupies box geometry and counts. Explicit hidden closes that off. */
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 20px 22px 60px;
     animation: slide .18s ease;
     transition: width .2s ease;
@@ -701,6 +706,9 @@
   /* The drawer is nearly full-width on phones (380px min, ~336px after its own
      padding) — 24px bold tips a mid-length title onto a second line. */
   @media (max-width: 480px) { .dhead h2 { font-size: 20px; } }
+  /* Drawer is already nearly full-width on phones (see above), so the
+     desktop-only expand toggle has nothing left to do. */
+  @media (max-width: 860px) { .expand-toggle { display: none; } }
   .back { width: 32px; height: 32px; margin-top: 2px; }
   /* One consistent text size across the whole panel body (values, list rows,
      breadcrumbs…). The header title and the small uppercase field labels keep

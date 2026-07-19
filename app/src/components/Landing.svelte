@@ -164,7 +164,7 @@
       <nav class="row wrap footer-nav">
         <a class="tiny" href="/how-to-use/">How to use</a>
         <a class="tiny" href="/security/">Security</a>
-        <a class="tiny" href="https://miroremias.com/blog/bitcoin-inheritance-problem/" target="_blank" rel="noopener">The story</a>
+        <a class="tiny" href="https://miroremias.com/projects/why-i-built-openfirst/" target="_blank" rel="noopener">The story</a>
         <a class="tiny" href="https://github.com/mr21free/openfirst.io" target="_blank" rel="noopener">GitHub</a>
         <a class="tiny" href="mailto:info@openfirst.io">Contact</a>
       </nav>
@@ -188,9 +188,12 @@
     max-width: 1160px; padding-left: 40px; padding-right: 40px;
   }
   @media (max-width: 640px) {
+    /* 22px, not the app-wide --gutter-mobile (18px) — matches the marketing
+       pages' own mobile inset (see .home-main on /guides, /how-to-use) so
+       "Your plans" lines up exactly under their eyebrow, not 4px left of it. */
     .topbar :global(.container),
     main.container,
-    footer :global(.container) { padding-left: var(--gutter-mobile); padding-right: var(--gutter-mobile); }
+    footer :global(.container) { padding-left: 22px; padding-right: 22px; }
   }
   .topbar {
     position: sticky; top: 0; z-index: 20;
@@ -220,7 +223,16 @@
     .topnav { flex: 1 0 100%; gap: 18px; min-height: 34px; }
   }
   main { flex: 1; width: 100%; }
-  .hero { padding: 64px 0 48px; }
+  /* 46px, not .home-main's own 40px: their eyebrow is an inline <span> in a
+     plain <div>, so it inherits the body's line-height as leading above the
+     first line; ours is a block <p>, which has none. +6px reproduces that
+     leading so "Your plans" lands on the exact same row as their eyebrow. */
+  .hero { padding: 46px 0 48px; }
+  /* Matches the marketing pages' blue eyebrow (/guides, /how-to-use, etc.) —
+     the app-wide .eyebrow in app.css is muted gray, smaller, and lighter-
+     weight for in-app UI labels (dialog/panel headers), but this page is
+     the site's own landing page. */
+  .eyebrow { color: var(--accent-deep); font-size: 11.5px; font-weight: 600; letter-spacing: 0.13em; }
   h1 {
     margin-top: 14px; font-size: clamp(30px, 4.2vw, 46px);
     font-weight: 650; letter-spacing: -0.025em; line-height: 1.08; max-width: 24ch;
@@ -274,16 +286,17 @@
   }
 
   footer { padding: 30px 0; }
-  .footer-tag { color: var(--accent); font-size: 13px; }
   footer .tiny { color: var(--screen-px); }
   .footer-nav { gap: 16px; }
   .footer-nav a:hover { color: var(--accent); text-decoration: none; }
   .draft-lock { display: inline-flex; margin-right: 7px; color: var(--ink-soft); vertical-align: -1px; }
 
-  .unlock h3 { font-size: 19px; }
-
   @media (max-width: 760px) {
     .action-grid { grid-template-columns: 1fr; }
-    .hero { padding-top: 48px; }
+  }
+  /* 640px/34px — matches .home-main's own mobile breakpoint (28px) plus the
+     same +6px leading compensation as the desktop rule above. */
+  @media (max-width: 640px) {
+    .hero { padding-top: 34px; }
   }
 </style>

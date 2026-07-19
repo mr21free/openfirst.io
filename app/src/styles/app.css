@@ -49,7 +49,11 @@
   --z-editor-full: 80;
   --z-alert: 101;    /* confirm dialogs above everything */
   --z-tooltip: 200;
-  --scrim: oklch(0.2 0.03 255 / 0.34);
+  /* Dark enough to read as "everything else is inactive" (iOS/Material land
+     around 40-55%) — was 0.34, lighter than ConfirmDialog's own scrim, so
+     drawers/dialogs dimmed the page less than alerts did for no real reason.
+     One shared value now; ConfirmDialog references it too. */
+  --scrim: oklch(0.2 0.03 255 / 0.45);
 }
 
 /* Dark mode — same heaven-blue hue, cooled down for night reading. */
@@ -89,6 +93,11 @@ html, body {
   text-rendering: optimizeLegibility;
 }
 body { min-height: 100vh; overflow-x: hidden; }
+/* iOS Safari can still rubber-band/pan the page under a touch drag even with
+   overflow: hidden set (lockBodyScroll relies on that alone) — most visible
+   on a panel/dialog whose own content is shorter than the viewport, so there's
+   nothing inside it to consume the drag first. This is the actual fix. */
+html, body { overscroll-behavior: none; }
 
 a { color: var(--accent-deep); text-decoration: none; }
 a:hover { text-decoration: underline; text-underline-offset: 3px; }
@@ -191,7 +200,14 @@ strong { font-weight: 600; }
 [data-tip][data-tip-pos='top']::after { top: auto; bottom: calc(100% + 8px); }
 [data-tip][data-tip-pos='left']::after { left: auto; right: calc(100% + 8px); top: 50%; transform: translateY(-50%); }
 [data-tip][data-tip-pos='right']::after { left: calc(100% + 8px); top: 50%; transform: translateY(-50%); }
-[data-tip]:hover::after, [data-tip]:focus-visible::after { opacity: 1; transition-delay: .35s; }
+/* Hover has no equivalent on touch — without this gate, mobile Safari treats
+   a tap as a lingering :hover (it clears only when something else is tapped),
+   so the bubble for the button just pressed hangs there over whatever it
+   opened. Keyboard focus-visible stays universal; hover is desktop-only. */
+@media (hover: hover) and (pointer: fine) {
+  [data-tip]:hover::after { opacity: 1; transition-delay: .35s; }
+}
+[data-tip]:focus-visible::after { opacity: 1; transition-delay: .35s; }
 
 /* Switch — on/off control (settings toggles). Pill by nature. */
 .switch {

@@ -536,7 +536,7 @@
     <button class="iconbtn tb" data-tip="Bold" onclick={() => surround('**')}><b>B</b></button>
     <button class="iconbtn tb" data-tip="Italic" onclick={() => surround('*')}><i>I</i></button>
     <button class="iconbtn tb" data-tip="Heading" onclick={() => prefixLine('## ')}>H</button>
-    <button class="iconbtn tb" data-tip="Bullet list" onclick={() => prefixLine('- ')}>
+    <button class="iconbtn tb" data-tip="Bullet list" aria-label="Bullet list" onclick={() => prefixLine('- ')}>
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
         <line x1="9" y1="6" x2="20" y2="6" /><line x1="9" y1="12" x2="20" y2="12" /><line x1="9" y1="18" x2="20" y2="18" />
         <circle cx="4" cy="6" r="1.5" fill="currentColor" stroke="none" /><circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none" /><circle cx="4" cy="18" r="1.5" fill="currentColor" stroke="none" />
@@ -550,7 +550,7 @@
         <text x="0.5" y="20.5" font-size="8" stroke="none" fill="currentColor">3</text>
       </svg>
     </button>
-    <button class="iconbtn tb" data-tip="Link" onclick={() => surround('[', '](https://)')}>
+    <button class="iconbtn tb" data-tip="Link" aria-label="Link" onclick={() => surround('[', '](https://)')}>
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
         <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
@@ -614,7 +614,7 @@
 <style>
   .ce { background: var(--paper); display: flex; flex-direction: column; }
   .ce.full { position: fixed; inset: 24px; z-index: var(--z-editor-full); border: 1px solid var(--rule); border-radius: 0; overflow: hidden; box-shadow: 0 30px 80px oklch(0.2 0.03 255 / 0.3); }
-  .fs-scrim { position: fixed; inset: 0; background: oklch(0.2 0.03 255 / 0.3); z-index: 79; }
+  .fs-scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 79; }
   /* Keep the formatting actions reachable while scrolling a long guide. In
      full mode the editor body scrolls internally, so the bar already stays put;
      this makes it stick to the top of the viewport in normal mode too. */
@@ -632,6 +632,9 @@
   .tb b, .tb i { display: block; line-height: 1; }
   .tb .tb-media-ico { width: 18px; height: 18px; }
   .tb-expand { margin-left: auto; }
+  /* Editor is already close to full-size on mobile (full width inline, and
+     full mode is just a 24px inset), so the expand toggle adds little. */
+  @media (max-width: 860px) { .tb-expand { display: none; } }
   .tb-sep { width: 1px; height: 18px; background: var(--rule); margin: 0 4px; flex: none; }
   .refwrap { position: relative; }
   .tb-ref { font-size: 13px; border: 1px solid var(--rule); border-radius: 8px; padding: 6px 12px; background: var(--paper); color: var(--accent-deep); cursor: pointer; }

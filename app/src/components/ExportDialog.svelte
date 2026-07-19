@@ -21,6 +21,11 @@
   let busy = $state(false);
   let error = $state('');
 
+  // Clear a stale password error the moment the field changes — typing, or
+  // "Suggest a passphrase" replacing the value outright — instead of leaving
+  // it stuck next to a value that may already be fine.
+  $effect(() => { password; error = ''; });
+
   const drafts = $derived(draftCount(data));
 
   // Rough size of what's about to be written: attachments (+33% when base64'd
@@ -129,11 +134,11 @@
 
   {#if error}<Callout text={error} />{/if}
 
-  <div class="row" style="gap:10px; margin-top:6px">
+  <div class="row" style="gap:10px; margin-top:6px; justify-content:flex-end">
+    <button class="btn btn-ghost" onclick={() => onClose?.()}>Cancel</button>
     <button class="btn btn-primary" onclick={doExport} disabled={busy}>
       {busy ? 'Working…' : 'Export'}
     </button>
-    <button class="btn btn-ghost" onclick={() => onClose?.()}>Cancel</button>
   </div>
 </div>
 {/if}
@@ -151,7 +156,6 @@
   }
   .modal h3 { font-size: 19px; }
   .namefield { display: flex; flex-direction: column; gap: 6px; }
-  .nlbl { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-mute); }
   /* overflow-wrap (not word-break: break-all) — it only breaks mid-word as a
      last resort, so a long filename wraps after a hyphen/underscore instead
      of splitting a word like "html" into "htm" + "l". */
@@ -163,8 +167,6 @@
     border: 1px solid var(--rule); border-radius: 0; padding: 10px 12px; background: var(--paper);
   }
   .inp:focus { outline: none; border-color: var(--accent-deep); }
-  /* Strength bar + label row, with the suggest link on the right */
-  .pw-gen-link:hover { color: var(--ink); }
   .hint-field { display: flex; align-items: center; }
   .reader-note, .size-note { margin: -6px 0 0 27px; color: var(--ink-mute); }
 </style>

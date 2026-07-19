@@ -1981,6 +1981,13 @@
     /* Clears the fixed bottom tab bar (its own height plus the home-indicator
        safe area) so the last bit of content isn't hidden underneath it. */
     .content { padding: var(--reader-section-gap) var(--mobile-gutter) calc(var(--actionbar-h) + env(safe-area-inset-bottom) + 16px); }
+    /* .body's min-height is zeroed above (the multi-row mobile topbar makes
+       --topbar-h wrong here), so a short list (empty/near-empty search
+       results) no longer stretches .content — the page background (a
+       different shade than .content's paper) showed through below it, down
+       to the fixed bottom bar. 100dvh guarantees full-bleed paper regardless
+       of where .content starts; any excess is a harmless bit of overscroll. */
+    .content { min-height: 100dvh; }
     .map-row { display: flex; flex-direction: column-reverse; }
     .map-side { position: static; flex-direction: row; justify-content: flex-end; margin-bottom: 6px; }
     /* One shared side gutter for the whole mobile shell (bar, content, nav

@@ -19,14 +19,20 @@
   let draftBusy = $state(false);
   let draftErr = $state('');
 
+  // A hand-typed password and a generated passphrase land in the same field —
+  // clear a stale error the moment either one changes (typing, or "Suggest a
+  // passphrase" replacing the value outright), instead of leaving it stuck
+  // next to a value that may already be fine.
+  $effect(() => { draftPass; draftErr = ''; });
+
   async function applyProtection() {
     draftErr = '';
     if (estimateBits(draftPass) < 40) {
-      draftErr = 'That passphrase is too weak — the strength meter above should read at least "Fair" before you continue.';
+      draftErr = 'That password is too weak — the strength meter above should read at least "Fair" before you continue.';
       return;
     }
     if (!draftPassConfirmed) {
-      draftErr = 'Repeat the passphrase below to confirm it — a forgotten plan passphrase cannot be recovered.';
+      draftErr = 'Repeat the password below to confirm it — a forgotten plan password cannot be recovered.';
       return;
     }
     draftBusy = true;
@@ -129,7 +135,7 @@
         </optgroup>
       </select>
     </label>
-    <div class="f"><span class="lbl">Primary recipients<InfoHint text="The people this plan is mainly for. They appear first — above a divider — wherever you pick who's reading." /></span>
+    <div class="f"><span class="lbl">Primary recipients<InfoHint text="The people this plan is mainly for. They appear first — above a divider — wherever you pick who's reading." pos="left" /></span>
       <EntityPicker {pkg} target={raw} key="primary_person_ids" kinds={['person']} placeholder="Add a recipient…" />
     </div>
 
@@ -139,9 +145,11 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
         </span>
         <div class="protect-main">
-          <span class="lbl" style="margin:0">Plan protection<InfoHint text="Encrypts the auto-saved plan in this browser's storage (the plan JSON and any files) with a passphrase. Protects a copied disk or profile — not a live-compromised browser or your unlocked screen. The encrypted export stays your durable backup." /></span>
+          <span class="lbl" style="margin:0">Plan protection<InfoHint text="Encrypts the auto-saved plan in this browser's storage (the plan JSON and any files) with a passphrase. Protects a copied disk or profile — not a live-compromised browser or your unlocked screen. The encrypted export stays your durable backup." pos="left" /></span>
           <p class="tiny muted protect-desc">
-            {#if store?.draftProtected}This plan is encrypted at rest in this browser's storage on this computer.{:else}The plan in progress is saved unencrypted in this browser's storage on this computer.{/if}
+            {#if store?.draftProtected}This plan is encrypted at rest in this browser's storage on this computer.
+            {:else if showProtect}Choose a passphrase below to turn on protection.
+            {:else}The plan in progress is saved unencrypted in this browser's storage on this computer.{/if}
           </p>
           {#if store?.draftProtected && !showProtect}
             <button class="btn-link" onclick={() => (showProtect = true)}>Change passphrase…</button>

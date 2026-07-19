@@ -42,7 +42,7 @@
     position: fixed;
     inset: 0;
     z-index: calc(var(--z-alert) - 1);
-    background: oklch(0.2 0.03 255 / 0.42);
+    background: var(--scrim);
   }
   .modal-card {
     position: fixed;

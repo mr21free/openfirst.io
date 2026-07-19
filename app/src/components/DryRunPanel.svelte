@@ -42,7 +42,7 @@
       <p class="tiny muted">{doneCount}/{checks.length} checked</p>
     </div>
     <div class="dhead-actions">
-      <button class="iconbtn" onclick={() => (full = !full)} data-tip={full ? 'Shrink panel' : 'Expand panel'} data-tip-pos="left" aria-label={full ? 'Shrink panel' : 'Expand panel'}>
+      <button class="iconbtn expand-toggle" onclick={() => (full = !full)} data-tip={full ? 'Shrink panel' : 'Expand panel'} data-tip-pos="left" aria-label={full ? 'Shrink panel' : 'Expand panel'}>
         {#if full}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" /><line x1="14" y1="10" x2="21" y2="3" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
         {:else}
@@ -153,5 +153,8 @@
       border-left: none;
       border-top: none;
     }
+    /* Panel is already full-width/height on mobile (see above), so the
+       desktop-only expand toggle has nothing left to do. */
+    .expand-toggle { display: none; }
   }
 </style>

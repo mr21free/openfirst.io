@@ -1,6 +1,7 @@
 <script>
   import { tick, untrack } from 'svelte';
   import { iconInner } from '../lib/icons.js';
+  import { htmlToMarkdown } from '../lib/pasteHtml.js';
 
   // Guide content editor (Markdown stored as text). References are embedded as
   // [[id]] tokens, shown here as atomic, non-editable PILLS — the Contentful /
@@ -411,7 +412,11 @@
     }
   }
   function onPaste(e) {
-    const text = e.clipboardData?.getData('text/plain');
+    // Rich HTML (Word, Google Docs, Notion, a browser-rendered PDF selection…)
+    // gets converted to our markdown subset first; internal app copies never
+    // set text/html (see onCopy above), so they always take the plain path.
+    const html = e.clipboardData?.getData('text/html');
+    const text = html ? htmlToMarkdown(html) : e.clipboardData?.getData('text/plain');
     if (text == null) return;
     e.preventDefault();
     const { sel, range } = caret(); range.deleteContents();

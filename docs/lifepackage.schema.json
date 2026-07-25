@@ -92,6 +92,7 @@
           "depends_on_ids": { "type": "array", "items": { "type": "string" }, "description": "other item ids this one needs (e.g. a PIN item)." },
           "attachment_ids": { "type": "array", "items": { "type": "string" }, "description": "files documenting it (attachment ids)." },
           "guide_ids": { "type": "array", "items": { "type": "string" }, "description": "guides that explain it." },
+          "tags": { "type": "array", "items": { "type": "string" }, "description": "lowercase slug tags for grouping/search/map-filtering, e.g. ['tax','2009']. Its own namespace, separate from attachment tags." },
           "sensitive": { "type": "boolean" }
         }
       }
@@ -128,7 +129,7 @@
           "importance": { "type": "string", "enum": ["high", "medium", "low"] },
           "content": {
             "type": "object",
-            "description": "Markdown body keyed by language code, e.g. { \"en\": \"## Heading...\" }. Reference other entities inline with [[id]] tokens; link a file tag with [#tag](#tag:slug).",
+            "description": "Markdown body keyed by language code, e.g. { \"en\": \"## Heading...\" }. Reference other entities inline with [[id]] tokens; link a file tag with [#tag](#tag:slug) or an item tag with [#tag](#itemtag:slug).",
             "additionalProperties": { "type": "string" }
           },
           "references": {

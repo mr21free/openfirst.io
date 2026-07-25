@@ -19,6 +19,8 @@ const fixture = {
   schema: 'inheritance-package/v1',
   package: { title: 'Print test', languages: ['en', 'sk'], primary_person_ids: ['p1'] },
   people: [{ id: 'p1', name: 'Reader' }],
+  locations: [{ id: 'loc1', name: 'Home' }],
+  items: [{ id: 'i1', name: 'Passport', location_ids: ['loc1'], tags: ['travel'] }],
   guides: [
     { id: 'g_draft', title: 'Draft note', draft: true, audience_person_ids: ['p1'], content: { en: 'Draft body.', sk: 'Koncept.' } },
     { id: 'g_en', title: 'EN only', audience_person_ids: ['p1'], content: { en: 'Only English here.' } }
@@ -92,6 +94,23 @@ try {
   await page.evaluate(() => [...document.querySelectorAll('button')].find((x) => (x.getAttribute('aria-label') || '') === 'Done editing')?.click());
   await pause(300);
   ok('print button re-enabled after editing', (await printState())?.disabled === false);
+
+  // --- MAP TAG FILTER: filter controls hidden on paper, applied tag(s) shown as plain text ---
+  await page.evaluate(() => [...document.querySelectorAll('nav .navlink-section')].find((b) => b.textContent.trim() === 'Map')?.click());
+  await page.waitForFunction(() => !!document.querySelector('main .map'), { timeout: 6000 });
+  await pause();
+  await page.evaluate(() => document.querySelector('main .map .filterbtn')?.click()); await pause(150);
+  await page.evaluate(() => document.querySelector('main .map .filterpop .facet .facet-opt input')?.click()); await pause(300);
+  await page.emulateMediaType('screen');
+  ok('map filter bar visible on screen', await page.evaluate(() => getComputedStyle(document.querySelector('main .map .filterbar')).display !== 'none'));
+  ok('print-only tag summary hidden on screen', await page.evaluate(() => getComputedStyle(document.querySelector('main .map .print-only')).display === 'none'));
+  await page.emulateMediaType('print');
+  ok('map filter bar hidden when printing', await page.evaluate(() => getComputedStyle(document.querySelector('main .map .filterbar')).display === 'none'));
+  ok('printed page states the applied tag as plain text', await page.evaluate(() => {
+    const p = document.querySelector('main .map .print-only');
+    return !!p && getComputedStyle(p).display !== 'none' && p.textContent.includes('travel');
+  }));
+  await page.emulateMediaType('screen');
 
   ok('no runtime errors', errs.length === 0);
 } catch (e) { ok('flow threw: ' + e.message, false); }

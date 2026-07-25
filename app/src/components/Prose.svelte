@@ -98,8 +98,8 @@
     if (!el) return;
     const open = (id) => { if (id) onOpen?.(id); };
     const act = (e, a) => {
-      if (a?.dataset.tag) { e.preventDefault(); onTag?.(a.dataset.tag); }
-      else if (a?.dataset.view) { e.preventDefault(); onView?.(a.dataset.view); }
+      if (a?.dataset.tag) { e.preventDefault(); onTag?.(a.dataset.tag, a.dataset.tagKind || 'file'); }
+      else if (a?.dataset.view) { e.preventDefault(); onView?.(a.dataset.view, a.dataset.viewTags || null); }
       else if (a?.dataset.id) { e.preventDefault(); open(a.dataset.id); }
     };
     const click = (e) => act(e, e.target.closest?.('a.xref, button.guide-img'));

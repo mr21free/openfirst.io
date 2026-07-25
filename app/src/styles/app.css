@@ -208,6 +208,10 @@ strong { font-weight: 600; }
   [data-tip]:hover::after { opacity: 1; transition-delay: .35s; }
 }
 [data-tip]:focus-visible::after { opacity: 1; transition-delay: .35s; }
+/* A tooltip naming what a toggle does is redundant once the toggle is open
+   (its popover already makes that obvious) — and on mobile a tap can leave
+   the button focus-visible, stranding the bubble over the open panel. */
+[data-tip][aria-expanded='true']::after { opacity: 0 !important; }
 
 /* Switch — on/off control (settings toggles). Pill by nature. */
 .switch {
@@ -240,6 +244,15 @@ strong { font-weight: 600; }
 }
 .chip-link { cursor: pointer; transition: border-color .12s, color .12s; }
 .chip-link:hover { border-color: var(--accent-deep); color: var(--accent-deep); }
+
+/* Tag chips — the "# slug" blue chip shown under Files/Items rows, in the
+   item/file detail drawer, and in the Map's applied-tag-filter summary. */
+.row-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+.row-tag { font-size: 11px; color: var(--accent-deep); background: var(--accent-wash); border-radius: 5px; padding: 1px 6px; }
+
+/* Opposite of .no-print: content (e.g. "Filtered by tag: …") that only shows
+   on the printed page, replacing the interactive filter controls. */
+.print-only { display: none; }
 
 /* Cards / panels */
 .card {
@@ -447,6 +460,7 @@ strong { font-weight: 600; }
     --accent-wash: #eef2ff; --accent-deep: #1a4bd6;
   }
   .no-print { display: none !important; }
+  .print-only { display: block !important; }
   body { background: #fff; }
   .card { border: none; padding: 0; }
   /* The section title (People, Roles, …) is hidden on narrow screens because

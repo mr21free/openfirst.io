@@ -238,7 +238,7 @@ export class InheritancePackage {
       add(g.id, 'guide', this.name(g.id), [g.title, ...Object.values(g.title_i18n || {}), content]);
     }
     for (const p of this.people || []) add(p.id, 'person', this.name(p.id), [p.name, p.nickname, p.display_as]);
-    for (const it of this.items || []) add(it.id, 'item', this.name(it.id), [it.description, it.notes, it.price]);
+    for (const it of this.items || []) add(it.id, 'item', this.name(it.id), [it.description, it.notes, it.price, ...(it.tags || [])]);
     for (const l of this.locations || []) add(l.id, 'location', this.name(l.id), [l.notes]);
     for (const a of this.attachments || []) add(a.id, 'attachment', this.name(a.id), [a.description, ...(a.tags || [])]);
     for (const c of this.readinessChecks || []) add(c.id, 'readiness', this.name(c.id), [c.question, c.expected, c.owner_notes, ...(c.tags || [])]);
@@ -323,25 +323,29 @@ export class InheritancePackage {
   attachmentsOrdered() { return this.ordered(this.attachments); }
   readinessOrdered() { return this.ordered(this.readinessChecks); }
 
-  /** Every distinct file tag, sorted — for filters and autocomplete. */
-  allTags() {
+  #tagsOf(collection) {
     const set = new Set();
-    for (const a of this.attachments || []) for (const t of a.tags || []) set.add(t);
+    for (const x of collection || []) for (const t of x.tags || []) set.add(t);
     return [...set].sort();
   }
-  /** Attachments carrying a given tag. */
-  attachmentsWithTag(tag) {
-    return (this.attachments || []).filter((a) => (a.tags || []).includes(tag));
+  #withTag(collection, tag) {
+    return (collection || []).filter((x) => (x.tags || []).includes(tag));
   }
 
-  allReadinessTags() {
-    const set = new Set();
-    for (const c of this.readinessChecks || []) for (const t of c.tags || []) set.add(t);
-    return [...set].sort();
-  }
-  readinessWithTag(tag) {
-    return (this.readinessChecks || []).filter((c) => (c.tags || []).includes(tag));
-  }
+  /** Every distinct file tag, sorted — for filters and autocomplete. */
+  allTags() { return this.#tagsOf(this.attachments); }
+  /** Attachments carrying a given tag. */
+  attachmentsWithTag(tag) { return this.#withTag(this.attachments, tag); }
+
+  /** Every distinct item tag, sorted — for filters and autocomplete. Kept as
+   *  its own namespace from file tags: an item "bitcoin" tag and a file
+   *  "bitcoin" tag are unrelated, so each has its own list/filter/reference. */
+  allItemTags() { return this.#tagsOf(this.items); }
+  /** Items carrying a given tag. */
+  itemsWithTag(tag) { return this.#withTag(this.items, tag); }
+
+  allReadinessTags() { return this.#tagsOf(this.readinessChecks); }
+  readinessWithTag(tag) { return this.#withTag(this.readinessChecks, tag); }
 
   // --- Location nesting (arbitrary depth via parent_id) ---
   /** Locations use manual order (drag-and-drop), then name — never importance. */

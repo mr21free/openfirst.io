@@ -193,6 +193,7 @@
         "depends_on_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
         "guide_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
         "attachment_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "tags": { "type": "array", "items": { "type": "string" }, "description": "Lowercase slug tags for grouping/search/map-filtering, e.g. [\"tax\",\"2009\"]." },
         "sensitive": { "type": "boolean", "default": false, "description": "Handle-with-care badge. The item describes where a secret lives; it never holds the secret itself." },
         "properties": {
           "type": "object",
@@ -271,6 +272,7 @@
         "path": { "type": "string" },
         "mime": { "type": "string" },
         "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" }, "description": "Lowercase slug tags for grouping/search, e.g. [\"tax\",\"2009\"]." },
         "item_id": { "$ref": "#/$defs/id" },
         "guide_id": { "$ref": "#/$defs/id" }
       }

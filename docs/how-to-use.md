@@ -44,17 +44,22 @@ example.
 
 - **Fill in real values** the AI deliberately left out.
 - **Write/refine guides.** Plain Markdown; cross-link anything with `[[…]]`, and
-  link a set of files with a tag. Mark anything unfinished as **Draft** — drafts
-  stay in your working copy but are **left out of the heir's reader**.
+  link a set of files or items with a tag. Mark anything unfinished as **Draft**
+  — drafts stay in your working copy but are **left out of the heir's reader**.
 - **Add and tag files.** Upload scans/photos/PDFs; add tags like `tax`, `will`,
   `bitcoin` to group them. PDFs preview inline (use the expand button to read
   full-screen).
+- **Tag items too.** Add the same kind of tags to Items (from the item's detail
+  or in bulk from the Items list) — item tags are a separate list from file
+  tags, and also drive the Map's tag filter below.
 - **Filter and sort any list.** People, Items, Locations and Files each have a
   **Filter** button — narrow by role, importance, location, who-can-access or tag
   (pick several in one group to widen, across groups to narrow), and **Sort** to
   reorder. It's just a view; nothing in the plan changes.
 - **Check the Map.** The "where is what" view shows each place with its items
-  nested inside — a quick sanity check.
+  nested inside — a quick sanity check. Once any item has a tag, a **Filter**
+  control appears above the map to narrow it down to matching items and their
+  parent locations; printing the map shows which tag(s) are applied as plain text.
 
 ## Export for your heirs
 

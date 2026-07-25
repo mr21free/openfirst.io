@@ -19,6 +19,7 @@
   import DryRunPicker from './DryRunPicker.svelte';
   import AudiencePicker from './AudiencePicker.svelte';
   import { langValue } from '../lib/package.js';
+  import { APP_DOMAIN } from '../lib/format.js';
   import { lockBodyScroll } from '../lib/scrollLock.js';
 
   let { store, onClose, onLock = null, readOnly = false, initialAudience = null, initialAdmin = false, initialView = null, initialDryRunPerson = null } = $props();
@@ -260,18 +261,23 @@
   let newMenuPos = $state({ top: 0, left: 0 });
   let query = $state('');
   let filters = $state({});  // faceted filters per list: { facetKey: [values] }
+  let mapFilters = $state({}); // Map's own tag filter, kept separate so switching lists doesn't clear it and vice versa
   let sortBy = $state('name');
   // Items lead with importance; the other lists open alphabetically.
   const defaultSort = (v) => (v === 'items' ? 'importance' : 'name');
-  let bulkTag = $state(''); // pending tag to apply to selected files
+  let bulkTag = $state(''); // pending tag to apply to selected files/items
   function applyBulkTag() {
     const t = bulkTag.trim();
     if (!t || !selectedIds.length) return;
-    store.addTagToAttachments(selectedIds, t);
+    if (view === 'items') store.addTagToItems(selectedIds, t);
+    else store.addTagToAttachments(selectedIds, t);
     bulkTag = '';
   }
-  // Jump to the Files view filtered to one tag (used by guide tag-links).
-  function openTag(tag) { view = 'files'; query = ''; selectedIds = []; filters = { tag: [tag] }; sortBy = defaultSort('files'); closeDrawer(); window.scrollTo({ top: 0 }); }
+  // Jump to the Files or Items view filtered to one tag (used by guide tag-links).
+  function openTag(tag, kind = 'file') {
+    const v = kind === 'item' ? 'items' : 'files';
+    view = v; query = ''; selectedIds = []; filters = { tag: [tag] }; sortBy = defaultSort(v); closeDrawer(); window.scrollTo({ top: 0 });
+  }
 
   // ---- faceted filtering + sort ----
   const IMP_RANK = { high: 0, medium: 1, low: 2 };
@@ -303,6 +309,7 @@
   ]);
   const itemFacets = $derived([
     impFacet(pkg.items),
+    { key: 'tag', label: 'Tag', test: (it, v) => (it.tags || []).includes(v), options: pkg.allItemTags().map((t) => ({ value: t, label: '# ' + t, count: pkg.itemsWithTag(t).length })) },
     { key: 'location', label: 'Location', test: (it, v) => (it.location_ids || []).includes(v), options: pkg.locations.map((l) => ({ value: l.id, label: pkg.name(l.id), count: pkg.items.filter((it) => (it.location_ids || []).includes(l.id)).length })).filter((o) => o.count) },
     { key: 'access', label: 'Who can access', test: (it, v) => v === '__none' ? !(it.access_person_ids || []).length : (it.access_person_ids || []).includes(v), options: [{ value: '__none', label: 'None', count: pkg.items.filter((it) => !(it.access_person_ids || []).length).length }, ...pkg.people.map((p) => ({ value: p.id, label: pkg.name(p.id), count: pkg.items.filter((it) => (it.access_person_ids || []).includes(p.id)).length }))].filter((o) => o.count) },
     { key: 'price', label: 'Price', test: (it, v) => (v === 'has') === !!String(it.price || '').trim(), options: [{ value: 'has', label: 'Has price', count: pkg.items.filter((it) => String(it.price || '').trim()).length }].filter((o) => o.count) }
@@ -632,7 +639,7 @@
   const locReorderable = $derived(!query.trim() && !locationFacets.some((f) => (filters[f.key] || []).length));
   const peopleResults = $derived(sortList(pkg.peopleOrdered().filter((p) => matches(personSearchFields(p)) && passesFacets(p, peopleFacets)), sortBy));
   const roleResults = $derived(sortList(pkg.roles.filter((role) => matches([role.id, role.name])), sortBy));
-  const itemResults = $derived(sortList(pkg.itemsOrdered().filter((it) => matches([it.name, it.description, it.price, it.notes]) && passesFacets(it, itemFacets)), sortBy));
+  const itemResults = $derived(sortList(pkg.itemsOrdered().filter((it) => matches([it.name, it.description, it.price, it.notes, ...(it.tags || [])]) && passesFacets(it, itemFacets)), sortBy));
   const fileResults = $derived(sortList(attachments.filter((att) => matches([att.filename, att.description, att.path, ...(att.tags || [])]) && passesFacets(att, fileFacets)), sortBy));
   // Ordered ids per list, for select-all and shift-range selection.
   const peopleIds = $derived(peopleResults.map((p) => p.id));
@@ -671,9 +678,21 @@
     selectedIds = [];
     anchorIndex = null;
     filters = {};
+    if (v !== 'map') mapFilters = {};
     sortBy = defaultSort(v);
     bulkTag = '';
     window.scrollTo({ top: 0 });
+  }
+  // Navigate to a view from a guide "@" reference, optionally pre-filtering
+  // the Map to one tag (from a `view:map:slug` link). A bare `[[view:map]]`
+  // (no tag) always means "show the full map", so it must clear any filter
+  // left over from a previous visit — go() only clears mapFilters when
+  // leaving Map, not when re-entering it without a tag. Guarded by `view ===
+  // 'map'` (not just `v === 'map'`) so a blocked navigation (go() no-ops when
+  // !canSeeMap) can't still leak a filter into state nothing is showing.
+  function goToView(v, tag) {
+    go(v);
+    if (view === 'map') mapFilters = tag ? { tag: [tag] } : {};
   }
   function chooseAudience(id) { audience = id; chosen = true; view = defaultViewFor(id); }
   function switchAudience(v) {
@@ -858,10 +877,10 @@
     <div class="bar">
       <div class="bar-plan">
         {#if readOnly}
-          <span class="brand-home" aria-hidden="true"><img class="logo" src={logo} alt="" aria-hidden="true" /></span>
+          <a class="brand-home" href={`https://${APP_DOMAIN}/`} target="_blank" rel="noopener" title={APP_DOMAIN} aria-label={APP_DOMAIN}><span class="brand-hit"><img class="logo" src={logo} alt="" aria-hidden="true" /></span></a>
           <span class="plan-title" title={planTitle}>{planTitle}</span>
         {:else}
-          <button class="brand-home" onclick={onClose} title="Back to start" aria-label="Back to start"><img class="logo" src={logo} alt="" aria-hidden="true" /></button>
+          <button class="brand-home" onclick={onClose} title="Back to start" aria-label="Back to start"><span class="brand-hit"><img class="logo" src={logo} alt="" aria-hidden="true" /></span></button>
           {#if editing && store.data?.package}
             <input class="plan-title-input" bind:value={store.data.package.title} placeholder="My plan" aria-label="Plan title" />
           {:else}
@@ -1181,7 +1200,7 @@
           {/if}
         {/snippet}
         {#if currentGuide}
-          <GuideView {pkg} guide={currentGuide} {lang} onOpen={openEntity} onTag={openTag} onView={(v) => go(v)} {editing} canEdit={!readOnly && !previewingHeir} onStartEditing={toggleEdit} onEdit={() => editEntity(currentGuide.id)} onDelete={() => removeEntity(currentGuide.id)} onToggleDraft={() => store.toggleGuideDraft(currentGuide.id)} onContent={(l, v) => store.setGuideContent(currentGuide.id, l, v)} onAddRef={(k, id) => store.addGuideRef(currentGuide.id, k, id)} onUploadMedia={(file) => uploadGuideMedia(currentGuide.id, file)} onTitle={(l, v) => store.setGuideTitle(currentGuide.id, l, v)} onTouched={() => store.touchGuide(currentGuide.id)} focusTitle={focusNewGuideTitle} onTitleFocused={() => (focusNewGuideTitle = false)} />
+          <GuideView {pkg} guide={currentGuide} {lang} onOpen={openEntity} onTag={openTag} onView={goToView} {editing} canEdit={!readOnly && !previewingHeir} onStartEditing={toggleEdit} onEdit={() => editEntity(currentGuide.id)} onDelete={() => removeEntity(currentGuide.id)} onToggleDraft={() => store.toggleGuideDraft(currentGuide.id)} onContent={(l, v) => store.setGuideContent(currentGuide.id, l, v)} onAddRef={(k, id) => store.addGuideRef(currentGuide.id, k, id)} onUploadMedia={(file) => uploadGuideMedia(currentGuide.id, file)} onTitle={(l, v) => store.setGuideTitle(currentGuide.id, l, v)} onTouched={() => store.touchGuide(currentGuide.id)} focusTitle={focusNewGuideTitle} onTitleFocused={() => (focusNewGuideTitle = false)} />
         {:else if view === 'start' && editing && pkg.guides.length === 0}
           <div class="card empty-hint">
             <span class="eyebrow">New plan</span>
@@ -1360,6 +1379,14 @@
             {/if}
           </div>
           {#if pkg.items.length > 0}<FilterBar facets={itemFacets} sorts={SORTS_IMP} bind:filters bind:sort={sortBy} bind:search={query} placeholder="Search items…" />{/if}
+          {#if editing && selectedIds.length}
+            <div class="bulk-tag">
+              <span class="tiny muted">Tag {selectedIds.length} selected:</span>
+              <input class="bulk-input" list="allitemtags" bind:value={bulkTag} placeholder="e.g. tax" onkeydown={(e) => e.key === 'Enter' && (e.preventDefault(), applyBulkTag())} />
+              <datalist id="allitemtags">{#each pkg.allItemTags() as t}<option value={t}></option>{/each}</datalist>
+              <button class="btn btn-small" onclick={applyBulkTag} disabled={!bulkTag.trim()}>Add tag</button>
+            </div>
+          {/if}
           <div class="ulist">
             {#each itemResults as it, i (it.id)}
               <div class="ulist-row">
@@ -1369,6 +1396,7 @@
                   <span class="ulist-main">
                     <span class="ulist-name">{pkg.name(it.id)}{#if it.sensitive}<span class="lock-dot" title="sensitive"> ●</span>{/if}</span>
                     {#if it.description}<span class="ulist-desc">{it.description}</span>{/if}
+                    {#if it.tags?.length}<span class="row-tags">{#each it.tags as t}<span class="row-tag"># {t}</span>{/each}</span>{/if}
                   </span>
                 </button>
                 <span class="ulist-aside">
@@ -1388,7 +1416,7 @@
             <div class="map-col">
               <div class="section-head"><h2 class="vh">Map</h2></div>
               {#if canSeeMap}
-                <MapView {pkg} onOpen={openEntity} />
+                <MapView {pkg} onOpen={openEntity} bind:filters={mapFilters} />
               {:else}
                 <p class="empty-results">Map is not available for this reader.</p>
               {/if}
@@ -1496,7 +1524,7 @@
   {#if editing}<input bind:this={fileInput} type="file" multiple hidden onchange={onFile} />{/if}
 
   {#if drawerId}
-    <Drawer {pkg} {store} {editing} showReadiness={canShowReadinessData} id={drawerId} onOpen={openEntity} onClose={closeDrawer} onBack={drawerBack} canBack={drawerStack.length > 0} onDelete={removeEntity} onTag={openTag} onView={(v) => go(v)} {requestConfirm} {requestNotice} />
+    <Drawer {pkg} {store} {editing} showReadiness={canShowReadinessData} id={drawerId} onOpen={openEntity} onClose={closeDrawer} onBack={drawerBack} canBack={drawerStack.length > 0} onDelete={removeEntity} onTag={openTag} onView={goToView} {requestConfirm} {requestNotice} />
   {/if}
 
   {#if dryRun && dryRunId}
@@ -1544,8 +1572,13 @@
   .with-actions .brand-home { width: 65px; justify-content: center; margin-right: -14px; }
   .bar-plan { min-width: 0; display: flex; align-items: center; gap: 14px; }
   .bar-actions { min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
-  .brand-home { flex: none; display: inline-flex; padding: 2px; border-radius: 6px; }
-  button.brand-home:hover { background: var(--accent-wash); }
+  /* The 65px-wide rail-alignment box (.with-actions .brand-home, below) is a
+     layout slot, not the hover hit-area — .brand-hit is the actual square
+     highlight (same sharp-cornered treatment as .iconbtn's hover/focus),
+     centered inside that slot regardless of how wide it is. */
+  .brand-home { flex: none; display: inline-flex; }
+  .brand-hit { display: inline-flex; padding: 2px; border-radius: 0; }
+  .brand-home:hover .brand-hit, .brand-home:focus-visible .brand-hit { background: var(--accent-wash); }
   .logo { width: 24px; height: 24px; display: block; }
   .plan-title {
     min-width: 0; max-width: 44vw;
@@ -1884,8 +1917,6 @@
   .bulk-tag { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0 4px; padding: 10px 12px; background: var(--accent-wash); border-radius: 9px; }
   .bulk-input { font: inherit; font-size: 14px; border: 1px solid var(--rule); border-radius: 8px; padding: 6px 10px; background: var(--paper); color: var(--ink); }
   .bulk-input:focus { outline: none; border-color: var(--accent-deep); }
-  .row-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
-  .row-tag { font-size: 11px; color: var(--accent-deep); background: var(--accent-wash); border-radius: 5px; padding: 1px 6px; }
 
   /* location tree + drag-and-drop */
   .loc-row {

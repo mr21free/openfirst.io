@@ -83,6 +83,7 @@ Accounts, wallets, keys, documents, devices, assets.
 | `depends_on_ids` |  | other item ids it needs (e.g. a PIN item) |
 | `attachment_ids` |  | files documenting it |
 | `guide_ids` |  | guides explaining it |
+| `tags` |  | lowercase slugs for grouping/search/map-filtering, e.g. `["tax","2009"]` — its own namespace, separate from `attachments[].tags` |
 | `sensitive` |  | boolean |
 
 ## `guide_groups[]`
@@ -107,7 +108,10 @@ holds per-language name overrides, e.g. `{ "sk": "Všeobecné" }`.
 - Cross-link any entity with `[[id]]` — e.g. `…the will is at [[loc_home]]`. List
   the ids you use under that guide's `references`.
 - Link a group of files with `[#label](#tag:slug)` — clicking it opens Files
-  filtered to that tag.
+  filtered to that tag. Link a group of items the same way with
+  `[#label](#itemtag:slug)` — item tags are a separate namespace from file tags.
+- Link the Map with `[[view:map]]`, or pre-filtered to one item tag with
+  `[[view:map:slug]]`.
 
 `references` shape: `{ person_ids?, role_ids?, item_ids?, location_ids?,
 guide_ids?, attachment_ids? }`.

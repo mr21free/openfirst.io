@@ -40,7 +40,8 @@ realistic sample plan exactly as the primary heir would see it.
   physical steps to reach the plan itself, with a printable envelope insert.
 - **Locations** — a nestable tree (Country → City → Home → Safe).
 - **Items** — accounts, wallets, keys, documents, devices; linked to where they
-  live, who can access them, what they depend on, and which files document them.
+  live, who can access them, what they depend on, which files document them,
+  and organised with **tags** for grouping, search and map filtering.
 - **Files** — scans/photos/PDFs, organised with **tags** (PDFs preview inline).
 - **Guides** — calm Markdown instructions ("First steps", "How to access my
   Bitcoin"), per-language, with cross-links to any entity and honest
@@ -98,6 +99,8 @@ double-click it from disk — it works offline by design.
 - **Format** (`lifepackage/v1` spec, JSON Schemas, samples):
   [MIT](docs/LICENSE-FORMAT.md). The file your heirs hold — and any tool that
   reads or writes it — owes this project nothing, forever.
+- **Third-party code**: see [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)
+  for the one runtime dependency shipped in the built app and its license.
 
 Want to contribute code? See [CONTRIBUTING.md](CONTRIBUTING.md) — commits
 need a DCO sign-off.

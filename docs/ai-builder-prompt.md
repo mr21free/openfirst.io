@@ -41,8 +41,9 @@ Follow these rules exactly:
    set "sensitive": true on that item.
 6. Write the guides as clear, calm Markdown for a non-technical reader (e.g. my
    spouse). Inside guide content you may cross-link other entities with [[id]]
-   tokens (and list those ids in that guide's "references"), and link a group of
-   files with [#tag](#tag:slug).
+   tokens (and list those ids in that guide's "references"), link a group of
+   files with [#tag](#tag:slug), and link a group of items with
+   [#tag](#itemtag:slug) — file tags and item tags are separate namespaces.
 7. Inline media is supported with [[img:attachment_id]] for images and
    [[video:attachment_id]] for MP4 video — but leave "attachments" empty unless
    I explicitly give you existing file metadata. I will add real files in the app.
@@ -66,8 +67,11 @@ SCHEMA SUMMARY
 - locations[]: { id, name, parent_id?, order?, notes?, access_person_ids?,
   importance? }   // nest with parent_id: Country > City > Home > Safe
 - items[]: { id, name, description?, notes?, price?, importance?, location_ids?,
-  container_ids?, access_person_ids?, depends_on_ids?, attachment_ids?, guide_ids?, sensitive? }
+  container_ids?, access_person_ids?, depends_on_ids?, attachment_ids?, guide_ids?,
+  tags?, sensitive? }
   (container_ids = item ids this is stored INSIDE, e.g. a PIN inside a password manager)
+  (tags = lowercase slugs for grouping/search/map-filtering, e.g. ["tax","2009"];
+  its own namespace, separate from attachments[].tags)
 - guide_groups[]: { id, name, order? }
 - guides[]: { id, title, group?, order?, importance?, draft?: bool,
   content: { "en": "## ...markdown..." },

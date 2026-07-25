@@ -5,7 +5,12 @@
   // facets: [{ key, label, options: [{ value, label, count }] }]
   // filters: { [facetKey]: [selectedValue] }
   // sorts:  [{ value, label }]
-  let { facets = [], sorts = [], filters = $bindable({}), sort = $bindable('default'), search = $bindable(''), placeholder = 'Search…' } = $props();
+  // alignStart: by default the popover's right edge aligns to the button's
+  // right edge, opening leftward — right for a button sitting at the right
+  // of the bar. Set true for a button (like Map's, hideSearch, no search box
+  // pushing it over) that sits at the left of the bar, where opening
+  // leftward would run the popover off-screen — it opens rightward instead.
+  let { facets = [], sorts = [], filters = $bindable({}), sort = $bindable('default'), search = $bindable(''), placeholder = 'Search…', hideSearch = false, alignStart = false } = $props();
 
   let open = $state(false);
   let sortOpen = $state(false);
@@ -34,7 +39,7 @@
 </script>
 
 <div class="filterbar no-print">
-  <input class="search" type="search" {placeholder} bind:value={search} />
+  {#if !hideSearch}<input class="search" type="search" {placeholder} bind:value={search} />{/if}
 
   {#if usable.length}
     <div class="filterwrap">
@@ -43,7 +48,7 @@
         {#if activeCount}<span class="fcount">{activeCount}</span>{/if}
       </button>
       {#if open}
-        <div class="filterpop">
+        <div class="filterpop" class:align-start={alignStart}>
           {#each usable as f}
             <div class="facet">
               <div class="facet-label">{f.label}</div>
@@ -68,7 +73,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 16-4 4-4-4" /><path d="M17 20V4" /><path d="m3 8 4-4 4 4" /><path d="M7 4v16" /></svg>
       </button>
       {#if sortOpen}
-        <div class="sortpop">
+        <div class="sortpop" class:align-start={alignStart}>
           {#each sorts as s}
             <button class="sort-opt" class:on={s.value === sort} onclick={() => pickSort(s.value)}>
               <span class="sort-name">{s.label}</span>
@@ -91,7 +96,7 @@
 {/if}
 
 <style>
-  .filterbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .filterbar { display: flex; align-items: center; justify-content: flex-start; gap: 8px; flex-wrap: wrap; }
   /* Search, filter and sort share one height so they line up as equal controls. */
   .filterbar .search { flex: 1; min-width: 160px; height: 40px; font: inherit; font-size: 14px; border: 1px solid var(--rule); border-radius: 0; padding: 0 12px; background: var(--paper); color: var(--ink); }
   .filterbar .search:focus { outline: none; border-color: var(--accent-deep); }
@@ -102,6 +107,7 @@
   .filterbtn { position: relative; }
   .fcount { position: absolute; top: -6px; right: -6px; background: var(--accent-deep); color: var(--paper); border-radius: 999px; min-width: 17px; height: 17px; padding: 0 4px; display: inline-grid; place-items: center; font-size: 10px; line-height: 1; }
   .filterpop { position: absolute; top: calc(100% + 6px); right: 0; z-index: var(--z-popover); width: 280px; max-width: 86vw; max-height: 60vh; overflow-y: auto; background: var(--paper); border: 1px solid var(--rule); border-radius: 0; box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18); padding: 8px; }
+  .filterpop.align-start { right: auto; left: 0; }
   .facet { padding: 6px 4px; border-bottom: 1px solid var(--rule-soft); }
   .facet:last-of-type { border-bottom: none; }
   .facet-label { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-mute); padding: 2px 6px 6px; }
@@ -114,6 +120,7 @@
   .clear-all:hover { background: var(--accent-wash); }
   .sortwrap { position: relative; flex: none; }
   .sortpop { position: absolute; top: calc(100% + 6px); right: 0; z-index: var(--z-popover); width: 200px; max-width: 86vw; background: var(--paper); border: 1px solid var(--rule); border-radius: 0; box-shadow: 0 16px 40px oklch(0.2 0.03 255 / 0.18); padding: 6px; }
+  .sortpop.align-start { right: auto; left: 0; }
   .sort-opt { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 8px 10px; border-radius: 7px; font-size: 14px; text-align: left; color: var(--ink); }
   .sort-opt:hover { background: var(--accent-wash); }
   .sort-opt.on { color: var(--accent-deep); font-weight: 500; }

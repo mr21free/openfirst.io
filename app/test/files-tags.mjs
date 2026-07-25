@@ -37,6 +37,14 @@ try {
   await page.evaluate(() => [...document.querySelectorAll('.bulk-tag button')].find((b) => b.textContent.includes('Add tag'))?.click()); await pause(300);
   ok('bulk-tag slugifies and applies to selected files', await page.evaluate(() => document.querySelectorAll('.row-tag').length === 2 && [...document.querySelectorAll('.row-tag')].every((t) => t.textContent.includes('tax-2009'))));
 
+  // opening the file's own read-mode drawer also shows its tags
+  await page.evaluate(() => document.querySelector('.plan-done')?.click()); await pause(400);
+  await page.evaluate(() => document.querySelector('main .ulist .ulist-row .ulist-click')?.click()); await pause(300);
+  ok('a file\'s read-mode drawer shows its tags', await page.evaluate(() => { const c = document.querySelector('[role="dialog"] .row-tag'); return !!c && c.textContent.includes('tax-2009'); }));
+  await page.evaluate(() => document.querySelector('[role="dialog"] button[aria-label="Close"]')?.click()); await pause(200);
+  await page.evaluate(() => document.querySelector('.plan-edit')?.click()); await pause(400);
+  await goFiles(); await pause();
+
   // filter by the tag (open the Filter popover, tick the Tag facet's first option)
   await page.evaluate(() => document.querySelector('.filterbtn')?.click()); await pause(150);
   await page.evaluate(() => document.querySelector('.filterpop .facet .facet-opt input')?.click()); await pause(300);

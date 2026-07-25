@@ -914,7 +914,8 @@
       "sensitive": true,
       "container_ids": [
         "item_red_folder"
-      ]
+      ],
+      "tags": ["bitcoin"]
     },
     {
       "id": "item_bitcoin_multisig_wallet",
@@ -941,7 +942,8 @@
         "item_wallet_descriptor_printout",
         "item_bitcoin_passphrase_location_note"
       ],
-      "notes": "Amanda should not move funds alone. Josh may explain the process, but must not be given unilateral access."
+      "notes": "Amanda should not move funds alone. Josh may explain the process, but must not be given unilateral access.",
+      "tags": ["bitcoin"]
     },
     {
       "id": "item_bitcoin_watch_only_wallet",
@@ -963,7 +965,8 @@
       "depends_on_ids": [
         "item_laptop_john",
         "item_wallet_descriptor_printout"
-      ]
+      ],
+      "tags": ["bitcoin"]
     },
     {
       "id": "item_coldcard_device",
@@ -983,7 +986,8 @@
       "depends_on_ids": [
         "item_seed_backup_uk",
         "item_bitcoin_passphrase_location_note"
-      ]
+      ],
+      "tags": ["bitcoin"]
     },
     {
       "id": "item_trezor_device",
@@ -1003,7 +1007,8 @@
       "depends_on_ids": [
         "item_seed_backup_milan",
         "item_bitcoin_passphrase_location_note"
-      ]
+      ],
+      "tags": ["bitcoin"]
     },
     {
       "id": "item_seed_backup_uk",
@@ -1019,7 +1024,8 @@
       "guide_ids": [
         "guide_bitcoin_recovery"
       ],
-      "sensitive": true
+      "sensitive": true,
+      "tags": ["bitcoin"]
     },
     {
       "id": "item_seed_backup_milan",
@@ -1036,7 +1042,8 @@
         "guide_bitcoin_recovery",
         "guide_milan_property"
       ],
-      "sensitive": true
+      "sensitive": true,
+      "tags": ["bitcoin"]
     },
     {
       "id": "item_seed_backup_solicitor",
@@ -1054,7 +1061,8 @@
         "guide_bitcoin_recovery",
         "guide_professionals"
       ],
-      "sensitive": true
+      "sensitive": true,
+      "tags": ["bitcoin"]
     },
     {
       "id": "item_bitcoin_passphrase_location_note",
@@ -1073,7 +1081,8 @@
       "sensitive": true,
       "container_ids": [
         "item_red_folder"
-      ]
+      ],
+      "tags": ["bitcoin"]
     },
     {
       "id": "item_wallet_descriptor_printout",
@@ -1093,7 +1102,8 @@
       "sensitive": true,
       "container_ids": [
         "item_red_folder"
-      ]
+      ],
+      "tags": ["bitcoin"]
     },
     {
       "id": "item_bitcoin_node",
@@ -1114,7 +1124,8 @@
       "sensitive": true,
       "depends_on_ids": [
         "item_laptop_john"
-      ]
+      ],
+      "tags": ["bitcoin"]
     },
     {
       "id": "item_exchange_account",
@@ -1136,7 +1147,8 @@
         "item_password_manager",
         "item_main_email_account",
         "item_phone_john"
-      ]
+      ],
+      "tags": ["bitcoin"]
     },
     {
       "id": "item_funeral_wishes",
@@ -1577,7 +1589,7 @@
       "order": 2,
       "importance": "high",
       "content": {
-        "en": "This is intentionally a process, not a secret. The secrets live in sealed physical places.\n\n### Before touching anything\nRead [[guide_do_not_do]] and [[guide_josh_scope]]. Then place these on a table:\n\n- [[item_bitcoin_policy_note]]\n- [[item_wallet_descriptor_printout]]\n- [[item_bitcoin_watch_only_wallet]]\n- [[item_seed_backup_uk]]\n- [[item_seed_backup_milan]]\n- [[item_seed_backup_solicitor]]\n- [[item_bitcoin_passphrase_location_note]]\n- [[item_coldcard_device]]\n- [[item_trezor_device]]\n- [[item_laptop_john]]\n\n### Safety rules\n- Never enter seed words into a website.\n- Never photograph seed words.\n- Never send seed words to Josh, a lawyer, a broker, or support.\n- Work offline where possible.\n- Confirm the wallet from [[item_wallet_descriptor_printout]] before attempting any movement.\n- Use a tiny test transaction first if funds must be moved.\n- Keep written notes of each action for the estate file.\n\n### Recommended recovery team\n- Amanda: decision maker and executor\n- Josh: technical explainer\n- Solicitor or accountant: witness/process support if Amanda wants one\n- No one person should hold all recovery material alone.\n\n### If unsure\nStop. Put the envelopes back. Bitcoin can wait longer than grief can think clearly.",
+        "en": "This is intentionally a process, not a secret. The secrets live in sealed physical places.\n\n### Before touching anything\nRead [[guide_do_not_do]] and [[guide_josh_scope]]. Then place these on a table:\n\n- [[item_bitcoin_policy_note]]\n- [[item_wallet_descriptor_printout]]\n- [[item_bitcoin_watch_only_wallet]]\n- [[item_seed_backup_uk]]\n- [[item_seed_backup_milan]]\n- [[item_seed_backup_solicitor]]\n- [[item_bitcoin_passphrase_location_note]]\n- [[item_coldcard_device]]\n- [[item_trezor_device]]\n- [[item_laptop_john]]\n\n### Safety rules\n- Never enter seed words into a website.\n- Never photograph seed words.\n- Never send seed words to Josh, a lawyer, a broker, or support.\n- Work offline where possible.\n- Confirm the wallet from [[item_wallet_descriptor_printout]] before attempting any movement.\n- Use a tiny test transaction first if funds must be moved.\n- Keep written notes of each action for the estate file.\n\n### Recommended recovery team\n- Amanda: decision maker and executor\n- Josh: technical explainer\n- Solicitor or accountant: witness/process support if Amanda wants one\n- No one person should hold all recovery material alone.\n\n### See it all together\nEvery item above is tagged [[itemtag:bitcoin]], so you don't have to hunt through the full Items list one by one. You can also open [[view:map:bitcoin]] to see exactly where each piece is physically located, at a glance.\n\n### If unsure\nStop. Put the envelopes back. Bitcoin can wait longer than grief can think clearly.",
         "it": ""
       },
       "audience_roles": [

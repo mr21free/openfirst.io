@@ -10,6 +10,7 @@
   import logo from '../assets/logo.svg';
   import Callout from './Callout.svelte';
   import { lockBodyScroll } from '../lib/scrollLock.js';
+  import { APP_DOMAIN } from '../lib/format.js';
   let { hint = '', onUnlock, onCancel = null, modal = false } = $props();
 
   $effect(() => { if (modal) return lockBodyScroll(); });
@@ -41,7 +42,7 @@
 {#snippet gateCard()}
   <div class="card gate" class:modal-card={modal} role={modal ? 'dialog' : undefined} aria-modal={modal ? 'true' : undefined} aria-label={modal ? 'Enter password' : undefined}>
     {#if !modal}
-      <div class="brand row"><img class="logo" src={logo} alt="" aria-hidden="true" /><span class="brand-name"><b>open</b>first</span></div>
+      <a class="brand row" href={`https://${APP_DOMAIN}/`} target="_blank" rel="noopener"><img class="logo" src={logo} alt="" aria-hidden="true" /><span class="brand-name"><b>open</b>first.io</span></a>
     {/if}
     <div class="gate-title row">
       <span class="lock-ico" aria-hidden="true">
@@ -102,6 +103,7 @@
     z-index: var(--z-modal);
   }
   .brand { font-family: var(--mono); font-weight: 500; gap: 10px; margin-bottom: 4px; color: var(--ink); }
+  .brand:hover { text-decoration: none; }
   .brand-name b { color: var(--accent-deep); font-weight: 500; }
   .logo { width: 24px; height: 24px; }
   .gate-title { gap: 10px; }

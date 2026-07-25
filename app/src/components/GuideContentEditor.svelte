@@ -47,8 +47,11 @@
     const att = ent?.kind === 'attachment' ? ent.obj : null;
     return !!att && ((att.mime || '').toLowerCase() === 'video/mp4' || VIDEO_EXT.test(att.path || att.filename || ''));
   };
-  const special = (id) => id.startsWith('tag:') || id.startsWith('view:') || id.startsWith('img:') || id.startsWith('video:');
-  const validSpecial = (id) => id.startsWith('tag:') || id.startsWith('view:') || (!!imageId(id) && isImageAttachment(imageId(id))) || (!!videoId(id) && isVideoAttachment(videoId(id)));
+  // A tag or view id is never a real entity — it's a filtered-view shortcut,
+  // so it must skip registerRef() and any entity-lookup path.
+  const isTagOrViewRef = (id) => id.startsWith('tag:') || id.startsWith('itemtag:') || id.startsWith('view:');
+  const special = (id) => isTagOrViewRef(id) || id.startsWith('img:') || id.startsWith('video:');
+  const validSpecial = (id) => isTagOrViewRef(id) || (!!imageId(id) && isImageAttachment(imageId(id))) || (!!videoId(id) && isVideoAttachment(videoId(id)));
   // A small leading icon per chip type, so you can tell a person from an item at
   // a glance while editing. (Shared icon set; inner markup only.)
   const chipIconSvg = (kind) =>
@@ -59,8 +62,13 @@
     span.setAttribute('contenteditable', 'false');
     span.dataset.refId = id;
     let kind, label;
-    if (id.startsWith('tag:')) { span.classList.add('tagchip-inline'); kind = 'tag'; label = id.slice(4); }
-    else if (id.startsWith('view:')) { span.classList.add('viewchip-inline'); kind = 'view'; label = id.slice(5).replace(/^./, (c) => c.toUpperCase()); }
+    if (id.startsWith('tag:')) { span.classList.add('tagchip-inline'); kind = 'tag'; label = `# ${id.slice(4)} — Files`; }
+    else if (id.startsWith('itemtag:')) { span.classList.add('tagchip-inline'); kind = 'tag'; label = `# ${id.slice(8)} — Items`; }
+    else if (id.startsWith('view:')) {
+      span.classList.add('viewchip-inline'); kind = 'view';
+      const [name, vtag] = id.slice(5).split(':');
+      label = name.replace(/^./, (c) => c.toUpperCase()) + (vtag ? ` — # ${vtag}` : '');
+    }
     else if (imageId(id)) { span.classList.add('imgchip-inline'); kind = 'image'; label = `Image: ${pkg.name(imageId(id))}`; }
     else if (videoId(id)) { span.classList.add('videochip-inline'); kind = 'video'; label = `Video: ${pkg.name(videoId(id))}`; }
     else { kind = pkg.entity(id)?.kind || 'item'; label = pkg.name(id); }
@@ -293,11 +301,12 @@
     if (!key) return;
     onAddRef?.(key, id);
   }
-  // Insert an entity OR a file-tag as an atomic chip ([[id]] / [[tag:slug]]).
-  // Clicking a tag chip in the reader opens Files filtered to that tag.
+  // Insert an entity OR a tag (file or item) as an atomic chip ([[id]] /
+  // [[tag:slug]] / [[itemtag:slug]]). Clicking a tag chip in the reader opens
+  // Files or Items filtered to that tag.
   function insertRef(id) {
     if (!validSpecial(id) && !pkg.entity(id)) return;
-    if (!id.startsWith('tag:') && !id.startsWith('view:')) registerRef(id);
+    if (!isTagOrViewRef(id)) registerRef(id);
     const { sel, range } = caret(); range.deleteContents();
     const frag = document.createDocumentFragment();
     const chip = makeChip(id), space = document.createTextNode(' ');
@@ -381,9 +390,16 @@
       const n = pkg.attachmentsWithTag(t).length;
       out.push({ id: 'tag:' + t, kind: 'tag', name: '# ' + t, sub: `${n} file${n === 1 ? '' : 's'}`, search: 'tag ' + t });
     }
+    const itemTagCounts = pkg.allItemTags().map((t) => [t, pkg.itemsWithTag(t).length]);
+    for (const [t, n] of itemTagCounts) {
+      out.push({ id: 'itemtag:' + t, kind: 'tag', name: '# ' + t, sub: `${n} item${n === 1 ? '' : 's'}`, search: 'tag ' + t });
+    }
     // The Map view (where everything is) — referenceable when it has content.
     if ((pkg.locations || []).length || (pkg.items || []).length) {
       out.push({ id: 'view:map', kind: 'view', name: 'Map', sub: 'where everything is', search: 'map where is everything overview' });
+      for (const [t, n] of itemTagCounts) {
+        out.push({ id: 'view:map:' + t, kind: 'view', name: 'Map — # ' + t, sub: `filtered to ${n} item${n === 1 ? '' : 's'}`, search: 'map ' + t });
+      }
     }
     return out;
   });
@@ -471,7 +487,7 @@
     range.setStart(node, atOffset);
     range.setEnd(node, Math.min(atOffset + 1 + query.length, node.nodeValue.length));
     range.deleteContents();
-    if (!id.startsWith('tag:') && !id.startsWith('view:')) registerRef(id);
+    if (!isTagOrViewRef(id)) registerRef(id);
     const chip = makeChip(id), space = document.createTextNode(' ');
     const frag = document.createDocumentFragment();
     frag.appendChild(chip); frag.appendChild(space);
@@ -678,7 +694,7 @@
   }
   /* Leading type icon (person/item/location/…) so chips are scannable while editing. */
   .ce-edit :global(.refchip .chip-ico) { width: 13px; height: 13px; flex: none; opacity: 0.75; }
-  /* File-tag chips look like reference chips but are clearly a tag. */
+  /* Tag chips (file or item) look like reference chips but are clearly a tag. */
   .ce-edit :global(.refchip.tagchip-inline) { background: var(--paper); border-style: dashed; }
   /* A view reference (Map) — a solid accent pill. */
   .ce-edit :global(.refchip.viewchip-inline) { background: var(--accent); border-color: var(--accent); color: #fff; }

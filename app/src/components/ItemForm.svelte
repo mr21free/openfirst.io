@@ -1,6 +1,7 @@
 <script>
   import EntityPicker from './EntityPicker.svelte';
   import GuideContentEditor from './GuideContentEditor.svelte';
+  import TagInput from './TagInput.svelte';
   import { deferFocus } from '../lib/autofocus.js';
 
   let { pkg, raw, onDelete } = $props();
@@ -21,6 +22,10 @@
         <select bind:value={raw.importance}><option value={undefined}>—</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
       </label>
       <label class="f"><span class="lbl">Price</span><input bind:value={raw.price} placeholder="e.g. 45 EUR / year" /></label>
+    </div>
+
+    <div class="f"><span class="lbl">Tags</span>
+      <TagInput target={raw} key="tags" suggestions={pkg.allItemTags()} placeholder="e.g. tax, will, bitcoin…" />
     </div>
 
     <div class="f"><span class="lbl">Where it is (locations)</span>

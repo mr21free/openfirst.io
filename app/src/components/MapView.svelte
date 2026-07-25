@@ -1,17 +1,49 @@
 <script>
+  import FilterBar from './FilterBar.svelte';
+
   // "Where is what" — the location hierarchy as nested containers, with the
   // items that live at each location shown inside. Click a box to open the
   // location, a chip to open the item (which shows its files/people).
-  let { pkg, onOpen } = $props();
+  // A tag filter (filter-only, no search box) narrows the tree down to items
+  // matching the selected tag(s) plus every ancestor location on the way to
+  // them, so the place is still reachable in the hierarchy.
+  let { pkg, onOpen, filters = $bindable({}) } = $props();
 
-  const roots = $derived(pkg.locationRoots());
-  const unplaced = $derived((pkg.items || []).filter((it) => !(it.location_ids || []).length));
-  const empty = $derived(!roots.length && !unplaced.length);
+  const tags = $derived(filters.tag || []);
+  const filterOn = $derived(tags.length > 0);
+  const mapFacets = $derived([
+    { key: 'tag', label: 'Tag', test: (it, v) => (it.tags || []).includes(v), options: pkg.allItemTags().map((t) => ({ value: t, label: '# ' + t, count: pkg.itemsWithTag(t).length })) }
+  ]);
+
+  const matchedItemIds = $derived.by(() => {
+    if (!filterOn) return null; // null = no restriction
+    return new Set((pkg.items || []).filter((it) => (it.tags || []).some((t) => tags.includes(t))).map((it) => it.id));
+  });
+  // Every location that must stay visible: one holding a matched item, or an
+  // ancestor of one (so the matched item is still reachable in the tree).
+  const visibleLocIds = $derived.by(() => {
+    if (!matchedItemIds) return null;
+    const set = new Set();
+    for (const it of pkg.items || []) {
+      if (!matchedItemIds.has(it.id)) continue;
+      for (const lid of it.location_ids || []) {
+        set.add(lid);
+        for (const anc of pkg.locationPath(lid)) set.add(anc.id);
+      }
+    }
+    return set;
+  });
+
+  const itemsAt = (locId) => (pkg.itemsAtLocation.get(locId) || []).filter((iid) => !matchedItemIds || matchedItemIds.has(iid));
+  const visibleRoots = $derived(pkg.locationRoots().filter((r) => !visibleLocIds || visibleLocIds.has(r.id)));
+  const visibleKidsOf = (locId) => pkg.locationChildren(locId).filter((c) => !visibleLocIds || visibleLocIds.has(c.id));
+  const unplaced = $derived((pkg.items || []).filter((it) => !(it.location_ids || []).length && (!matchedItemIds || matchedItemIds.has(it.id))));
+  const empty = $derived(!visibleRoots.length && !unplaced.length);
 </script>
 
 {#snippet locNode(loc, depth)}
-  {@const items = pkg.itemsAtLocation.get(loc.id) || []}
-  {@const kids = pkg.locationChildren(loc.id)}
+  {@const items = itemsAt(loc.id)}
+  {@const kids = visibleKidsOf(loc.id)}
   <div class="loc-box" class:root={depth === 0}>
     <div class="loc-head">
       <button class="loc-name" onclick={() => onOpen(loc.id)} title="Open location">
@@ -39,7 +71,15 @@
 
 <div class="map">
   <p class="map-hint tiny muted no-print">A map of what is where. Open a place to see its details, or an item to see its files and who can access it.</p>
-  {#each roots as r}{@render locNode(r, 0)}{/each}
+
+  {#if pkg.allItemTags().length}
+    <FilterBar facets={mapFacets} sorts={[]} bind:filters hideSearch alignStart />
+    {#if tags.length}
+      <p class="print-only tiny">Filtered by tag{tags.length > 1 ? 's' : ''}: {tags.map((t) => '#' + t).join(', ')}</p>
+    {/if}
+  {/if}
+
+  {#each visibleRoots as r}{@render locNode(r, 0)}{/each}
 
   {#if unplaced.length}
     <div class="loc-box root unplaced">
@@ -50,7 +90,9 @@
     </div>
   {/if}
 
-  {#if empty}<p class="empty-results">No locations or items yet — add some in Locations and Items.</p>{/if}
+  {#if empty}
+    <p class="empty-results">{filterOn ? 'No items match the selected tag(s).' : 'No locations or items yet — add some in Locations and Items.'}</p>
+  {/if}
 </div>
 
 <style>

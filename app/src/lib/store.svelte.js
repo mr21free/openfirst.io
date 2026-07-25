@@ -576,17 +576,27 @@ export class Store {
     return id;
   }
 
-  /** Add a tag to many files at once (bulk tagging from the Files view). */
-  addTagToAttachments(ids, tag) {
-    this.ensureArrays();
+  #addTagTo(collection, ids, tag) {
     const t = slugifyTag(tag);
     if (!t) return;
     for (const id of ids) {
-      const a = this.data.attachments.find((x) => x.id === id);
-      if (!a) continue;
-      if (!Array.isArray(a.tags)) a.tags = [];
-      if (!a.tags.includes(t)) a.tags.push(t);
+      const x = collection.find((e) => e.id === id);
+      if (!x) continue;
+      if (!Array.isArray(x.tags)) x.tags = [];
+      if (!x.tags.includes(t)) x.tags.push(t);
     }
+  }
+
+  /** Add a tag to many files at once (bulk tagging from the Files view). */
+  addTagToAttachments(ids, tag) {
+    this.ensureArrays();
+    this.#addTagTo(this.data.attachments, ids, tag);
+  }
+
+  /** Add a tag to many items at once (bulk tagging from the Items view). */
+  addTagToItems(ids, tag) {
+    this.ensureArrays();
+    this.#addTagTo(this.data.items, ids, tag);
   }
 
   addLanguage(code) {
@@ -738,14 +748,7 @@ export class Store {
 
   addTagToReadinessChecks(ids, tag) {
     this.ensureArrays();
-    const t = slugifyTag(tag);
-    if (!t) return;
-    for (const id of ids) {
-      const c = this.data.readiness_checks.find((x) => x.id === id);
-      if (!c) continue;
-      if (!Array.isArray(c.tags)) c.tags = [];
-      if (!c.tags.includes(t)) c.tags.push(t);
-    }
+    this.#addTagTo(this.data.readiness_checks, ids, tag);
   }
 
   #rm(arr, id) {

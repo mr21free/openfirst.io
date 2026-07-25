@@ -594,6 +594,11 @@
 
       <!-- ITEM -->
       {#if e.kind === 'item'}
+        {#if obj.tags?.length}
+          <div class="field"><span class="muted small">Tags</span>
+            <div class="row-tags">{#each obj.tags as tag}<span class="row-tag"># {tag}</span>{/each}</div>
+          </div>
+        {/if}
         {#if obj.location_ids?.length}
           <div class="field">
             {@render fieldHead(`item-locations:${id}`, 'Where it is', obj.location_ids.length)}
@@ -661,8 +666,13 @@
             {#if sectionOpen(`att-parents:${id}`, attachmentParentIds.length)}<EntityList {pkg} ids={attachmentParentIds} {onOpen} />{/if}
           </div>
         {/if}
+        {#if obj.tags?.length}
+          <div class="field" class:notop={!attachmentParentIds.length}><span class="muted small">Tags</span>
+            <div class="row-tags">{#each obj.tags as tag}<span class="row-tag"># {tag}</span>{/each}</div>
+          </div>
+        {/if}
         {#if attUrl}
-          <div class="attachment-actions row wrap">
+          <div class="attachment-actions row wrap att-actions-sep">
             <a class="btn btn-primary" href={attUrl} download={obj.filename}>Download</a>
             <button class="iconbtn" onclick={printAttachment} data-tip="Print this file" data-tip-pos="left" aria-label="Print">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -718,6 +728,8 @@
   /* Productboard-style divided field rows for scannability. */
   .field { display: flex; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid var(--rule-soft); }
   .field:first-child { padding-top: 0; border-top: none; }
+  .field.notop { padding-top: 0; border-top: none; }
+  .att-actions-sep { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--rule-soft); }
   .field > .muted { font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-mute); }
   .field-head { display: flex; align-items: center; gap: 8px; min-height: 22px; }
   .field-head .muted { font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-mute); }

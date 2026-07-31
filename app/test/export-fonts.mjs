@@ -23,7 +23,7 @@ const familiesIn = (html) =>
   }));
 
 // Creates a new plan, sets the guide font in Settings, adds a person (the
-// homing trigger), uses the fallback "Download the file" path (headless
+// homing trigger), uses the fallback "Download" path (headless
 // Chrome has no showSaveFilePicker), and returns the path to the produced
 // container-v1 .html.
 async function buildAndDownload(browser, dir, readingFont) {

@@ -57,7 +57,7 @@ const dumpDrafts = (page) => page.evaluate(() => new Promise((res) => {
 const dir = mkdtempSync(resolve(tmpdir(), 'lp-slots-'));
 // Chrome's CDP-driven downloads overwrite a same-named file in place rather
 // than auto-renaming with a "(1)" suffix the way an interactive Save-As
-// dialog would — "Download new copy" reuses the plan's stable suggested
+// dialog would — the "Download" button reuses the plan's stable suggested
 // filename every time, so a fresh download can land on a name we've already
 // seen. Track mtimes instead of just filenames to catch that case.
 const seenMtimes = new Map();

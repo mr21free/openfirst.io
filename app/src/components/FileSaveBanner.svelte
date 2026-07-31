@@ -26,6 +26,13 @@
 
   const fsaSupported = typeof window !== 'undefined' && 'showSaveFilePicker' in window;
 
+  // This same component ships inside every downloaded plan file too (the app
+  // is embedded verbatim), so one runtime check covers both places: hosted on
+  // openfirst.io is always the latest build by definition, so the version/
+  // update control only earns its keep in a standalone .html, which can go
+  // stale sitting on someone's disk.
+  const isHosted = typeof window !== 'undefined' && window.location.hostname === APP_DOMAIN;
+
   let busy = $state(false);
   let error = $state('');
 
@@ -146,22 +153,24 @@
 </script>
 
 {#snippet versionTag()}
-  <span class="fs-version">
-    <span class="fs-version-num">v{APP_VERSION}</span>
-    {#if updateState === 'available'}
-      <!-- A plain button can't hand you the new file — send you to the site,
-           where the top-nav "Download" link is same-origin and can. New tab
-           so it doesn't disturb whatever you're editing right now. -->
-      <a class="fs-check" href={`https://${APP_DOMAIN}/`} target="_blank" rel="noopener">v{latestVersion} available — get it</a>
-    {:else}
-      <button class="fs-check" onclick={checkForUpdate} disabled={updateState === 'checking'}>
-        {#if updateState === 'checking'}Checking…
-        {:else if updateState === 'current'}up to date
-        {:else if updateState === 'error'}couldn't check — {errorReason}
-        {:else}check for updates{/if}
-      </button>
-    {/if}
-  </span>
+  {#if !isHosted}
+    <span class="fs-version">
+      <span class="fs-version-num">v{APP_VERSION}</span>
+      {#if updateState === 'available'}
+        <!-- A plain button can't hand you the new file — send you to the site,
+             where the top-nav "Download" link is same-origin and can. New tab
+             so it doesn't disturb whatever you're editing right now. -->
+        <a class="fs-check" href={`https://${APP_DOMAIN}/`} target="_blank" rel="noopener">v{latestVersion} available — get it</a>
+      {:else}
+        <button class="fs-check" onclick={checkForUpdate} disabled={updateState === 'checking'}>
+          {#if updateState === 'checking'}Checking…
+          {:else if updateState === 'current'}up to date
+          {:else if updateState === 'error'}couldn't check — {errorReason}
+          {:else}check for updates{/if}
+        </button>
+      {/if}
+    </span>
+  {/if}
 {/snippet}
 
 {#if !isDemo && store.hasAddedEntity}
@@ -182,13 +191,16 @@
     </div>
   {:else if !store.fileName}
     <div class="filestatus warn no-print" role="status">
-      <span class="fs-left">Browser only · temporary · not saved to any file.</span>
+      <span class="fs-left">
+        <span class="fs-long">Browser only · temporary · not saved to any file.</span>
+        <span class="fs-short">Not saved to a file yet.</span>
+      </span>
       <div class="row" style="gap:2px">
         <button class="btn btn-primary btn-small" disabled={busy} onclick={chooseLocation}>
-          {fsaSupported ? 'Save' : 'Download the file'}
+          {fsaSupported ? 'Save' : 'Download'}
         </button>
         {#if !fsaSupported}
-          <InfoHint text="Each download is a standalone copy — your work itself stays saved in this browser. Use the newest download if you need a file to share or back up." label="About this download" pos="left" />
+          <InfoHint text="Each download is a standalone copy — your work itself stays saved in this browser. Use the newest download if you need a file to share or back up. On iPhone/iPad, reopen it by coming back here and using “Open existing plan”, not by tapping the file straight from Downloads." label="About this download" pos="left" />
         {/if}
       </div>
       {#if error}<span class="err">{error}</span>{/if}
@@ -202,10 +214,13 @@
     </div>
   {:else if store.needsManualFileUpdate}
     <div class="filestatus warn no-print" role="status">
-      <span class="fs-left"><span class="fs-file">{store.fileName}</span> is behind by {store.pendingFileChanges} change{store.pendingFileChanges === 1 ? '' : 's'} — this browser can only save by downloading a new copy.</span>
+      <span class="fs-left">
+        <span class="fs-long"><span class="fs-file">{store.fileName}</span> is behind by {store.pendingFileChanges} change{store.pendingFileChanges === 1 ? '' : 's'} — this browser can only save by downloading a new copy.</span>
+        <span class="fs-short"><span class="fs-file">{store.fileName}</span> · {store.pendingFileChanges} unsaved change{store.pendingFileChanges === 1 ? '' : 's'}</span>
+      </span>
       <div class="row" style="gap:2px">
-        <button class="btn btn-primary btn-small" disabled={busy} onclick={updateFile}>Download new copy</button>
-        <InfoHint text="Each download is a standalone copy — your work itself stays saved in this browser. Use the newest download if you need a file to share or back up." label="About this download" pos="left" />
+        <button class="btn btn-primary btn-small" disabled={busy} onclick={updateFile}>Download</button>
+        <InfoHint text="This browser can only save by downloading a fresh copy each time — it can't write to the same file in place. Each download is standalone; your work itself stays saved in this browser too. On iPhone/iPad, reopen it by coming back here and using “Open existing plan”, not by tapping the file straight from Downloads." label="About this download" pos="left" />
       </div>
       {@render versionTag()}
     </div>
@@ -274,10 +289,17 @@
   .fs-check:hover:not(:disabled) { opacity: 1; text-decoration: underline; }
   .fs-check:disabled { cursor: default; }
 
+  /* Two states' descriptive text has both a fuller desktop phrasing and a
+     shorter mobile one — swap which shows rather than trimming the same
+     string everywhere, since desktop has room to spare and mobile doesn't. */
+  .fs-short { display: none; }
+
   @media (max-width: 820px) {
     /* The mobile action rail already owns the true bottom edge as a fixed
        tab bar (see Reader.svelte's .actionbar) — sit just above it instead
        of underneath it. */
     .filestatus { bottom: calc(var(--actionbar-h) + env(safe-area-inset-bottom)); }
+    .fs-long { display: none; }
+    .fs-short { display: inline; }
   }
 </style>

@@ -91,7 +91,7 @@
          squeezing five items into one line — that let flex-shrink wrap
          "How to use" mid-word instead of moving whole items down. */
       .nav-links { display: flex; gap: 18px; flex: 1 0 100%; }
-      .nav-cta { display: flex; gap: 8px; flex: 1 0 100%; justify-content: flex-end; }
+      .nav-cta { display: flex; gap: 10px; flex: 1 0 100%; justify-content: flex-start; }
       .topnav a.btn-primary, .topnav a.btn { min-height: 34px; padding: 6px 14px; font-size: 13px; }
     }
 
@@ -295,7 +295,13 @@
     .btn-lg { min-height: 46px; padding: 12px 22px; }
     .topnav .btn { min-height: 38px; padding: 8px 18px; font-size: 14px; }
     .topnav a.btn-primary { color: #fff; }
-    .topnav a.btn:not(.btn-primary) { margin-left: -10px; }
+    /* Pull "Download" a touch closer to "Open the app" than the nav's usual
+       24px item gap — desktop only. Mobile's .nav-cta already sets its own
+       tighter gap below, and stacking this on top of it made the two buttons
+       overlap/touch, so this must not leak into the mobile flex row. */
+    @media (min-width: 761px) {
+      .topnav a.btn:not(.btn-primary) { margin-left: -10px; }
+    }
   </style>
 </head>
 <body class="home">

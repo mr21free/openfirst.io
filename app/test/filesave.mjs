@@ -1,6 +1,6 @@
 // File-autosave (iteration 2a, Container Format v1 — see FORMAT.md /
 // planfile.js): create a plan, add a person (homing trigger), use the
-// fallback "Download the file" path (headless Chrome has no
+// fallback "Download" path (headless Chrome has no
 // showSaveFilePicker, so this is the path this harness can actually
 // exercise), and confirm the produced .html is a genuine, complete
 // container-v1 file that boots correctly as a read-only reader on its own.
@@ -55,7 +55,7 @@ try {
   await page.waitForFunction(() => !!document.querySelector('.filestatus.warn'), { timeout: 6000 });
   ok('adding an entity surfaces the homing prompt', true);
   const promptLabel = await page.evaluate(() => document.querySelector('.filestatus.warn button')?.textContent.trim());
-  ok('fallback prompt offers "Download the file"', promptLabel === 'Download the file');
+  ok('fallback prompt offers "Download"', promptLabel === 'Download');
 
   await page.evaluate(() => document.querySelector('.filestatus.warn button')?.click());
 

@@ -189,7 +189,7 @@
       <div class="sec-eyebrow">What is protected</div>
       <h2 class="sec-h">Locked with the same recipe banks use — and the recipe is public.</h2>
       <div class="pgrid">
-        <div class="pcard"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg></span><h3>Provably offline</h3><p>A strict Content-Security-Policy forbids every network connection — even a maliciously crafted plan can't phone home. Everything is inlined; nothing is fetched.</p></div>
+        <div class="pcard"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg></span><h3>Can't phone home</h3><p>A strict Content-Security-Policy forbids every network connection except a fixed one back to openfirst.io itself, used only by the optional "check for updates" button — a maliciously crafted plan still can't send your data anywhere. Everything else is inlined; nothing else is ever fetched.</p></div>
         <div class="pcard"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><h3>Strong, standard encryption</h3><p>Every parameter is stored in the file, so it decrypts with standard tools — no OpenFirst needed. The password hint is tamper-evident: it can't be rewritten without breaking decryption.</p></div>
         <div class="pcard"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span><h3>The draft is encrypted too</h3><p>While you build, the draft autosaves to your browser's own storage (IndexedDB) on your computer — it never touches a server. Lock it with a passphrase (Settings → Draft protection) and a copied disk or backup reveals nothing.</p></div>
         <div class="pcard"><span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><h3>Safe rendering</h3><p>Guide text goes through a small hand-written renderer that escapes all HTML. A tampered plan can't inject scripts or dangerous links.</p></div>
@@ -197,7 +197,7 @@
       <div class="spec-chips">
         <span class="chip">AES-256-GCM</span>
         <span class="chip">PBKDF2-SHA256 · 600,000 iterations</span>
-        <span class="chip">connect-src 'none'</span>
+        <span class="chip">connect-src 'self' openfirst.io</span>
         <span class="chip">6-word passphrase ≈ 77 bits</span>
       </div>
       <div class="card" style="margin-top:22px; max-width:64ch"><strong>Entropy is the real lever.</strong> The app nudges you toward a 6-word passphrase — that makes brute force infeasible. A short PIN doesn't; treat it as friction, not protection.</div>

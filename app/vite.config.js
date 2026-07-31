@@ -6,14 +6,17 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 
 // Strict CSP for the PRODUCTION single file only. Everything is inlined there,
-// so 'unsafe-inline' covers our own bundle while connect-src 'self' still
-// guarantees a tampered package can never exfiltrate anything to an outside
-// destination — the only fetch the app ever makes is same-origin
-// /version.json for the manual "check for updates" button. Not applied in
-// dev (Vite needs the network for its client + HMR).
+// so 'unsafe-inline' covers our own bundle. connect-src allows exactly two
+// origins: 'self' (irrelevant for a real plan file, which never fetches
+// anything of its own) and https://openfirst.io, needed so the manual "check
+// for updates" button can reach the real site's /version.json even when this
+// copy is running standalone (file:// or a local server), where 'self' alone
+// would never resolve to the real site. Nothing else is ever fetched, and
+// this one GET carries no plan data. Not applied in dev (Vite needs the
+// network for its client + HMR).
 const PROD_CSP =
   "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; " +
-  "font-src data:; img-src 'self' data: blob:; media-src data: blob:; frame-src data: blob:; connect-src 'self'; " +
+  "font-src data:; img-src 'self' data: blob:; media-src data: blob:; frame-src data: blob:; connect-src 'self' https://openfirst.io; " +
   "base-uri 'none'; form-action 'none'";
 
 function injectCspOnBuild() {

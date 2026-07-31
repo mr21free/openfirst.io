@@ -2,9 +2,11 @@
 // must only ever appear in edit mode — an heir/read-only viewer never needs
 // to know the app version (explicit product requirement). It must also
 // render the right static v{APP_VERSION} label and move into the
-// "checking…" state on click (the live fetch itself needs a real same-origin
-// server to succeed, since the CSP is connect-src 'self' — covered manually,
-// see CHANGES.md sign-off notes).
+// "checking…" state on click. The real fetch targets the actual production
+// https://openfirst.io/version.json (the CSP's one deliberate connect-src
+// exception, see vite.config.js) — a genuine round trip against production is
+// covered manually, not here; fetch is stubbed below for deterministic
+// error/success paths instead.
 
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
@@ -52,6 +54,13 @@ try {
   await page.evaluate(() => document.querySelector('.fs-version-num').click());
   ok('clicking the version number does not trigger a check', await page.evaluate(() => document.querySelector('.fs-check')?.textContent?.trim()) === 'check for updates');
 
+  // Stub fetch to reject deterministically — the real fetch now targets the
+  // actual production https://openfirst.io/version.json (see FileSaveBanner's
+  // checkForUpdate), which the CSP permits even under file://, so it would
+  // otherwise genuinely succeed/fail depending on the test machine's real
+  // network and the real site's current content. This test only cares about
+  // the error-handling path, not real connectivity.
+  await page.evaluate(() => { window.fetch = async () => { throw new Error('offline'); }; });
   await page.evaluate(() => document.querySelector('.fs-check').click());
   await page.waitForFunction(
     () => document.querySelector('.fs-check')?.textContent?.trim() !== 'check for updates',
@@ -60,8 +69,6 @@ try {
     .then(() => ok('clicking it moves out of the idle state', true))
     .catch(() => ok('clicking it moves out of the idle state', false));
 
-  // file:// has no real server for /version.json to hit, so the fetch fails
-  // outright — this is also exactly the case the error-reason feature covers.
   await page.waitForFunction(() => /^couldn't check — /.test(document.querySelector('.fs-check')?.textContent?.trim() || ''), { timeout: 4000 })
     .then(() => ok('a failed check shows an error reason', true))
     .catch(() => ok('a failed check shows an error reason', false));

@@ -46,7 +46,7 @@
     updateState = 'checking';
     errorReason = '';
     try {
-      const res = await fetch('/version.json', { cache: 'no-store' });
+      const res = await fetch(`https://${APP_DOMAIN}/version.json`, { cache: 'no-store' });
       if (!res.ok) { errorReason = 'not published here'; throw new Error(); }
       const { version } = await res.json();
       if (!version) { errorReason = 'unexpected response'; throw new Error(); }

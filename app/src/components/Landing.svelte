@@ -1,6 +1,7 @@
 <script>
   import { loadFromFiles, decryptAndLoad } from '../lib/load.js';
   import { APP_DOMAIN } from '../lib/format.js';
+  import { APP_VERSION } from '../lib/version.js';
   import logo from '../assets/logo.svg';
   import ConfirmDialog from './ConfirmDialog.svelte';
   import UnlockGate from './UnlockGate.svelte';
@@ -222,9 +223,14 @@
       <span class="spacer"></span>
       {#if onHttp}
         <nav class="topnav">
-          <a href="/demo/">Demo</a>
-          <a href="/guides/">Guides</a>
-          <a href="/how-to-use/">How to use</a>
+          <span class="nav-links">
+            <a href="/demo/">Demo</a>
+            <a href="/guides/">Guides</a>
+            <a href="/how-to-use/">How to use</a>
+          </span>
+          <span class="nav-cta">
+            <a class="btn" href="/download/openfirst.html" download={`openfirst-${APP_VERSION}.html`}>Download</a>
+          </span>
         </nav>
       {/if}
     </div>
@@ -381,6 +387,12 @@
   .topnav { display: flex; align-items: center; gap: 24px; }
   .topnav a { color: var(--ink-soft); font-size: 14px; font-weight: 500; }
   .topnav a:hover { color: var(--ink); text-decoration: none; }
+  /* Same treatment as the marketing pages' topnav (site/index.html,
+     how-to-use/index.html, etc.): "Download" is a real .btn there, not a
+     plain link, so it matches here too rather than reading as just another
+     nav item. */
+  .nav-links, .nav-cta { display: contents; }
+  .topnav .btn { min-height: 38px; padding: 8px 18px; font-size: 14px; }
   /* Small screens: nav drops to its own line under the logo (freedomclock-style). */
   @media (max-width: 760px) {
     .topbar > :global(.container) { height: auto; flex-wrap: wrap; row-gap: 2px; padding-top: 13px; padding-bottom: 9px; }
@@ -389,7 +401,10 @@
        other pages' topnav (34px) — without it, this page's link-only row is
        shorter than theirs and its links center higher, sitting visibly
        closer to the logo than the same links do elsewhere. */
-    .topnav { flex: 1 0 100%; gap: 18px; min-height: 34px; }
+    .topnav { flex: 1 0 100%; flex-wrap: wrap; gap: 10px 18px; min-height: 34px; }
+    .nav-links { display: flex; gap: 18px; flex: 1 0 100%; }
+    .nav-cta { display: flex; gap: 10px; flex: 1 0 100%; justify-content: flex-start; }
+    .topnav a.btn { min-height: 34px; padding: 6px 14px; font-size: 13px; }
   }
   main { flex: 1; width: 100%; }
   /* 46px, not .home-main's own 40px: their eyebrow is an inline <span> in a

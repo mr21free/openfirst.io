@@ -43,11 +43,28 @@ renameSync(app, resolve(dist, 'build', 'index.html')); // last copy wins; root f
 
 copyFileSync(home, resolve(dist, 'index.html'));
 
-// Stamp the marketing homepage's "Download the app" filename with the real
-// version — the linked URL itself stays stable across releases (see below),
-// only the suggested save-as name needs the version baked in.
-const homeOut = resolve(dist, 'index.html');
-writeFileSync(homeOut, readFileSync(homeOut, 'utf8').replace(/__APP_VERSION__/g, APP_VERSION));
+// Stamp every static page's "Download" link filename with the real version —
+// the linked URL itself stays stable across releases (see below), only the
+// suggested save-as name needs the version baked in. The homepage comes from
+// site/ (just copied above); the rest are public/ pages Vite already copied
+// into dist/ verbatim, so __APP_VERSION__ still needs stamping here — it's
+// never substituted at the public/ source, since anything left there would
+// ship the literal placeholder text on any page this script doesn't touch.
+const stampedPages = [
+  'index.html',
+  'guides/index.html',
+  '404.html',
+  'guides/trusted-helper-protocol/index.html',
+  'how-to-use/index.html',
+  'guides/dry-run/index.html',
+  'guides/bitcoin-inheritance-runbook/index.html',
+  'guides/first-72-hours/index.html',
+  'security/index.html'
+];
+for (const page of stampedPages) {
+  const out = resolve(dist, page);
+  writeFileSync(out, readFileSync(out, 'utf8').replace(/__APP_VERSION__/g, APP_VERSION));
+}
 
 // A stable, permanent download of the app itself — the built app is already
 // one self-contained file (see the /build/ copy above), so "downloading the

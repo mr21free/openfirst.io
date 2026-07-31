@@ -153,9 +153,9 @@
 </script>
 
 {#snippet versionTag()}
-  {#if !isHosted}
-    <span class="fs-version">
-      <span class="fs-version-num">v{APP_VERSION}</span>
+  <span class="fs-version">
+    <span class="fs-version-num">v{APP_VERSION}</span>
+    {#if !isHosted}
       {#if updateState === 'available'}
         <!-- A plain button can't hand you the new file — send you to the site,
              where the top-nav "Download" link is same-origin and can. New tab
@@ -169,8 +169,8 @@
           {:else}check for updates{/if}
         </button>
       {/if}
-    </span>
-  {/if}
+    {/if}
+  </span>
 {/snippet}
 
 {#if !isDemo && store.hasAddedEntity}

@@ -160,19 +160,17 @@ try {
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => (b.getAttribute('aria-label') || '') === 'Settings')?.click());
   await page.waitForFunction(() => /Settings/.test(document.body.innerText) && !!document.querySelector('[role="dialog"] .frm input'), { timeout: 6000 });
   ok('settings opens the meta form', true);
-  await page.keyboard.press('Escape');
 
-  // export icon opens the dialog with a password-protect option
-  await page.evaluate(() => [...document.querySelectorAll('button')].find(b => (b.getAttribute('aria-label') || '') === 'Export')?.click());
-  await page.waitForFunction(() => document.body.innerText.includes('Save a copy to disk'), { timeout: 5000 });
-  await page.evaluate(() => { const lbl = [...document.querySelectorAll('[role="dialog"] label')].find((l) => /password/i.test(l.textContent)); const cb = lbl?.querySelector('input[type=checkbox]'); if (cb && !cb.checked) cb.click(); });
-  const pwShown = await page.waitForFunction(() => !!document.querySelector('[role="dialog"] input[type=password]'), { timeout: 4000 }).then(() => true).catch(() => false);
-  ok('export dialog offers password protection', pwShown);
+  // "+ Add a passphrase" opens the same PassphraseField used by the old
+  // Export dialog — confirm passphrase suggestion still works from here.
+  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] .protect button')].find((b) => /Add a passphrase/i.test(b.textContent))?.click());
+  await page.waitForFunction(() => !!document.querySelector('[role="dialog"] .pw-gen-link'), { timeout: 4000 });
   await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].find(b => /suggest a passphrase/i.test(b.textContent))?.click());
-  const phrase = await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] input')].find(i => i.placeholder === 'Password or passphrase')?.value || '');
+  const phrase = await page.evaluate(() => document.querySelector('[role="dialog"] .pw-field input.inp')?.value || '');
   ok('suggest generates a 6-word diceware passphrase', phrase.split('-').filter(Boolean).length === 6);
   ok('generated passphrase rates very strong', await page.evaluate(() => /very strong/i.test(document.querySelector('[role="dialog"] .pw-strength')?.textContent || '')));
-  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].find(b => b.textContent.trim() === 'Cancel')?.click());
+  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] .protect-form button')].find(b => b.textContent.trim() === 'Cancel')?.click());
+  await page.keyboard.press('Escape');
 
   // Blur any focused field (e.g. the auto-focused new-group name input) so the shortcut isn't treated as typing.
   await page.evaluate(() => document.activeElement?.blur());

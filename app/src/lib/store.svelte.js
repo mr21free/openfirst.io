@@ -9,9 +9,25 @@
 
 import { InheritancePackage } from './package.js';
 import { collectRoleIds, humanizeKey, normalizedRoles, slugifyTag } from './package.js';
-import { saveDraft, saveDraftBlob, deleteDraftBlob, clearDraft } from './persist.js';
-import { DEFAULT_ITERATIONS } from './crypto.js';
-import { DRAFT_ENC_VERSION, newDraftSalt, deriveDraftKey, encryptString, encryptBlob } from './draftcrypto.js';
+import { saveDraft, saveDraftBlob, deleteDraftBlob, clearDraft, putFileHandle, loadDraft } from './persist.js';
+import { generateMasterKey, wrapMasterKeyForSlot, decryptContainerData } from './slotcrypto.js';
+import { buildContainer, buildPlanFileHtml, parseContainerFromHtml } from './planfile.js';
+import { fontsToKeep, triggerDownload } from './export.js';
+
+const FILE_WRITE_DEBOUNCE_MS = 2000;
+
+// Hard ceiling on the plan file's total size (CHANGES.md Q5) — past this,
+// `.zip` export no longer exists as an overflow escape hatch, so new
+// attachments are refused outright instead of silently growing an unwieldy
+// file. Estimate mirrors ExportSizeBanner's (+33% for base64 inflation).
+const ATTACHMENT_CEILING_BYTES = 250 * 1024 * 1024;
+
+function b64ToBlob(b64, mime) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return new Blob([out], { type: mime || '' });
+}
 
 const KINDS = ['people', 'locations', 'items', 'guides', 'folders', 'attachments'];
 const PLAN_ARRAYS = [...KINDS, 'readiness_checks', 'readiness_runs'];
@@ -22,6 +38,21 @@ const nowIso = () => new Date().toISOString();
 function stableKey(snap) {
   const p = snap?.package ? { ...snap.package, updated: undefined } : snap?.package;
   return JSON.stringify({ ...snap, package: p });
+}
+
+/** Self-healing check for a resumed draft's `hasAddedEntity` flag: a record
+ *  saved by the now-fixed debounce-race bug (see #processChanges) could be
+ *  permanently stuck at `hasAddedEntity: false` — the interrupted save never
+ *  landed, so IndexedDB kept the pre-edit snapshot from persistOnOpen()
+ *  forever, hiding the file-status bar even though the plan clearly has real
+ *  content. Mirrors exactly what addPerson/addLocation/addItem/addGuide flip
+ *  the flag for — the seeded owner + "Start here" guide don't count. */
+export function hasRealContent(data) {
+  if (!data) return false;
+  return (data.people?.length || 0) > 1
+    || (data.locations?.length || 0) > 0
+    || (data.items?.length || 0) > 0
+    || (data.guides?.length || 0) > 1;
 }
 
 // Read every property of a deeply-reactive tree WITHOUT cloning it, so the
@@ -41,18 +72,47 @@ export class Store {
   editable = $state(false); // becomes true once editing starts → autosave on
   savedAt = $state(null);
 
+  // File-autosave (see planfile.js / FORMAT.md's Container Format v1). `revision`
+  // increments on every real content change; `fileRevision` is the last one
+  // actually written to the live file, so a reload can tell "is the file behind"
+  // without trusting a clock. `fileName`/`hasAddedEntity` persist alongside
+  // `data` in the IndexedDB draft record — see #processChanges below.
+  revision = $state(0);
+  hasAddedEntity = $state(false); // has the user added a real person/location/item/guide yet
+  fileName = $state(null); // set once homed (live handle or a fallback download)
+  fileRevision = $state(0);
+  fileWriteFailed = $state(false);
+  fileSavedAt = $state(null);
+
+  // Iteration 2b: when a file-backed plan reconnects, the file itself is
+  // authoritative (see `openFromFile`) — this is how many revisions the local
+  // crash-scratch is ahead of what was just loaded from the file, if any.
+  // 0 means there's nothing to offer.
+  scratchAheadBy = $state(0);
+
   attachmentBlobs = new Map(); // id -> Blob (non-reactive; for export + persist)
   pkg = $derived(this.data ? new InheritancePackage(this.data, this.attachmentUrls) : null);
 
   #timer = null;
   #baseline = null; // last-seen content key (excluding the auto "updated" date)
+  #inFlight = null; // the save currently being written, if any (see #processChanges)
   #persistedBlobs = new Map(); // id -> Blob already written to IndexedDB
+  #fileHandle = null; // FileSystemFileHandle — memory only, never persisted directly
+  #fileTimer = null;
 
-  // Draft-at-rest protection: when set, everything written to IndexedDB is
-  // AES-GCM encrypted with this in-memory key (see draftcrypto.js).
-  draftProtected = $state(false);
-  #draftKey = null;   // CryptoKey — memory only, never persisted
-  #draftSalt = null;  // Uint8Array — stored in the draft record for re-derivation
+  // Multi-passphrase container encryption (see slotcrypto.js / FORMAT.md).
+  // `slots` holds full slot objects (label/hint/salt/iv/wrappedKey — none of
+  // it secret without the passphrase), so it's safe to keep reactively and
+  // serialize into the scratch record. `#masterKeyRaw` is the one secret,
+  // memory-only, cleared on `reset()`/`lockDraft()`.
+  slots = $state([]);
+  #masterKeyRaw = null;
+  #lockedPlanId = null; // remembered across lockDraft() so unlocking knows which plan/file to re-decrypt
+  locked = $state(false);
+
+  get protected() {
+    return this.slots.length > 0;
+  }
 
   constructor() {
     // Auto-save on a real change while editing, and stamp the plan's "updated"
@@ -74,20 +134,31 @@ export class Store {
     });
   }
 
-  load({ data, attachmentUrls = {}, blobs = new Map(), persistedDraft = false, draftKey = null, draftSalt = null }) {
+  load({
+    data, attachmentUrls = {}, blobs = new Map(), persistedDraft = false, masterKeyRaw = null, slots = [],
+    revision = 0, hasAddedEntity = false, fileHandle = null, fileName = null, fileRevision = 0
+  }) {
     this.data = data;
     this.attachmentUrls = attachmentUrls;
     this.attachmentBlobs = blobs;
     // A resumed draft's blobs already live in IndexedDB — don't rewrite them on
     // the first save. Anything else (import, new plan) must be written once.
     this.#persistedBlobs = persistedDraft ? new Map(blobs) : new Map();
-    this.#draftKey = draftKey;
-    this.#draftSalt = draftSalt;
-    this.draftProtected = !!draftKey;
+    this.#masterKeyRaw = masterKeyRaw;
+    this.slots = slots;
+    this.locked = false;
     this.mode = 'read';
     this.editable = false;
     this.savedAt = null;
     this.#baseline = null;
+    this.revision = revision;
+    this.hasAddedEntity = hasAddedEntity;
+    this.#fileHandle = fileHandle;
+    this.fileName = fileName;
+    this.fileRevision = fileRevision;
+    this.fileWriteFailed = false;
+    this.fileSavedAt = null;
+    clearTimeout(this.#fileTimer);
   }
 
   reset() {
@@ -95,49 +166,132 @@ export class Store {
     this.attachmentUrls = {};
     this.attachmentBlobs = new Map();
     this.#persistedBlobs = new Map();
-    this.#draftKey = null;
-    this.#draftSalt = null;
-    this.draftProtected = false;
+    this.#masterKeyRaw = null;
+    this.slots = [];
+    this.locked = false;
+    this.#lockedPlanId = null;
     this.mode = 'read';
     this.editable = false;
     this.#baseline = null;
+    this.revision = 0;
+    this.hasAddedEntity = false;
+    this.#fileHandle = null;
+    this.fileName = null;
+    this.fileRevision = 0;
+    this.fileWriteFailed = false;
+    this.fileSavedAt = null;
+    clearTimeout(this.#fileTimer);
   }
 
-  /** Turn on draft-at-rest encryption for this plan: derive the key, keep it
-   *  in memory, and rewrite the stored draft + every blob encrypted. */
-  async enableDraftProtection(passphrase) {
-    const salt = newDraftSalt();
-    const key = await deriveDraftKey(passphrase, salt, DEFAULT_ITERATIONS);
-    this.#draftSalt = salt;
-    this.#draftKey = key;
-    this.draftProtected = true;
-    // Force a full re-persist: the plaintext record is overwritten and every
-    // blob is rewritten encrypted under the same keys.
+  /** Turn on passphrase protection for this plan: a fresh random master key,
+   *  wrapped into a first slot, then a full re-persist under the new scheme. */
+  async protectPlan(passphrase, label, hint) {
+    if (this.protected) return;
+    const planId = this.data?.package?.id || 'current';
+    const masterKeyRaw = generateMasterKey();
+    const slot = await wrapMasterKeyForSlot({ masterKeyRaw, passphrase, label, hint, planId });
+    this.#masterKeyRaw = masterKeyRaw;
+    this.slots = [slot];
     this.#persistedBlobs = new Map();
     this.#baseline = '';
     clearTimeout(this.#timer);
     await this.#processChanges();
   }
 
-  /** Turn draft protection OFF: rewrite the stored draft + blobs in plaintext
-   *  and forget the key. (Changing the passphrase = enableDraftProtection with
-   *  the new one — it re-derives, re-salts, and rewrites everything.) */
-  async disableDraftProtection() {
-    this.#draftKey = null;
-    this.#draftSalt = null;
-    this.draftProtected = false;
-    this.#persistedBlobs = new Map();
+  /** Wrap the existing master key under a new passphrase-derived slot — any
+   *  one of the resulting slots can still recover the same plan. */
+  async addSlot(passphrase, label, hint) {
+    if (!this.protected) return;
+    const planId = this.data?.package?.id || 'current';
+    const slot = await wrapMasterKeyForSlot({ masterKeyRaw: this.#masterKeyRaw, passphrase, label, hint, planId });
+    this.slots = [...this.slots, slot];
     this.#baseline = '';
     clearTimeout(this.#timer);
     await this.#processChanges();
   }
 
-  /** Flush any pending save, then drop the plan and the key from memory.
-   *  The encrypted draft stays on disk; resuming asks for the passphrase. */
+  /** Remove one slot. Removing the last one turns protection off entirely —
+   *  same effect disableProtection() used to have, folded in here since the
+   *  UI no longer offers a separate "make passphrase-free" action. */
+  async removeSlot(slotId) {
+    const next = this.slots.filter((s) => s.id !== slotId);
+    if (next.length === this.slots.length) return false;
+    this.slots = next;
+    if (!next.length) {
+      this.#masterKeyRaw = null;
+      this.#persistedBlobs = new Map();
+    }
+    this.#baseline = '';
+    clearTimeout(this.#timer);
+    await this.#processChanges();
+    return true;
+  }
+
+  /** Re-key one slot (same id, new passphrase/label/hint) — every other slot
+   *  is untouched. */
+  async rekeySlot(slotId, newPassphrase, label, hint) {
+    const idx = this.slots.findIndex((s) => s.id === slotId);
+    if (idx < 0) return false;
+    const planId = this.data?.package?.id || 'current';
+    const slot = await wrapMasterKeyForSlot({ masterKeyRaw: this.#masterKeyRaw, passphrase: newPassphrase, label, hint, planId, slotId });
+    const next = [...this.slots];
+    next[idx] = slot;
+    this.slots = next;
+    this.#baseline = '';
+    clearTimeout(this.#timer);
+    await this.#processChanges();
+    return true;
+  }
+
+  /** Flush any pending save, then drop the plan content and the master key
+   *  from memory — but keep the file/draft connection (fileHandle/fileName/
+   *  slots/planId) alive, so unlocking resumes the same plan instead of
+   *  dropping back to the landing screen. */
   async lockDraft() {
     clearTimeout(this.#timer);
     await this.#processChanges();
-    this.reset();
+    clearTimeout(this.#fileTimer);
+    this.#lockedPlanId = this.data?.package?.id || 'current';
+    this.data = null;
+    this.attachmentUrls = {};
+    this.attachmentBlobs = new Map();
+    this.#persistedBlobs = new Map();
+    this.#masterKeyRaw = null;
+    this.mode = 'read';
+    this.editable = false;
+    this.#baseline = null;
+    this.locked = true;
+  }
+
+  /** Read back the raw (still-encrypted) container to unlock after
+   *  `lockDraft()` — the still-live file handle if there is one (re-reading
+   *  the file fresh, in case it changed while locked), else the just-flushed
+   *  IndexedDB scratch record. */
+  async loadLockedContainer() {
+    if (this.#fileHandle) {
+      try {
+        const text = await (await this.#fileHandle.getFile()).text();
+        const container = parseContainerFromHtml(text);
+        if (container) return container;
+      } catch {
+        /* fall through to the scratch copy */
+      }
+    }
+    return (await loadDraft(this.#lockedPlanId || 'current')) || null;
+  }
+
+  /** Reassign the decrypted plan content after an `unlockContainer(...)` call
+   *  against `loadLockedContainer()`'s result — mirrors `load()` but keeps
+   *  the file/draft connection (revision, fileName, slots, …) untouched. */
+  async resumeAfterUnlock({ data, attachmentUrls, blobs, masterKeyRaw }) {
+    this.data = data;
+    this.attachmentUrls = attachmentUrls;
+    this.attachmentBlobs = blobs;
+    this.#persistedBlobs = this.#fileHandle ? new Map() : new Map(blobs);
+    this.#masterKeyRaw = masterKeyRaw;
+    this.mode = 'edit';
+    this.editable = true;
+    this.locked = false;
   }
 
   ensureArrays() {
@@ -185,9 +339,33 @@ export class Store {
     this.editable = true;
   }
 
+  // 50ms, not something more generous like the old 600ms: a debounce this
+  // short still coalesces genuinely-rapid changes (each keystroke resets the
+  // timer), but empirically, anything much longer than this reopens the
+  // exact race flushPendingChanges() exists to close — visibilitychange
+  // firing on refresh doesn't buy the in-flight async save any extra time to
+  // finish before the page is torn down (see App.svelte), so the real
+  // defense is finishing the write well before a person could plausibly
+  // reload at all. Verified via repeated fast-refresh tests down to a
+  // genuinely instant (0ms-gap, scripted) reload.
   #scheduleProcess() {
     clearTimeout(this.#timer);
-    this.#timer = setTimeout(() => this.#processChanges(), 600);
+    this.#timer = setTimeout(() => this.#processChanges(), 50);
+  }
+
+  /** Skip the 600ms debounce and write right now — called when the tab is
+   *  about to go away (visibilitychange/pagehide, see App.svelte) so a fast
+   *  refresh right after an edit can't lose that edit or leave
+   *  hasAddedEntity/the file-status bar out of sync with what's really on
+   *  the page. If a save is already in flight (the debounce timer having
+   *  just fired on its own), join it instead of re-checking the baseline —
+   *  that check would otherwise pass (see #processChanges) before the
+   *  in-flight write has actually reached IndexedDB, making the flush a
+   *  no-op right as the real write is the thing that needs to finish before
+   *  the page goes away. */
+  flushPendingChanges() {
+    clearTimeout(this.#timer);
+    return this.#inFlight || this.#processChanges();
   }
 
   async #processChanges() {
@@ -195,45 +373,275 @@ export class Store {
     const snap = $state.snapshot(this.data);
     const key = stableKey(snap);
     if (key === this.#baseline) {
-      await this.#syncBlobs(); // a re-uploaded file can change without changing the JSON
+      // A re-uploaded file can change without changing the JSON. Protected
+      // plans embed every blob straight into the ciphertext (see below), so
+      // there's no separate per-blob store to sync — the new bytes are
+      // picked up lazily on the next real edit, same as the file-autosave
+      // path already does for unprotected plans.
+      if (!this.slots.length) await this.#syncBlobs();
       return;
     }
-    this.#baseline = key;
+    const rev = this.revision + 1;
     const stamp = today();
     if (this.data.package) this.data.package.updated = stamp;
     if (snap.package) snap.package.updated = stamp; // save what we stamped, without re-snapshotting
     const at = new Date().toISOString();
     const planKey = snap.package?.id || 'current';
+    // `baseline`/`revision` only advance once the write actually succeeds —
+    // flipping them first (before the await) would let a save that gets cut
+    // off by page teardown look like it happened, and would make a
+    // concurrent flushPendingChanges() bail out as a false no-op right when
+    // it's needed most.
+    const task = (async () => {
+      let record;
+      if (this.slots.length) {
+        record = await buildContainer({
+          planId: planKey, revision: rev, data: snap, blobs: this.attachmentBlobs,
+          protection: { masterKeyRaw: this.#masterKeyRaw, slots: $state.snapshot(this.slots) }
+        });
+        record.savedAt = at;
+        record.hasAddedEntity = this.hasAddedEntity;
+      } else {
+        record = { data: snap, savedAt: at, revision: rev, hasAddedEntity: this.hasAddedEntity };
+      }
+      const ok = await saveDraft(record, planKey);
+      if (!this.slots.length) await this.#syncBlobs();
+      if (ok) {
+        this.#baseline = key;
+        this.revision = rev;
+        this.savedAt = at;
+        this.#scheduleFileWrite();
+      }
+    })();
+    this.#inFlight = task;
+    try {
+      await task;
+    } finally {
+      if (this.#inFlight === task) this.#inFlight = null;
+    }
+  }
+
+  /** Persist an immediate scratch-draft snapshot the moment a plan is opened
+   *  — before any edit — so a plan someone just opened (import, new plan,
+   *  one-time .html import) doesn't vanish from the launcher's "your plans"
+   *  list if they navigate away without touching anything. #processChanges
+   *  above only ever saves once there's a real change from the opening
+   *  baseline; this deliberately bypasses that gate, and — since nothing has
+   *  actually changed yet — doesn't touch revision or the "updated" stamp.
+   *  Skipped for a live file-backed open: the file itself is already the
+   *  immediately-remembered copy (see openFromFile's own putFileHandle call),
+   *  so this would just be a redundant IndexedDB copy of what's on disk. */
+  async persistOnOpen() {
+    if (!this.data || this.#fileHandle) return;
+    const snap = $state.snapshot(this.data);
+    const at = new Date().toISOString();
+    const planKey = snap.package?.id || 'current';
     let record;
-    if (this.#draftKey) {
-      const { iv, ct } = await encryptString(this.#draftKey, planKey, JSON.stringify(snap));
-      record = {
-        enc: DRAFT_ENC_VERSION,
-        salt: this.#draftSalt,
-        iterations: DEFAULT_ITERATIONS,
-        iv,
-        ct,
-        // Kept readable so the "Resume a draft" list can show which plan this
-        // is without the passphrase. Only the title and date — nothing else.
-        title: snap.package?.title || '',
-        savedAt: at
-      };
+    if (this.slots.length) {
+      record = await buildContainer({
+        planId: planKey, revision: this.revision, data: snap, blobs: this.attachmentBlobs,
+        protection: { masterKeyRaw: this.#masterKeyRaw, slots: $state.snapshot(this.slots) }
+      });
+      record.savedAt = at;
+      record.hasAddedEntity = this.hasAddedEntity;
     } else {
-      record = { data: snap, savedAt: at };
+      record = { data: snap, savedAt: at, revision: this.revision, hasAddedEntity: this.hasAddedEntity };
     }
     const ok = await saveDraft(record, planKey);
-    await this.#syncBlobs();
     if (ok) this.savedAt = at;
+    if (!this.slots.length) await this.#syncBlobs();
+  }
+
+  // ---- File autosave (Container Format v1 — see planfile.js/FORMAT.md) ----
+
+  #scheduleFileWrite() {
+    if (!this.#fileHandle) return;
+    clearTimeout(this.#fileTimer);
+    this.#fileTimer = setTimeout(() => this.#writeFileNow(), FILE_WRITE_DEBOUNCE_MS);
+  }
+
+  async #writeFileNow() {
+    if (!this.#fileHandle || !this.data) return;
+    const snap = $state.snapshot(this.data);
+    const planId = snap.package?.id || 'current';
+    const rev = this.revision;
+    try {
+      const container = await buildContainer({
+        planId, revision: rev, data: snap, blobs: this.attachmentBlobs,
+        protection: this.slots.length ? { masterKeyRaw: this.#masterKeyRaw, slots: $state.snapshot(this.slots) } : null
+      });
+      const html = await buildPlanFileHtml(container, fontsToKeep(snap));
+      const writable = await this.#fileHandle.createWritable();
+      await writable.write(html);
+      await writable.close();
+      this.fileRevision = rev;
+      this.fileSavedAt = new Date().toISOString();
+      this.fileWriteFailed = false;
+      await putFileHandle(planId, this.fileName, this.#fileHandle, rev, this.slots.length > 0);
+    } catch {
+      this.fileWriteFailed = true;
+    }
+  }
+
+  /** Manual retry after a failed file write (see FileSaveBanner) — the next
+   *  edit would also retry, but a stuck failure with no further edits needs
+   *  its own way out. */
+  async retryFileWrite() {
+    if (!this.#fileHandle) return;
+    clearTimeout(this.#fileTimer);
+    await this.#writeFileNow();
+  }
+
+  /** How many real edits haven't made it into the live file yet. */
+  get pendingFileChanges() {
+    return Math.max(0, this.revision - this.fileRevision);
+  }
+
+  get isFileBehind() {
+    return !!this.#fileHandle && this.revision > this.fileRevision;
+  }
+
+  /** True for the no-File-System-Access fallback: homed via download, but new
+   *  changes since then need a fresh manual download (see FileSaveBanner). */
+  get needsManualFileUpdate() {
+    return !this.#fileHandle && !!this.fileName && this.revision > this.fileRevision;
+  }
+
+  /**
+   * The user just picked (or the app silently reconnected to) a real file
+   * handle for this plan — the "homing" moment for File System Access
+   * browsers. Writes immediately when there's anything not yet on disk
+   * (always true the first time a plan is homed).
+   */
+  async connectFileHandle(handle, name, { force = false } = {}) {
+    // A debounced draft save may still be pending (or mid-flight) — settle it
+    // first so `this.revision` below reflects what's actually about to be
+    // written, not a stale value the in-flight save is about to bump out from
+    // under this call (see downloadFileNow for the same reasoning).
+    await this.flushPendingChanges();
+    this.#fileHandle = handle;
+    this.fileName = name;
+    const planId = this.data?.package?.id || 'current';
+    await putFileHandle(planId, name, handle, this.fileRevision, this.slots.length > 0);
+    if (force || this.revision > this.fileRevision) {
+      clearTimeout(this.#fileTimer);
+      await this.#writeFileNow();
+    }
+  }
+
+  /** Fallback homing/update for browsers without File System Access: builds
+   *  the same container-v1 html and triggers a download instead of writing a
+   *  live handle. Used both for the first "choose location" and every later
+   *  "Update your file (n changes)" click — there's no live handle to keep
+   *  writing into, so `needsManualFileUpdate` drives an explicit button. */
+  async downloadFileNow(name = this.fileName) {
+    if (!this.data || !name) return;
+    // Same reasoning as connectFileHandle: settle any pending/in-flight draft
+    // save first, so `rev` below can't go stale out from under this call —
+    // captured too early, this.revision could still bump right after,
+    // permanently (and wrongly) marking the just-downloaded file "behind".
+    await this.flushPendingChanges();
+    const snap = $state.snapshot(this.data);
+    const planId = snap.package?.id || 'current';
+    const rev = this.revision;
+    const container = await buildContainer({
+      planId, revision: rev, data: snap, blobs: this.attachmentBlobs,
+      protection: this.slots.length ? { masterKeyRaw: this.#masterKeyRaw, slots: $state.snapshot(this.slots) } : null
+    });
+    const html = await buildPlanFileHtml(container, fontsToKeep(snap));
+    triggerDownload(new Blob([html], { type: 'text/html' }), name);
+    this.fileName = name;
+    this.fileRevision = rev;
+    this.fileSavedAt = new Date().toISOString();
+    await putFileHandle(planId, name, null, rev, this.slots.length > 0);
+  }
+
+  /**
+   * Iteration 2b's source-of-truth flip: reconnecting to a file-backed plan
+   * loads the file's own content (already read + parsed by the caller —
+   * see App.svelte's `continueFileBackedPlan`/`locateFileForPlan`) instead of
+   * IndexedDB. IndexedDB then only matters as a possible crash-recovery copy,
+   * checked right after via `#checkScratchNewer`.
+   */
+  async openFromFile({ data, attachmentUrls, blobs }, revision, handle, name, { masterKeyRaw = null, slots = [] } = {}) {
+    this.load({
+      data, attachmentUrls, blobs, persistedDraft: false, masterKeyRaw, slots,
+      revision, hasAddedEntity: true, fileHandle: handle, fileName: name, fileRevision: revision
+    });
+    this.startEditing();
+    // Persist the handle used to open this plan — not just the one written on
+    // the next edit — so a freshly-picked handle from "Locate it" sticks even
+    // if the user closes the tab without touching anything, and so
+    // `lastOpenedAt` reflects this open, not just the last write.
+    await putFileHandle(data?.package?.id || 'current', name, handle, revision, slots.length > 0);
+    await this.#checkScratchNewer(data?.package?.id || 'current');
+  }
+
+  async #checkScratchNewer(planId) {
+    const d = await loadDraft(planId);
+    this.scratchAheadBy = (d?.data && typeof d.revision === 'number' && d.revision > this.revision)
+      ? d.revision - this.revision
+      : 0;
+  }
+
+  /** "Restore backup" (see FileSaveBanner): the local scratch has changes the
+   *  file doesn't. Reassigning `data` (rather than hand-rolling revision/
+   *  baseline bookkeeping) lets the existing autosave effect treat this like
+   *  any other edit — it bumps `revision`, re-persists the scratch, and
+   *  schedules the normal debounced file write. */
+  async restoreScratchBackup() {
+    const planId = this.data?.package?.id || 'current';
+    const d = await loadDraft(planId);
+    if (!d?.data) { this.scratchAheadBy = 0; return; }
+    const attachmentUrls = {};
+    const blobs = new Map();
+    let plainData;
+    if (this.slots.length) {
+      // Protected scratch record is a container: `d.data` is ciphertext,
+      // decrypted with the already-in-memory master key (this is only
+      // reachable mid-session on an already-unlocked protected plan).
+      const decrypted = await decryptContainerData({ container: d, masterKeyRaw: this.#masterKeyRaw });
+      const { attachmentBlobs, ...rest } = decrypted;
+      plainData = rest;
+      for (const [id, a] of Object.entries(attachmentBlobs || {})) {
+        const blob = b64ToBlob(a.b64, a.mime);
+        blobs.set(id, blob);
+        attachmentUrls[id] = URL.createObjectURL(blob);
+      }
+    } else {
+      plainData = d.data;
+      for (const a of d.attachments || []) {
+        if (a.blob) {
+          const blob = a.blob.type ? a.blob : a.blob.slice(0, a.blob.size);
+          blobs.set(a.id, blob);
+          attachmentUrls[a.id] = URL.createObjectURL(blob);
+        }
+      }
+    }
+    this.data = plainData;
+    this.attachmentUrls = attachmentUrls;
+    this.attachmentBlobs = blobs;
+    this.#persistedBlobs = this.slots.length ? new Map() : new Map(blobs); // already in the scratch store
+    this.scratchAheadBy = 0;
+  }
+
+  /** "Use file instead" (see FileSaveBanner): discard the scratch, keep the
+   *  file's content as loaded. */
+  async useFileInstead() {
+    const planId = this.data?.package?.id || 'current';
+    await clearDraft(planId);
+    this.scratchAheadBy = 0;
   }
 
   // Write only new/replaced attachment blobs; delete removed ones. Keeps every
-  // keystroke from rewriting megabytes of files into IndexedDB.
+  // keystroke from rewriting megabytes of files into IndexedDB. Only called
+  // for unprotected plans — a protected plan's blobs travel embedded in the
+  // ciphertext record instead (see #processChanges).
   async #syncBlobs() {
     const planKey = this.data?.package?.id || 'current';
     for (const [id, blob] of this.attachmentBlobs) {
       if (this.#persistedBlobs.get(id) !== blob) {
-        const value = this.#draftKey ? await encryptBlob(this.#draftKey, planKey, blob) : blob;
-        if (await saveDraftBlob(planKey, id, value)) this.#persistedBlobs.set(id, blob);
+        if (await saveDraftBlob(planKey, id, blob)) this.#persistedBlobs.set(id, blob);
       }
     }
     for (const id of [...this.#persistedBlobs.keys()]) {
@@ -279,6 +687,7 @@ export class Store {
     this.ensureArrays();
     const id = this.genId('person');
     this.data.people.push({ id, name: '', roles: [] });
+    this.hasAddedEntity = true;
     return id;
   }
 
@@ -289,6 +698,7 @@ export class Store {
     const loc = { id, name: '', order };
     if (parentId) loc.parent_id = parentId;
     this.data.locations.push(loc);
+    this.hasAddedEntity = true;
     return id;
   }
 
@@ -325,6 +735,7 @@ export class Store {
     this.ensureArrays();
     const id = this.genId('item');
     this.data.items.push({ id, name: '' });
+    this.hasAddedEntity = true;
     return id;
   }
 
@@ -341,6 +752,7 @@ export class Store {
     while (titles.has(title)) title = `New Guide (${n++})`;
     this.data.guides.push({ id, title, content: { [lang]: '' }, order, updated: today() });
     this.#renumberBlocks(this.#navBlocks());
+    this.hasAddedEntity = true;
     return id;
   }
 
@@ -564,6 +976,14 @@ export class Store {
 
   async addAttachmentFile(file) {
     this.ensureArrays();
+    let existingBytes = 0;
+    for (const a of this.data.attachments || []) {
+      existingBytes += this.attachmentBlobs.get(a.id)?.size || 0;
+    }
+    const estimatedTotal = (existingBytes + (file.size || 0)) * (4 / 3);
+    if (estimatedTotal > ATTACHMENT_CEILING_BYTES) {
+      throw new Error(`This file would push the plan file past ~${Math.round(ATTACHMENT_CEILING_BYTES / (1024 * 1024))}MB, which can be too large to open reliably. Keep photos and videos small, or split this material into a separate plan.`);
+    }
     const id = this.genId('att');
     const original = file.name || 'file';
     const dot = original.lastIndexOf('.');

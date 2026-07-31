@@ -112,6 +112,7 @@
   .dhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .dhead-main { min-width: 0; }
   .dhead h2 { margin-top: 4px; font-size: 24px; }
+  .dhead-main p { margin-top: 6px; }
   .dhead-actions { display: flex; align-items: center; gap: 6px; flex: none; }
   .dry-done { padding-top: 12px; display: flex; justify-content: flex-end; border-top: 1px solid var(--rule-soft); }
   .dry-list { display: grid; gap: 18px; }

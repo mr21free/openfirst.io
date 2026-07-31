@@ -1,8 +1,13 @@
-// Print hygiene: two on-screen-only cues must disappear when printing a guide.
-//   1) A DRAFT guide's dashed "draft" frame (border) — gone on paper.
+// Print hygiene, plus a guard that a draft guide never reaches a reopened
+// file's reader view at all (so there's nothing to print in the first
+// place):
+//   1) A draft guide is absent from the nav once "Admin" is chosen for a
+//      reopened file — same hiding rule as any other reader, the owner's
+//      own admin identity is not an exception (drafts still ride along
+//      inside the file's data, just never rendered outside live editing).
 //   2) The "Not available in <LANG> — showing the <other> version instead."
-//      language-fallback notice — gone on paper.
-// Both must still be VISIBLE on screen. Verified via print-media emulation.
+//      language-fallback notice must be visible on screen and gone on
+//      paper. Verified via print-media emulation.
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -36,12 +41,6 @@ const page = await browser.newPage();
 const errs = []; page.on('pageerror', (e) => errs.push(e.message));
 
 const openGuide = (t) => page.evaluate((t) => [...document.querySelectorAll('nav .navlink')].find((b) => b.textContent.trim() === t)?.click(), t);
-const draftBorder = () => page.evaluate(() => {
-  const a = document.querySelector('main article.guide.is-draft');
-  if (!a) return null;
-  const s = getComputedStyle(a);
-  return { style: s.borderTopStyle, width: s.borderTopWidth };
-});
 const noticeDisplay = () => page.evaluate(() => {
   const n = document.querySelector('main .notice');
   return n ? getComputedStyle(n).display : '__missing__';
@@ -55,17 +54,10 @@ try {
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything|admin/i.test(b.textContent))?.click());
   await page.waitForFunction(() => !!document.querySelector('nav .navlink'), { timeout: 8000 });
 
-  // --- DRAFT FRAME ---
-  await openGuide('Draft note');
-  await page.waitForFunction(() => !!document.querySelector('main article.guide.is-draft'), { timeout: 6000 });
-  await pause();
-  await page.emulateMediaType('screen');
-  const onScreen = await draftBorder();
-  ok('draft frame shows a dashed border on screen', onScreen?.style === 'dashed' && onScreen.width !== '0px');
-  await page.emulateMediaType('print');
-  const onPaper = await draftBorder();
-  ok('draft frame is gone when printing', onPaper && (onPaper.style === 'none' || onPaper.width === '0px'));
-  await page.emulateMediaType('screen');
+  // --- DRAFT GUIDE HIDDEN FROM THE REOPENED FILE'S READER, EVEN AS ADMIN ---
+  const navTitles = await page.evaluate(() => [...document.querySelectorAll('nav .navlink')].map((b) => b.textContent.trim()));
+  ok('draft guide is absent from the nav (not just marked, actually gone)', !navTitles.includes('Draft note'));
+  ok('the published guide is still there', navTitles.includes('EN only'));
 
   // --- FALLBACK NOTICE ---
   await page.select('select.lang', 'sk');
@@ -116,7 +108,7 @@ try {
 } catch (e) { ok('flow threw: ' + e.message, false); }
 finally { await browser.close(); rmSync(dir, { recursive: true, force: true }); }
 
-console.log('\n=== Print hygiene (draft frame + fallback notice) ===');
+console.log('\n=== Print hygiene (draft hiding + fallback notice) ===');
 let bad = 0;
 for (const [s, n] of results) { if (s === 'FAIL') bad++; console.log(`  [${s}] ${n}`); }
 console.log(bad ? `\n✗ ${bad} failed` : `\n✓ all passed (${results.length})`);

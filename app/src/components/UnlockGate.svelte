@@ -1,17 +1,25 @@
 <script>
   /*
-    The ONE password-entry gate (see DESIGN.md). Two shells, same card:
+    The ONE passphrase-entry gate (see DESIGN.md). Two shells, same card:
      • full-page (default) — the heir reader's opening screen, resume of a
        protected draft;
      • `modal` — unlocking an encrypted file from within another screen
        (scrim + centered card, Escape/scrim-click cancels).
     `onUnlock(password)` may throw — that's shown as a kind, retryable error.
+    `slots` (array of `{ label, hint }`) lists a container's passphrase slots
+    when there's more than one label/hint to show; `hint` alone still covers
+    the old single-passphrase case.
+    `term` names the secret in the copy — 'passphrase' everywhere the plan's
+    own slots scheme applies, 'password' only when unlocking a legacy
+    single-secret `.zip`/`.encrypted.json` import (kept for backward
+    compatibility), so the gate matches whichever feature actually produced
+    the file.
   */
   import logo from '../assets/logo.svg';
   import Callout from './Callout.svelte';
   import { lockBodyScroll } from '../lib/scrollLock.js';
   import { APP_DOMAIN } from '../lib/format.js';
-  let { hint = '', onUnlock, onCancel = null, modal = false } = $props();
+  let { hint = '', slots = null, onUnlock, onCancel = null, modal = false, term = 'passphrase' } = $props();
 
   $effect(() => { if (modal) return lockBodyScroll(); });
 
@@ -26,13 +34,13 @@
     busy = true;
     try {
       await onUnlock(password);
-      // Unlocked — drop the password from this component's state right away.
+      // Unlocked — drop the passphrase from this component's state right away.
       password = '';
       show = false;
     } catch (e) {
-      error = hint
-        ? 'That password didn’t work. Check capital letters and spaces — and try the hint above. The file is fine; you can try again.'
-        : 'That password didn’t work. Check capital letters and spaces. The file is fine; you can try again.';
+      error = hint || slots?.length
+        ? `That ${term} didn’t work. Check capital letters and spaces — and try the hint above. The file is fine; you can try again.`
+        : `That ${term} didn’t work. Check capital letters and spaces. The file is fine; you can try again.`;
     } finally {
       busy = false;
     }
@@ -40,7 +48,7 @@
 </script>
 
 {#snippet gateCard()}
-  <div class="card gate" class:modal-card={modal} role={modal ? 'dialog' : undefined} aria-modal={modal ? 'true' : undefined} aria-label={modal ? 'Enter password' : undefined}>
+  <div class="card gate" class:modal-card={modal} role={modal ? 'dialog' : undefined} aria-modal={modal ? 'true' : undefined} aria-label={modal ? `Enter ${term}` : undefined}>
     {#if !modal}
       <a class="brand row" href={`https://${APP_DOMAIN}/`} target="_blank" rel="noopener"><img class="logo" src={logo} alt="" aria-hidden="true" /><span class="brand-name"><b>open</b>first.io</span></a>
     {/if}
@@ -50,18 +58,24 @@
       </span>
       <h3>This plan is protected</h3>
     </div>
-    <p class="soft small">Enter the password to open it.</p>
-    {#if hint}<p class="soft small"><strong>Hint:</strong> {hint}</p>{/if}
+    <p class="soft small">Enter the {term} to open it.</p>
+    {#if slots?.length}
+      <ul class="slot-hints soft small">
+        {#each slots as s}
+          <li><strong>{s.label || 'Passphrase'}</strong>{#if s.hint} — hint: {s.hint}{/if}</li>
+        {/each}
+      </ul>
+    {:else if hint}<p class="soft small"><strong>Hint:</strong> {hint}</p>{/if}
     <div class="pw-field">
       <!-- svelte-ignore a11y_autofocus -->
-      <input class="pw inp" type={show ? 'text' : 'password'} bind:value={password} placeholder="Password"
+      <input class="pw inp" type={show ? 'text' : 'password'} bind:value={password} placeholder={term.charAt(0).toUpperCase() + term.slice(1)}
         autocomplete="new-password" autofocus onkeydown={(e) => e.key === 'Enter' && unlock()} />
-      <button class="pw-icon" type="button" data-tip={show ? 'Hide' : 'Show'} data-tip-pos="top" aria-label={show ? 'Hide password' : 'Show password'} onclick={() => (show = !show)}>
+      <button class="pw-icon" type="button" data-tip={show ? 'Hide' : 'Show'} data-tip-pos="top" aria-label={show ? `Hide ${term}` : `Show ${term}`} onclick={() => (show = !show)}>
         {#if show}
-          <!-- password is visible → crossed-out eye: clicking hides it -->
+          <!-- passphrase is visible → crossed-out eye: clicking hides it -->
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
         {:else}
-          <!-- password is hidden → open eye: clicking reveals it -->
+          <!-- passphrase is hidden → open eye: clicking reveals it -->
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
         {/if}
       </button>
@@ -109,6 +123,7 @@
   .gate-title { gap: 10px; }
   .lock-ico { display: inline-flex; color: var(--ink-soft); }
   .gate h3 { font-size: 19px; margin: 0; }
+  .slot-hints { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 2px; }
   .pw-field { position: relative; }
   .inp {
     width: 100%; font: inherit; font-size: 14px; color: var(--ink);

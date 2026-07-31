@@ -45,6 +45,20 @@ try {
   await upload('plan.json');
   ok('documented example imports into the reader', await page.evaluate(() => /who are you/i.test(document.body.innerText) || !!document.querySelector('nav')));
 
+  // Regression: opening a plan (any source) and navigating straight back to
+  // the launcher without editing anything used to leave no IndexedDB record
+  // at all — store.svelte.js's normal autosave only ever saves once a real
+  // edit diverges from the just-opened baseline (see persistOnOpen). Confirm
+  // the imported plan shows up on the launcher immediately after "Back to
+  // start", and still shows up after a hard reload (proving it's actually in
+  // IndexedDB, not just an in-memory list).
+  await page.evaluate(() => document.querySelector('[aria-label="Back to start"]')?.click());
+  await pause(500);
+  ok('an opened-but-unedited plan appears on the launcher without a reload', await page.evaluate(() => [...document.querySelectorAll('.draft-main strong')].some((el) => el.textContent.includes('My life package'))));
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForFunction(() => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Create new plan'), { timeout: 8000 });
+  ok('it still appears after a hard reload (persisted, not just in-memory)', await page.evaluate(() => [...document.querySelectorAll('.draft-main strong')].some((el) => el.textContent.includes('My life package'))));
+
   await fresh();
   await upload('legacy.json');
   ok('legacy inheritance-package/v1 JSON still imports', await page.evaluate(() => /who are you/i.test(document.body.innerText) || !!document.querySelector('nav')));

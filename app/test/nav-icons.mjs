@@ -94,6 +94,11 @@ try {
     [...document.querySelectorAll('nav .navrow')].every((r) => !r.querySelector('.navico'))));
 
   // --- draft marker sits to the LEFT of the guide title ---
+  // A draft guide no longer renders in the reader view at all (see
+  // guide-draft.mjs / print.mjs) — the marker only exists in the editing
+  // nav, where the owner still needs to see which guides are drafts.
+  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => (b.getAttribute('aria-label') || '') === 'Edit')?.click());
+  await pause();
   ok('draft marker comes before the guide title in its row', await page.evaluate(() => {
     const row = [...document.querySelectorAll('nav .navrow.is-draft')][0];
     if (!row) return false;
@@ -103,6 +108,8 @@ try {
     // DOCUMENT_POSITION_FOLLOWING (4) => title comes after the mark.
     return !!(mark.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING);
   }));
+  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => (b.getAttribute('aria-label') || '') === 'Done editing')?.click());
+  await pause();
 
   // --- side panel: each referenced row has a leading type icon of its kind ---
   await page.evaluate(() => [...document.querySelectorAll('nav .navlink-section')].find((b) => /^Items$/.test(b.querySelector('.navlabel')?.textContent || ''))?.click());

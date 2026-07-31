@@ -1,14 +1,85 @@
 <script>
   import { loadFromFiles, decryptAndLoad } from '../lib/load.js';
+  import { APP_DOMAIN } from '../lib/format.js';
   import logo from '../assets/logo.svg';
   import ConfirmDialog from './ConfirmDialog.svelte';
   import UnlockGate from './UnlockGate.svelte';
   import Callout from './Callout.svelte';
 
-  let { onLoaded, newPlan, drafts = [], resumeDraft, discardDraft } = $props();
+  let {
+    onLoaded, newPlan, drafts = [], resumeDraft, discardDraft,
+    recentPlans = [], continueRecent, locateRecent, openPickedHtmlHandle, importHtmlOneTime, restoreRecentFromBackup, deleteRecent
+  } = $props();
+
+  // A picked .html only reconnects live (keeps autosaving into that same
+  // file) on browsers with File System Access — Chrome/Edge. Elsewhere the
+  // plain <input type=file> fallback can still read the file, it just can't
+  // hold onto a handle, so it becomes a one-time import instead (see
+  // handleAnyFileInput / importHtmlOneTime).
+  const fsaSupported = typeof window !== 'undefined' && 'showOpenFilePicker' in window;
+
+  // These marketing pages only exist as real routes on the hosted site — a
+  // downloaded standalone copy of the app (see scripts/postbuild.mjs's
+  // /download/openfirst.html) opened via file:// has no /demo/, /guides/,
+  // /how-to-use/, or /security/ next to it, so the relative links would just
+  // 404. GitHub and the mailto link are absolute, so they're unaffected and
+  // always shown (same convention as App.svelte's onHttp).
+  const onHttp = typeof location !== 'undefined' && location.protocol !== 'file:';
 
   function draftWhen(savedAt) {
-    return savedAt ? new Date(savedAt).toLocaleString() : '';
+    return savedAt
+      ? new Date(savedAt).toLocaleString(undefined, {
+          year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+        })
+      : '';
+  }
+
+  // Per-row error state (iteration 2b) — keyed by planId. 'missing' when
+  // continueRecent/locateRecent resolves to false (permission denied, parse
+  // failure, or the file moved/was deleted); 'mismatch' when locateRecent
+  // resolves to the 'mismatch' sentinel (the picked file is a real, valid
+  // plan file, just a different plan than this row).
+  let recentRowErrors = $state({});
+
+  async function handleContinueRecent(rec) {
+    const ok = await continueRecent?.(rec);
+    if (ok === false) recentRowErrors = { ...recentRowErrors, [rec.planId]: 'missing' };
+  }
+  async function handleLocateRecent(rec) {
+    const result = await locateRecent?.(rec.planId);
+    if (result === 'mismatch') recentRowErrors = { ...recentRowErrors, [rec.planId]: 'mismatch' };
+    // `false` (cancelled the picker, or still can't find/read it) leaves the
+    // existing error row up as-is.
+  }
+  async function handleRestoreRecentFromBackup(rec) {
+    await restoreRecentFromBackup?.(rec.planId);
+  }
+  // A recent (file-backed) plan's Delete offers to also remove the file
+  // itself — only possible when there's a live handle with grantable
+  // read/write permission (a fallback-downloaded plan has no live handle at
+  // all; nothing here can reach that file). Defaults to unchecked: deleting
+  // the one durable copy of someone's plan by not noticing a pre-checked box
+  // is a much worse failure than one extra click.
+  async function confirmDeleteRecent(rec) {
+    const canDeleteFile = !!rec.handle;
+    const result = await askModal({
+      tone: 'danger', title: 'Delete this plan?',
+      message: `This will permanently delete "${rec.title}" from this browser.`
+        + (canDeleteFile ? '' : ` (This plan was saved via a browser download, so its file isn't something this browser can reach to delete — only its copy here will be removed.)`),
+      confirmLabel: 'Delete', cancelLabel: 'Cancel',
+      checkbox: canDeleteFile ? { label: `Delete the "${rec.name}" file`, defaultChecked: false } : null
+    });
+    const confirmed = result?.confirmed ?? result;
+    if (!confirmed) return;
+    const wantedFileDelete = canDeleteFile && !!result.checked;
+    const fileDeleteError = await deleteRecent?.(rec.planId, wantedFileDelete);
+    if (wantedFileDelete && fileDeleteError) {
+      await askModal({
+        tone: 'danger', title: "Couldn't delete the file",
+        message: `"${rec.title}" was removed from this browser, but the file itself (${rec.name}) could not be deleted: ${fileDeleteError}`,
+        confirmLabel: 'OK', cancelLabel: null
+      });
+    }
   }
 
   let modalPrompt = $state(null);
@@ -24,7 +95,7 @@
   }
 
   async function confirmDelete(key) {
-    const ok = await askModal({ tone: 'danger', title: 'Delete this plan?', message: 'This will permanently delete the plan from this browser. This cannot be undone.', confirmLabel: 'Delete', cancelLabel: 'Cancel' });
+    const ok = await askModal({ tone: 'danger', title: 'Delete this plan?', message: 'This will permanently delete the plan from this browser.', confirmLabel: 'Delete', cancelLabel: 'Cancel' });
     if (ok) discardDraft?.(key);
   }
 
@@ -82,65 +153,161 @@
   }
 
   function cancelUnlock() { pendingEnvelope = null; }
+
+  // One "Open existing plan" button for all three formats. On File System
+  // Access browsers, a single combined-type picker covers .html/.json/.zip so
+  // a picked .html can still reconnect live (see openPickedHtmlHandle);
+  // elsewhere the plain <input type=file> fallback below covers the same
+  // three extensions, just without a live handle for .html.
+  async function handleOpenExisting() {
+    if (!fsaSupported) { fileInput.click(); return; }
+    error = '';
+    busy = true;
+    try {
+      let handle;
+      try {
+        handle = (await window.showOpenFilePicker({
+          types: [{ description: 'OpenFirst plan or backup', accept: {
+            'text/html': ['.html'],
+            'application/json': ['.json'],
+            'application/zip': ['.zip']
+          } }]
+        }))[0];
+      } catch {
+        return; // cancelled the picker
+      }
+      if (/\.html?$/i.test(handle.name)) {
+        const ok = await openPickedHtmlHandle?.(handle);
+        if (ok === false) error = "Couldn't open that file — make sure it's a plan .html this app created.";
+        // A passphrase-protected file or a successful open both navigate away
+        // from Landing entirely (fileGate / the editor) — nothing else to do here.
+        return;
+      }
+      const file = await handle.getFile();
+      await run(() => loadFromFiles([file]));
+    } catch (e) {
+      error = e?.message || String(e);
+    } finally {
+      busy = false;
+    }
+  }
+
+  async function handleAnyFileInput(fileList) {
+    const file = fileList?.[0];
+    if (!file) return;
+    if (/\.html?$/i.test(file.name)) {
+      error = '';
+      busy = true;
+      try {
+        const ok = await importHtmlOneTime?.(file);
+        if (ok === false) error = "Couldn't open that file — make sure it's a plan .html this app created.";
+      } catch (e) {
+        error = e?.message || String(e);
+      } finally {
+        busy = false;
+      }
+      return;
+    }
+    run(() => loadFromFiles(fileList));
+  }
 </script>
 
 <div class="page">
   <header class="topbar no-print">
     <div class="container row">
-      <a class="brand row" href="/">
+      <a class="brand row" href={`https://${APP_DOMAIN}/`} target="_blank" rel="noopener">
         <img class="logo" src={logo} alt="" aria-hidden="true" />
         <span class="brand-name"><b>open</b>first</span>
       </a>
       <span class="spacer"></span>
-      <nav class="topnav">
-        <a href="/demo/">Demo</a>
-        <a href="/guides/">Guides</a>
-        <a href="/how-to-use/">How to use</a>
-      </nav>
+      {#if onHttp}
+        <nav class="topnav">
+          <a href="/demo/">Demo</a>
+          <a href="/guides/">Guides</a>
+          <a href="/how-to-use/">How to use</a>
+        </nav>
+      {/if}
     </div>
   </header>
 
   <main class="container">
     <section class="hero">
       <p class="eyebrow">Your plans</p>
-      <h1>{drafts.length ? 'Welcome back.' : 'Start your plan.'}</h1>
+      <h1>{drafts.length || recentPlans.length ? 'Welcome back.' : 'Start your plan.'}</h1>
       <p class="lede soft">
-        Everything you build is saved in this browser's storage, on this computer — no account, no cloud.
-        {#if !drafts.length}Start with the map: the people, the places, the things that matter.{/if}
+        Everything you build stays on this computer — no account, no cloud.
+        {#if !drafts.length && !recentPlans.length}Start with the map: the people, the places, the things that matter.{/if}
       </p>
 
-      {#if drafts.length && !storageNoteDismissed}
+      <div class="launcher-actions no-print">
+        <button
+          class="btn btn-primary"
+          data-tip="Start building your plan. Your work autosaves to this browser's storage — there's no server, so there's nowhere to upload it to."
+          onclick={handleNewPlan}
+        >Create new plan</button>
+        <button
+          class="btn btn-secondary"
+          data-tip="Open a plan .html file (reconnects live) or a .json/.zip backup."
+          disabled={busy}
+          onclick={handleOpenExisting}
+        >Open existing plan</button>
+      </div>
+
+      {#if (drafts.length || recentPlans.length) && !storageNoteDismissed}
         <p class="storage-note no-print">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span>Plans saved here live in this browser's own storage. They don't sync and aren't backed up — clearing this browser's site data removes them. <strong>Your exported file is the durable copy.</strong></span>
           <button class="iconbtn note-x" data-tip="Got it — don't show this again" data-tip-pos="left" aria-label="Dismiss storage note" onclick={dismissStorageNote}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </p>
       {/if}
+      {#each recentPlans as rec (rec.planId)}
+        <div class="draft card no-print">
+          {#if recentRowErrors[rec.planId] === 'mismatch'}
+            <div class="draft-main">
+              <strong>That's a different plan.</strong>
+              <span class="small muted">The file you picked isn't {rec.name} — try again, or restore from this browser's backup instead.</span>
+            </div>
+            <div class="row" style="gap:8px">
+              <button class="btn btn-secondary" onclick={() => handleLocateRecent(rec)}>Try again</button>
+              <button class="btn btn-ghost" onclick={() => handleRestoreRecentFromBackup(rec)}>Restore from backup</button>
+            </div>
+          {:else if recentRowErrors[rec.planId]}
+            <div class="draft-main">
+              <strong>Can't find {rec.name}.</strong>
+              <span class="small muted">It may have been moved, renamed, or deleted.</span>
+            </div>
+            <div class="row" style="gap:8px">
+              <button class="btn btn-secondary" onclick={() => handleLocateRecent(rec)}>Locate it</button>
+              <button class="btn btn-ghost" onclick={() => handleRestoreRecentFromBackup(rec)}>Restore from backup</button>
+            </div>
+          {:else}
+            <div class="draft-main">
+              <strong>{#if rec.protected}<span class="draft-lock" title="Passphrase-protected"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>{/if}{rec.title}</strong>
+              <span class="small muted">Updated {draftWhen(rec.lastOpenedAt)} · {rec.name}</span>
+            </div>
+            <div class="row" style="gap:8px">
+              <button class="btn btn-primary" onclick={() => handleContinueRecent(rec)}>Resume</button>
+              <button class="iconbtn danger" data-tip="Delete plan" data-tip-pos="left" aria-label="Delete plan" onclick={() => confirmDeleteRecent(rec)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
+              </button>
+            </div>
+          {/if}
+        </div>
+      {/each}
       {#each drafts as draft (draft.key)}
         <div class="draft card no-print">
           <div class="draft-main">
             <strong>{#if draft.protected}<span class="draft-lock" title="Passphrase-protected in this browser's storage"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>{/if}{draft.title}</strong>
-            <span class="small muted">{draftWhen(draft.savedAt) ? `saved ${draftWhen(draft.savedAt)} · ` : ''}kept in this browser{draft.protected ? ' · encrypted' : ''}</span>
+            <span class="small muted">{draftWhen(draft.savedAt) ? `Updated ${draftWhen(draft.savedAt)} · ` : ''}Browser storage{draft.protected ? ' · encrypted' : ''}</span>
           </div>
           <div class="row" style="gap:8px">
             <button class="btn btn-primary" onclick={() => resumeDraft?.(draft.key)}>Resume</button>
-            <button class="iconbtn danger" data-tip="Delete plan" aria-label="Delete plan" onclick={() => confirmDelete(draft.key)}>
+            <button class="iconbtn danger" data-tip="Delete plan — removes it from this browser; doesn't touch any file you've already saved" data-tip-pos="left" aria-label="Delete plan" onclick={() => confirmDelete(draft.key)}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
             </button>
           </div>
         </div>
       {/each}
-
-      <div class="action-grid no-print">
-        <div class="action-card">
-          <p class="soft small">Start building your plan. Your work autosaves to this browser's storage — there's no server, so there's nowhere to upload it to.</p>
-          <button class="btn btn-primary" onclick={handleNewPlan}>Create new plan</button>
-        </div>
-        <div class="action-card">
-          <p class="soft small">Open a <code>.json</code> or <code>.zip</code> backup — or recover an editable plan from a heir <code>start-here.html</code>.</p>
-          <button class="btn btn-secondary" onclick={() => fileInput.click()}>Open existing plan</button>
-        </div>
-      </div>
 
       {#if error}
         <div class="error-slot"><Callout text={error} /></div>
@@ -149,9 +316,9 @@
       <input
         bind:this={fileInput}
         type="file"
-        accept=".json,.zip,.html,.htm,application/json,application/zip,text/html"
+        accept=".json,.zip,.html,application/json,application/zip,text/html"
         hidden
-        onchange={(e) => run(() => loadFromFiles(e.target.files))}
+        onchange={(e) => handleAnyFileInput(e.target.files)}
       />
     </section>
   </main>
@@ -162,9 +329,11 @@
       <span class="tiny">Made with ❤ in Switzerland</span>
       <span class="spacer"></span>
       <nav class="row wrap footer-nav">
-        <a class="tiny" href="/how-to-use/">How to use</a>
-        <a class="tiny" href="/security/">Security</a>
-        <a class="tiny" href="https://miroremias.com/projects/why-i-built-openfirst/" target="_blank" rel="noopener">The story</a>
+        {#if onHttp}
+          <a class="tiny" href="/how-to-use/">How to use</a>
+          <a class="tiny" href="/security/">Security</a>
+          <a class="tiny" href="https://miroremias.com/projects/why-i-built-openfirst/" target="_blank" rel="noopener">The story</a>
+        {/if}
         <a class="tiny" href="https://github.com/mr21free/openfirst.io" target="_blank" rel="noopener">GitHub</a>
         <a class="tiny" href="mailto:info@openfirst.io">Contact</a>
       </nav>
@@ -260,19 +429,15 @@
   .draft:first-of-type { margin-top: 28px; }
   .draft-main { display: flex; flex-direction: column; gap: 3px; }
 
-  /* Action cards */
-  .action-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px;
-    margin-top: 48px;
+  /* Stand-alone launcher buttons, side by side, right under the lede — no
+     boxed cards. Each carries its explainer as a data-tip hover hint instead
+     of visible copy (see app.css's [data-tip] pattern); those hints run a
+     full sentence rather than app.css's usual short label, so this overrides
+     the shared bubble's nowrap/width to actually wrap. */
+  .launcher-actions { display: flex; gap: 14px; margin-top: 22px; }
+  .launcher-actions [data-tip]::after {
+    white-space: normal; width: max-content; max-width: 260px; text-align: left; line-height: 1.4;
   }
-  .action-card {
-    display: flex; flex-direction: column; gap: 16px; text-align: left;
-    background: var(--paper); border: 1px solid var(--rule-soft);
-    border-top: 2px solid var(--accent);
-    border-radius: var(--radius); padding: 22px;
-  }
-  .action-card .btn { margin-top: auto; align-self: center; }
-  .action-card code { background: var(--accent-wash); color: var(--accent-deep); padding: 0 5px; border-radius: 4px; font-size: 0.9em; }
   .btn-secondary {
     background: transparent;
     color: var(--accent-deep);
@@ -291,8 +456,8 @@
   .footer-nav a:hover { color: var(--accent); text-decoration: none; }
   .draft-lock { display: inline-flex; margin-right: 7px; color: var(--ink-soft); vertical-align: -1px; }
 
-  @media (max-width: 760px) {
-    .action-grid { grid-template-columns: 1fr; }
+  @media (max-width: 480px) {
+    .launcher-actions { flex-direction: column; align-items: flex-start; }
   }
   /* 640px/34px — matches .home-main's own mobile breakpoint (28px) plus the
      same +6px leading compensation as the desktop rule above. */

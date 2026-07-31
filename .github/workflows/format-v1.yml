@@ -1,0 +1,50 @@
+name: Format v1 recovery check
+
+# Keeps FORMAT.md's durability claim honest: recover.js (canonical, zero
+# dependencies) and recover.py (secondary worked example) must agree,
+# byte-for-byte, on every checked-in fixture, forever. Neither script has
+# any other dependency to install, so this job needs no `npm ci` at all.
+on:
+  push:
+    paths:
+      - 'app/recover.js'
+      - 'app/recover.py'
+      - 'app/FORMAT.md'
+      - 'app/schema/fixtures/format-v1/**'
+      - '.github/workflows/format-v1.yml'
+  pull_request:
+    paths:
+      - 'app/recover.js'
+      - 'app/recover.py'
+      - 'app/FORMAT.md'
+      - 'app/schema/fixtures/format-v1/**'
+      - '.github/workflows/format-v1.yml'
+  workflow_dispatch: {}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install recover.py's one dependency
+        run: pip install cryptography
+
+      - name: Regenerate fixtures and confirm nothing drifted
+        working-directory: app/schema/fixtures/format-v1
+        run: |
+          node generate.mjs
+          git diff --exit-code -- . \
+            || (echo '::error::Committed fixtures do not match generate.mjs output — regenerate and commit them.' && exit 1)
+
+      - name: Cross-check recover.js against recover.py on every fixture
+        working-directory: app
+        run: npm run test:format-v1

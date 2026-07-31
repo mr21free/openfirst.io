@@ -5,10 +5,17 @@
 
   const cancelable = $derived(prompt?.cancelLabel !== null);
 
+  // Optional checkbox (e.g. "also delete the file on disk"). Resets to its
+  // default whenever a new prompt is shown. Callers that don't set
+  // `prompt.checkbox` are unaffected — `close()` still resolves a plain
+  // boolean for them, exactly as before.
+  let checkboxChecked = $state(false);
+  $effect(() => { checkboxChecked = prompt?.checkbox?.defaultChecked ?? false; });
+
   $effect(() => { if (prompt) return lockBodyScroll(); });
 
-  function close(value) {
-    onResolve?.(value);
+  function close(confirmed) {
+    onResolve?.(prompt?.checkbox ? { confirmed, checked: checkboxChecked } : confirmed);
   }
 
   function onKeydown(e) {
@@ -26,6 +33,12 @@
       <h2 id="modal-title">{prompt.title}</h2>
     </div>
     <p id="modal-message" class="modal-message">{prompt.message}</p>
+    {#if prompt.checkbox}
+      <label class="modal-checkbox">
+        <input type="checkbox" bind:checked={checkboxChecked} />
+        <span>{prompt.checkbox.label}</span>
+      </label>
+    {/if}
     <div class="modal-actions">
       {#if cancelable}
         <button class="btn btn-ghost" onclick={() => close(false)}>{prompt.cancelLabel || 'Cancel'}</button>
@@ -71,6 +84,16 @@
     white-space: pre-line;
     overflow-wrap: anywhere;
   }
+  .modal-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .modal-checkbox input { margin-top: 3px; flex: none; }
   .modal-actions {
     display: flex;
     justify-content: flex-end;

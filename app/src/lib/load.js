@@ -3,7 +3,8 @@
   nothing uploaded. Returns the raw { data, attachmentUrls, blobs } so the store
   can own the editable data and the read-only InheritancePackage view.
 
-  Supports a single lifepackage.json, a whole package folder, or a .zip.
+  Supports a single lifepackage.json, or a .zip package (kept temporarily for
+  backward compatibility with older exports — see CHANGES.md).
   Legacy inheritance.json packages are still accepted.
   Plus the bundled demo sample (works offline in the single-file build).
 */
@@ -110,9 +111,6 @@ export async function loadFromFiles(fileList) {
   const files = Array.from(fileList);
   if (!files.length) throw new Error('No files selected.');
 
-  if (files.length === 1 && /\.html?$/i.test(files[0].name)) {
-    return loadFromReaderHtml(await files[0].text());
-  }
   if (files.length === 1 && /\.zip$/i.test(files[0].name)) {
     return loadFromZip(await files[0].arrayBuffer());
   }
@@ -133,17 +131,7 @@ export async function loadFromFiles(fileList) {
     return { data: obj, attachmentUrls: {}, blobs: new Map() };
   }
 
-  const paths = files.map((f) => f.webkitRelativePath || f.name);
-  const [src, base] = findSourceBase(paths);
-  if (!src) throw new Error(`Could not find "${SOURCE_FILE}" in the dropped files. Legacy "${SOURCE_FILES[1]}" is also supported.`);
-
-  const byPath = new Map();
-  files.forEach((f, i) => byPath.set(norm(paths[i]), f));
-  const data = JSON.parse(await byPath.get(norm(src)).text());
-
-  const fileMap = new Map();
-  for (const [rel, file] of byPath) fileMap.set(rel, () => file); // File is a Blob
-  return buildLoaded(data, fileMap, base);
+  throw new Error('Pick a plan .json or .zip package.');
 }
 
 export function loadFromZip(arrayBuffer) {
@@ -162,60 +150,6 @@ export function loadFromZip(arrayBuffer) {
 export async function decryptAndLoad(envelope, password) {
   const zipBytes = await decryptEnvelope(envelope, password);
   return loadFromZip(zipBytes.buffer);
-}
-
-// ---- Recover an editable plan from a heir reader (start-here.html) ----
-// The reader embeds the published plan as `window.__LIFE_PACKAGE__` (the export
-// escapes every "<" as <, so the embedded JSON is the only thing before the
-// next </script>). Recovers everything the reader holds — i.e. all but drafts.
-
-function b64ToBlob(b64, mime) {
-  const bin = atob(b64);
-  const arr = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-  return new Blob([arr], { type: mime || '' });
-}
-
-const notReader = () => new Error('This file isn’t an OpenFirst reader. Pick a start-here.html exported from this app.');
-
-/** Pull the `window.__LIFE_PACKAGE__` payload out of a reader's HTML text. */
-export function extractReaderPayload(htmlText) {
-  const m = /window\.__LIFE_PACKAGE__\s*=\s*(\{[\s\S]*?)<\/script>/.exec(htmlText || '');
-  if (!m) throw notReader();
-  let payload;
-  try { payload = JSON.parse(m[1].trim().replace(/;$/, '').trim()); }
-  catch { throw new Error('This reader file looks corrupted — its embedded plan couldn’t be read.'); }
-  if (!payload || !payload.reader) throw notReader();
-  return payload;
-}
-
-/** Load a heir reader (.html) back as an editable plan (drafts are not included). */
-export function loadFromReaderHtml(htmlText) {
-  const payload = extractReaderPayload(htmlText);
-  // Password-protected reader: hand the envelope to the same unlock flow as .json.
-  if (payload.encrypted) return needsPassword(payload.encrypted);
-  const data = payload.data;
-  if (!data) throw new Error('This reader has no plan to recover.');
-  normalizeAttachmentLinks(data);
-  normalizePackageFormat(data);
-  stripRawSecrets(data);
-
-  const problems = validatePackage(data);
-  if (problems.length) {
-    const shown = problems.slice(0, 12).map((p) => '• ' + p).join('\n');
-    const more = problems.length > 12 ? `\n• …and ${problems.length - 12} more` : '';
-    throw new Error('This plan can’t be imported — fix these and try again:\n' + shown + more);
-  }
-
-  const attachmentUrls = {};
-  const blobs = new Map();
-  for (const [id, a] of Object.entries(payload.attachments || {})) {
-    if (!a?.b64) continue;
-    const blob = b64ToBlob(a.b64, a.mime || mimeForAttachment(data.attachments?.find((att) => att.id === id)));
-    blobs.set(id, blob);
-    attachmentUrls[id] = URL.createObjectURL(blob);
-  }
-  return { data, attachmentUrls, blobs, fromReader: true };
 }
 
 export async function loadSample() {

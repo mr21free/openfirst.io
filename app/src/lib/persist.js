@@ -3,12 +3,15 @@
   refresh or crash. Entirely on-device (no server). Each plan is stored under
   its own key (data.package.id), so multiple drafts can coexist.
 
-  Two object stores:
+  Three object stores:
    - 'drafts': the plan JSON + savedAt, one record per plan key. Small, cheap
      to rewrite on every autosave.
    - 'blobs': attachment files, one record per `planKey + '\\u0000' + attachmentId`.
      Written only when a file is added/replaced and deleted when it's removed —
      so typing in a big plan never rewrites megabytes of attachments.
+   - 'handles': the File System Access handle the app is autosaving into for a
+     given plan (keyed by planId), so reopening the app can silently
+     reconnect instead of asking again where the plan lives.
 
   (v1 stored the blobs inline in the draft record; loadDraft still reads that
   shape and flags it so the caller can migrate on the next save.)
@@ -21,6 +24,7 @@
 const DB_NAME = 'lifepackage';
 const STORE = 'drafts';
 const BLOBS = 'blobs';
+const HANDLES = 'handles';
 const SEP = '\u0000'; // can't appear in a plan key ↔ unambiguous blob keys
 
 export function persistenceAvailable() {
@@ -31,17 +35,30 @@ export function persistenceAvailable() {
   }
 }
 
+// Cached across calls — re-opening a fresh connection on every autosave adds
+// a real, avoidable round trip right when latency matters most (a flush
+// racing page teardown on refresh/close, see store.svelte.js's
+// flushPendingChanges). A dropped connection (e.g. another tab's version
+// upgrade) just gets reopened on the next call.
+let dbPromise = null;
+
 function openDb() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 2);
+  if (dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 3);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
       if (!db.objectStoreNames.contains(BLOBS)) db.createObjectStore(BLOBS);
+      if (!db.objectStoreNames.contains(HANDLES)) db.createObjectStore(HANDLES);
     };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      req.result.onclose = () => { dbPromise = null; };
+      resolve(req.result);
+    };
+    req.onerror = () => { dbPromise = null; reject(req.error); };
   });
+  return dbPromise;
 }
 
 function run(storeName, mode, fn) {
@@ -138,8 +155,9 @@ export async function loadDraft(key = 'current') {
 }
 
 /** Returns all saved drafts (no blobs, no decryption) as
- *  [{ key, data, savedAt, enc, title }] — `enc`/`title` are set for
- *  passphrase-protected drafts, whose plan JSON is not readable here. */
+ *  [{ key, data, savedAt, enc, title, slots }] — `enc`/`title` are set for
+ *  the old single-passphrase scheme, `slots` for the current multi-passphrase
+ *  one (slotcrypto.js); either way the plan JSON isn't readable here. */
 export async function loadAllDrafts() {
   if (!persistenceAvailable()) return [];
   try {
@@ -153,8 +171,8 @@ export async function loadAllDrafts() {
         const keys = keysReq.result || [];
         const vals = valsReq.result || [];
         resolve(keys.map((k, i) => {
-          const { data, savedAt, enc, title } = vals[i] || {};
-          return { key: k, data, savedAt, enc, title };
+          const { data, savedAt, enc, title, slots } = vals[i] || {};
+          return { key: k, data, savedAt, enc, title, slots };
         }));
       };
       tx.onerror = () => reject(tx.error);
@@ -170,6 +188,71 @@ export async function clearDraft(key = 'current') {
   try {
     await run(STORE, 'readwrite', (s) => s.delete(key));
     await run(BLOBS, 'readwrite', (s) => s.delete(blobRange(key)));
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Remember the file handle a plan autosaves into, keyed by planId — so
+ * reopening the app can silently try to reconnect (see store.svelte.js).
+ * `fileRevision` is the revision most recently and successfully written to
+ * that file; kept here (not just in memory) so a reload knows whether the
+ * file is caught up or behind before a single new edit happens.
+ * `protected` mirrors whether the file currently has passphrase slots —
+ * recorded here (not just derived from the local scratch draft, which is
+ * only written on a real edit) so the launcher's lock icon is correct
+ * immediately, even for a plan whose file this browser has never edited.
+ */
+export async function putFileHandle(planId, name, handle, fileRevision = 0, protectedFlag = false) {
+  if (!persistenceAvailable() || !planId) return false;
+  try {
+    await run(HANDLES, 'readwrite', (s) => s.put({ name, handle, fileRevision, protected: protectedFlag, lastOpenedAt: Date.now() }, planId));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function getFileHandle(planId) {
+  if (!persistenceAvailable() || !planId) return null;
+  try {
+    return (await run(HANDLES, 'readonly', (s) => s.get(planId))) || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Returns every remembered file connection as
+ *  [{ planId, name, handle, fileRevision, lastOpenedAt }] — `handle` is `null`
+ *  for a plan homed via the no-File-System-Access fallback download path.
+ *  Drives the launcher's file-backed "recent plans" list (see App.svelte). */
+export async function getAllFileHandles() {
+  if (!persistenceAvailable()) return [];
+  try {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(HANDLES, 'readonly');
+      const s = tx.objectStore(HANDLES);
+      const keysReq = s.getAllKeys();
+      const valsReq = s.getAll();
+      tx.oncomplete = () => {
+        const keys = keysReq.result || [];
+        const vals = valsReq.result || [];
+        resolve(keys.map((k, i) => ({ planId: k, ...vals[i] })));
+      };
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  } catch {
+    return [];
+  }
+}
+
+export async function deleteFileHandle(planId) {
+  if (!persistenceAvailable() || !planId) return;
+  try {
+    await run(HANDLES, 'readwrite', (s) => s.delete(planId));
   } catch {
     /* ignore */
   }

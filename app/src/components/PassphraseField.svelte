@@ -2,8 +2,8 @@
   /*
     The app's ONE password/passphrase input pattern (FreedomClock lineage):
     in-field show + copy icons, a strength bar, and a "Suggest a passphrase"
-    link. Used by the Export dialog and Settings → Draft protection, so the
-    two always look and behave the same.
+    link. Used wherever the plan is protected with a passphrase (Settings →
+    Plan protection, add/rekey a slot).
   */
   import { generatePassphrase, estimateBits, strength } from '../lib/passphrase.js';
   import Callout from './Callout.svelte';

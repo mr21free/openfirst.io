@@ -13,9 +13,10 @@
   are already in dist/ and shared by every page.
 */
 
-import { mkdirSync, copyFileSync, renameSync, existsSync } from 'node:fs';
+import { mkdirSync, copyFileSync, renameSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { APP_VERSION } from '../src/lib/version.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = resolve(root, 'dist');
@@ -41,4 +42,21 @@ for (const dir of ['build', 'open', 'demo']) {
 renameSync(app, resolve(dist, 'build', 'index.html')); // last copy wins; root freed
 
 copyFileSync(home, resolve(dist, 'index.html'));
-console.log('postbuild: / (home) · /build/ · /open/ · /demo/ ready');
+
+// Stamp the marketing homepage's "Download the app" filename with the real
+// version — the linked URL itself stays stable across releases (see below),
+// only the suggested save-as name needs the version baked in.
+const homeOut = resolve(dist, 'index.html');
+writeFileSync(homeOut, readFileSync(homeOut, 'utf8').replace(/__APP_VERSION__/g, APP_VERSION));
+
+// A stable, permanent download of the app itself — the built app is already
+// one self-contained file (see the /build/ copy above), so "downloading the
+// app" is just handing out that same file under its own stable URL. Kept
+// separate from /build/ (which is a live app boot mode, not a download).
+mkdirSync(resolve(dist, 'download'), { recursive: true });
+copyFileSync(resolve(dist, 'build', 'index.html'), resolve(dist, 'download', 'openfirst.html'));
+
+// The one thing the in-app "check for updates" button ever fetches.
+writeFileSync(resolve(dist, 'version.json'), JSON.stringify({ version: APP_VERSION }));
+
+console.log(`postbuild: / (home) · /build/ · /open/ · /demo/ · /download/ ready — v${APP_VERSION}`);

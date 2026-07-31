@@ -1,95 +1,9 @@
 /*
-  Export the working plan to a durable, on-disk package — a .zip the Reader can
-  open again (and that's readable without the app: plain JSON + Markdown + files).
-  Built entirely in the browser with fflate; nothing is uploaded.
+  Shared helpers for building the plan file — used by planfile.js when it
+  writes the container-v1 .html (both live autosave and the front door).
 */
 
-import { zipSync, strToU8 } from 'fflate';
-import { encryptToEnvelope } from './crypto.js';
-import { APP_NAME, PACKAGE_SCHEMA, SOURCE_FILE, packageForExport } from './format.js';
-
-function slugDate() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-/**
- * Heir-facing view of the plan: drop every guide flagged `draft`, and any guide
- * group left with no published guides. The owner's working copy is untouched;
- * this only shapes what gets exported.
- */
-function publishedOnly(data) {
-  const guides = (data.guides || []).filter((g) => !g.draft);
-  const usedGroups = new Set(guides.map((g) => g.group).filter(Boolean));
-  const guide_groups = (data.guide_groups || []).filter((g) => usedGroups.has(g.id));
-  const {
-    readiness_checks: _checks,
-    readiness_runs: _runs,
-    ...rest
-  } = data || {};
-  return { ...rest, guides, guide_groups };
-}
-
-/** How many guides would be withheld from an heir export (for owner messaging). */
-export function draftCount(data) {
-  return (data?.guides || []).filter((g) => g.draft).length;
-}
-
-function packageFolderName(data, name) {
-  const t = (name || data.package?.title || 'life-package').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '');
-  return `${t || 'life-package'}_${slugDate()}`;
-}
-
-function startHereText(data) {
-  const title = data.package?.title || 'a plan';
-  return [
-    'START HERE',
-    '==========',
-    '',
-    `This folder is ${title}. Take your time.`,
-    '',
-    'Read it without any app: open the guides in this package as plain text.',
-    `Or open it with the ${APP_NAME} reader and drop this folder / the .zip in.`,
-    '',
-    `The machine-readable source of truth is "${SOURCE_FILE}" (open format,`,
-    `schema: ${PACKAGE_SCHEMA}), so this plan stays readable for many years.`,
-    '',
-    `Last updated: ${data.package?.updated || slugDate()}`,
-    ''
-  ].join('\n');
-}
-
-function manifest(data) {
-  return {
-    schema: PACKAGE_SCHEMA,
-    package_id: data.package?.id,
-    title: data.package?.title,
-    updated: data.package?.updated,
-    languages: data.package?.languages,
-    default_language: data.package?.default_language,
-    generator: `${APP_NAME} (editor export)`,
-    files: { source: SOURCE_FILE, human_entry: 'START_HERE.txt', attachments_dir: 'attachments/' }
-  };
-}
-
-/** Build the package as a zip Uint8Array. `blobs` is Map<attachmentId, Blob>. */
-export async function buildPackageZip(data, blobs, name) {
-  const root = packageFolderName(data, name);
-  const out = packageForExport(data);
-  const files = {};
-  files[`${root}/${SOURCE_FILE}`] = strToU8(JSON.stringify(out, null, 2) + '\n');
-  files[`${root}/START_HERE.txt`] = strToU8(startHereText(out));
-  files[`${root}/manifest.json`] = strToU8(JSON.stringify(manifest(out), null, 2) + '\n');
-
-  for (const att of out.attachments || []) {
-    const blob = blobs.get(att.id);
-    if (!blob || !att.path) continue;
-    const bytes = new Uint8Array(await blob.arrayBuffer());
-    files[`${root}/${att.path.replace(/^\.?\//, '')}`] = bytes;
-  }
-  return { zip: zipSync(files, { level: 6 }), name: `${root}.zip` };
-}
-
-function triggerDownload(blob, name) {
+export function triggerDownload(blob, name) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -99,22 +13,6 @@ function triggerDownload(blob, name) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
-
-export async function exportPackageZip(data, blobs, name) {
-  const built = await buildPackageZip(data, blobs, name);
-  triggerDownload(new Blob([built.zip], { type: 'application/zip' }), built.name);
-}
-
-/** Export password-protected: the package .zip encrypted into our open envelope
- *  (lifepackage-encrypted/v1) — which the Reader can unlock with the password. */
-export async function exportEncryptedPackage(data, blobs, password, hint = '', name) {
-  const { zip } = await buildPackageZip(data, blobs, name);
-  const envelope = await encryptToEnvelope(zip, password, { hint });
-  const fileName = `${packageFolderName(data, name)}.encrypted.json`;
-  triggerDownload(new Blob([JSON.stringify(envelope, null, 2) + '\n'], { type: 'application/json' }), fileName);
-}
-
-// ---- Self-contained reader (one .html the heir just double-clicks) ----
 
 function b64FromBytes(bytes) {
   let s = '';
@@ -136,7 +34,7 @@ function mimeForAttachment(att) {
   return explicit;
 }
 
-async function blobToB64(blob, att = null) {
+export async function blobToB64(blob, att = null) {
   const bytes = new Uint8Array(await blob.arrayBuffer());
   return { mime: blob.type || mimeForAttachment(att) || '', b64: b64FromBytes(bytes) };
 }
@@ -148,18 +46,18 @@ const READING_FONT_FAMILY = {
   atkinson: 'Atkinson Hyperlegible', serif: 'Source Serif 4', literata: 'Literata', lora: 'Lora'
 };
 
-/** Which font families the heir reader actually needs: the two UI faces, plus
- *  the plan's chosen guide font. Everything else can be dropped from the export. */
-function fontsToKeep(data) {
+/** Which font families the reader actually needs: the two UI faces, plus
+ *  the plan's chosen guide font. Everything else can be dropped from the file. */
+export function fontsToKeep(data) {
   const keep = new Set(['IBM Plex Mono', 'IBM Plex Sans']); // UI voices — always present
   const fam = READING_FONT_FAMILY[data?.package?.reading_font];
   if (fam) keep.add(fam);
   return keep;
 }
 
-/** Drop @font-face blocks (and their inlined base64) for families the heir
- *  doesn't use — the read-only export carries only the fonts it renders. */
-function stripUnusedFonts(docEl, keep) {
+/** Drop @font-face blocks (and their inlined base64) for families the plan
+ *  doesn't use — the file carries only the fonts it renders. */
+export function stripUnusedFonts(docEl, keep) {
   for (const style of docEl.querySelectorAll('style')) {
     const css = style.textContent;
     if (!css || !css.includes('@font-face')) continue;
@@ -172,78 +70,18 @@ function stripUnusedFonts(docEl, keep) {
   }
 }
 
-/** A self-contained reader needs a fully inlined page to clone. In production
- *  the running page already is that (everything bundled by viteSingleFile).
+/** The plan file needs a fully inlined page to clone. In production the
+ *  running page already is that (everything bundled by viteSingleFile).
  *  In dev, the page is loaded over the network (/@vite/client, /src/main.js)
  *  and can't stand alone — fetch a real in-memory production build from the
  *  dev server instead (see `readerTemplateDevServer` in vite.config.js) so
- *  export works out of the box without a manual `npm run build`. */
-async function readerTemplateRoot() {
+ *  the file builds out of the box without a manual `npm run build`. */
+export async function readerTemplateRoot() {
   if (!document.querySelector('script[src]')) return document.documentElement;
   const res = await fetch('/__reader-template.html');
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
-    throw new Error(`Could not build the heir reader (dev server): ${detail || res.statusText}`);
+    throw new Error(`Could not build the plan file (dev server): ${detail || res.statusText}`);
   }
   return new DOMParser().parseFromString(await res.text(), 'text/html').documentElement;
-}
-
-/** Clone the reader template and inject the package payload so the file boots
- *  straight into a read-only reader. Everything is already inlined. */
-async function buildReaderHtml(payload, keepFonts = null) {
-  const docEl = (await readerTemplateRoot()).cloneNode(true);
-  docEl.removeAttribute('data-theme'); // let the embedded plan's theme decide
-  if (keepFonts) stripUnusedFonts(docEl, keepFonts);
-  if (docEl.querySelector('script[src]')) {
-    throw new Error('The built reader template still references external scripts — this should not happen.');
-  }
-  const app = docEl.querySelector('#app');
-  if (app) app.innerHTML = ''; // boot fresh, not from the current render
-  // Favicon links point at paths that don't exist beside a standalone file.
-  docEl.querySelectorAll('link[rel*="icon"], link[rel="apple-touch-icon"]').forEach((l) => l.remove());
-  const head = docEl.querySelector('head');
-  const json = JSON.stringify(payload).replace(/</g, '\\u003c'); // stay inside the <script> tag
-  const s = document.createElement('script');
-  s.textContent = `window.__LIFE_PACKAGE__=${json};`;
-  head.insertBefore(s, head.firstChild);
-  return '<!doctype html>\n' + docEl.outerHTML;
-}
-
-/**
- * Export a single, self-contained `start-here.html` for the heir: the reader
- * with the plan baked in, read-only. If `password` is given, the embedded plan
- * is the encrypted envelope and the heir unlocks it on open.
- */
-export async function exportSelfContainedReader(data, blobs, { password = '', hint = '', name } = {}) {
-  // The heir reader (.html) is the published view: draft guides are dropped here
-  // only. The .zip and encrypted .json exports keep everything (owner's record).
-  const heir = packageForExport(publishedOnly(data));
-  let payload;
-  if (password) {
-    const { zip } = await buildPackageZip(heir, blobs, name);
-    const envelope = await encryptToEnvelope(zip, password, { hint });
-    payload = { reader: true, v: 1, encrypted: envelope };
-  } else {
-    const out = name && heir.package ? { ...heir, package: { ...heir.package, title: name } } : heir;
-    const attachments = {};
-    for (const att of out.attachments || []) {
-      const blob = blobs.get(att.id);
-      if (blob) attachments[att.id] = await blobToB64(blob, att);
-    }
-    payload = { reader: true, v: 1, data: out, attachments };
-  }
-  // Bundle only the fonts the heir reader renders (UI mono + the chosen guide
-  // font) — computed from the original data even when the payload is encrypted.
-  const html = await buildReaderHtml(payload, fontsToKeep(data));
-  // Same <title>_<date> pattern as the .zip and .encrypted.json exports (so
-  // multiple plans don't collide/overwrite each other on disk), with the
-  // "start-here" cue kept intact for a heir who doesn't know what to look for.
-  triggerDownload(new Blob([html], { type: 'text/html' }), `${packageFolderName(data, name)}_start-here.html`);
-}
-
-/** Export just the JSON source (no attachments) — quick backup. */
-export function exportJson(data) {
-  const out = packageForExport(data);
-  const name = `${packageFolderName(out)}.${SOURCE_FILE}`;
-  triggerDownload(new Blob([JSON.stringify(out, null, 2) + '\n'], { type: 'application/json' }), name);
 }

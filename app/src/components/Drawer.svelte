@@ -13,6 +13,7 @@
   import StatusIcon from './StatusIcon.svelte';
   import TrashIcon from './TrashIcon.svelte';
   import { lockBodyScroll } from '../lib/scrollLock.js';
+  import { printAccessPath as printAccessPathShared } from '../lib/printAccessPath.js';
 
   let { pkg, id, onOpen, onClose, onBack = null, canBack = false, store = null, editing = false, showReadiness = false, onDelete = null, onTag = null, onView = null, requestConfirm = null, requestNotice = null } = $props();
 
@@ -99,42 +100,8 @@
   });
   const pathSteps = $derived(e?.kind === 'person' ? (obj?.access_path?.steps || []) : []);
 
-  // The envelope insert: a printable one-pager of this person's access path.
   function printAccessPath() {
-    const w = window.open('', '_blank', 'width=820,height=900');
-    if (!w) return;
-    const name = escapeHtml(obj.name || 'you');
-    const owner = escapeHtml(pkg.owner?.name || 'the owner');
-    const updated = escapeHtml(pkg.meta?.updated || '');
-    const stepsHtml = pathSteps.map((st, i) => {
-      const ref = st.ref_id && pkg.entity(st.ref_id) ? `<div class="ref">→ ${escapeHtml(pkg.name(st.ref_id))}</div>` : '';
-      const photo = st.photo_id && pkg.attachmentUrls[st.photo_id]
-        ? `<img src="${escapeHtml(pkg.attachmentUrls[st.photo_id])}" alt="" />` : '';
-      return `<li><span class="n">${i + 1}</span><div class="b"><div class="t">${escapeHtml(st.text || '')}</div>${ref}${photo}</div></li>`;
-    }).join('');
-    w.document.write(`<!doctype html>
-      <html><head><title>For ${name}</title>
-      <style>
-        body { font-family: ui-monospace, Menlo, monospace; color: #222; max-width: 660px; margin: 40px auto; padding: 0 24px; line-height: 1.55; }
-        .eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #666; }
-        h1 { font-weight: 300; font-size: 30px; margin: 8px 0 4px; }
-        .calm { color: #555; margin: 10px 0 26px; }
-        ol { list-style: none; padding: 0; margin: 0; }
-        li { display: flex; gap: 14px; padding: 14px 0; border-top: 1px solid #ddd; page-break-inside: avoid; }
-        .n { flex: none; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid #3C6FB2; color: #3C6FB2; font-weight: 600; font-size: 13px; }
-        .t { font-size: 15px; }
-        .ref { color: #3C6FB2; font-size: 13px; margin-top: 4px; }
-        img { max-width: 320px; max-height: 220px; display: block; margin-top: 8px; border: 1px solid #ddd; }
-        .foot { margin-top: 28px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 12px; color: #777; }
-      </style></head>
-      <body onload="setTimeout(() => { window.focus(); window.print(); }, 150)">
-        <div class="eyebrow">Open only if something has happened to ${owner}</div>
-        <h1>For ${name}</h1>
-        <p class="calm">Take your time. Everything important is designed to wait. When you are ready, follow these steps in order — and if you are unsure at any point, stop and call the person this plan names first.</p>
-        <ol>${stepsHtml}</ol>
-        <div class="foot">Last updated: ${updated} · Always use the copy with the newest date.</div>
-      </body></html>`);
-    w.document.close();
+    printAccessPathShared({ person: obj, pkg });
   }
 
   const testerName = (run) => run.person_id ? pkg.name(run.person_id) : 'Admin';

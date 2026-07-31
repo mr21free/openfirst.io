@@ -1,13 +1,14 @@
 // Draft / publish guides: a guide can be flagged draft (kept in the working
-// plan, marked in the tree) and is then excluded — along with any group it
-// would leave empty — from heir-facing exports.
+// plan, marked in the tree). Since the container-v1 plan .html is now the
+// only real output (no more separate heir-facing export), draft guides ride
+// along in the file's data just like everything else — but they must never
+// render anywhere a reader (owner previewing, or a real heir) can see them:
+// not in the nav, not directly by id, not in search results. This file
+// covers the toggle/editing-side marking first, then the read-side hiding.
 
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { unzipSync, strFromU8 } from 'fflate';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FILE = 'file://' + resolve(__dirname, '../dist/build/index.html');
@@ -16,12 +17,9 @@ const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const results = [];
 const ok = (n, c) => results.push([c ? 'PASS' : 'FAIL', n]);
 
-const dir = mkdtempSync(resolve(tmpdir(), 'lp-draft-'));
 const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--no-sandbox', '--allow-file-access-from-files'] });
 const page = await browser.newPage();
 await page.setViewport({ width: 1280, height: 900 });
-const cdp = await page.target().createCDPSession();
-await cdp.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: dir, eventsEnabled: true });
 const errors = [];
 page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
 page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
@@ -70,52 +68,40 @@ try {
   await openGuide('New Guide (1)'); await pause(); await toggleDraft(); await pause();
   ok('nav marks every draft guide (draft icon, both modes)', await page.evaluate(() => document.querySelectorAll('nav .navrow.is-draft .draft-mark svg').length === 2));
 
-  // Export the self-contained heir reader (no password) and inspect the baked-in payload.
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => (b.getAttribute('aria-label') || '') === 'Export')?.click());
-  await page.waitForFunction(() => document.body.innerText.includes('Save a copy to disk'), { timeout: 5000 });
-  ok('export dialog notes the withheld drafts', await page.evaluate(() => /draft.*not included/i.test(document.querySelector('[role="dialog"] .reader-note')?.textContent || '')));
-  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].find((b) => b.textContent.trim() === 'Export')?.click());
+  // Give the still-draft 'New Guide' some distinctive body text, so we can
+  // prove search can't surface it either, not just the nav.
+  await openGuide('New Guide'); await pause();
+  await page.evaluate(() => {
+    const ed = document.querySelector('main .editor-host [contenteditable="true"]');
+    if (ed) { ed.focus(); document.execCommand('insertText', false, 'zzz-unique-draft-marker-zzz'); }
+  });
+  await pause(300);
 
-  // Filename now carries the plan title + date (like the .zip/.encrypted.json
-  // exports), so match by suffix rather than the old exact name.
-  const findOut = () => readdirSync(dir).find((f) => f.endsWith('_start-here.html'));
-  let waited = 0; while (!findOut() && waited < 8000) { await pause(150); waited += 150; }
-  const readerFile = findOut();
-  ok('start-here.html produced', !!readerFile);
+  // Switch to the reading side (owner preview) — 'New Guide' and 'New Guide
+  // (1)' are draft, 'New Guide (2)' is published.
+  await click('Read'); await pause(300);
+  const navTitles = await page.evaluate(() => [...document.querySelectorAll('nav .navlink, nav .navlink-child')].map((b) => b.textContent.trim()));
+  ok('draft guides are gone from the reading nav', !navTitles.includes('New Guide') && !navTitles.includes('New Guide (1)'));
+  ok('the published guide is still there', navTitles.includes('New Guide (2)'));
 
-  const html = readerFile ? readFileSync(resolve(dir, readerFile), 'utf8') : '';
-  const m = html.match(/window\.__LIFE_PACKAGE__=(\{.*?\});<\/script>/s);
-  let payload = null; try { payload = JSON.parse(m[1]); } catch (_) {}
-  const guides = payload?.data?.guides || [];
-  const groups = payload?.data?.guide_groups || [];
-  ok('export omits draft guides', guides.length === 2 && guides.every((g) => !g.draft));
-  ok('export keeps published guides (Start here + New Guide (2))', guides.some((g) => g.title === 'Start here') && guides.some((g) => g.title === 'New Guide (2)'));
-  ok('export drops the now-empty group + leaves no orphan group refs', !groups.some((g) => g.name === 'New group') && guides.every((g) => !g.group || groups.some((x) => x.id === g.group)));
+  // Search must not surface a draft guide either — by name or by its content.
+  await page.evaluate(() => { document.querySelector('.gs-input').focus(); document.querySelector('.gs-input').value = 'New Guide'; document.querySelector('.gs-input').dispatchEvent(new Event('input', { bubbles: true })); });
+  await pause(250);
+  const searchNames = await page.evaluate(() => [...document.querySelectorAll('.gs-row:not(.gs-all)')].map((r) => r.textContent.trim()));
+  ok('search does not surface a draft guide by name', !searchNames.some((t) => t.includes('New Guide') && !t.includes('New Guide (2)')));
+  await page.evaluate(() => { document.querySelector('.gs-input').value = 'zzz-unique-draft-marker-zzz'; document.querySelector('.gs-input').dispatchEvent(new Event('input', { bubbles: true })); });
+  await pause(250);
+  ok('search does not surface a draft guide by its content', await page.evaluate(() => document.querySelectorAll('.gs-row').length === 0));
+  await page.evaluate(() => document.querySelector('.gs-input').blur());
 
-  // A successful export hands off to the review-reminder follow-up dialog — dismiss it.
-  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].find((b) => b.textContent.trim() === 'No thanks')?.click());
-
-  // The plain .zip (owner's record) must KEEP drafts and their group.
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => (b.getAttribute('aria-label') || '') === 'Export')?.click());
-  await page.waitForFunction(() => document.body.innerText.includes('Save a copy to disk'), { timeout: 5000 });
-  await page.evaluate(() => { const cb = [...document.querySelectorAll('[role="dialog"] .toggle input')][0]; if (cb && cb.checked) cb.click(); }); // turn OFF self-contained reader
-  await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] button')].find((b) => b.textContent.trim() === 'Export')?.click());
-  let zipName = null, zw = 0;
-  while (!(zipName = readdirSync(dir).find((f) => f.endsWith('.zip'))) && zw < 8000) { await pause(150); zw += 150; }
-  ok('.zip produced', !!zipName);
-  let zguides = [], zgroups = [];
-  if (zipName) {
-    const files = unzipSync(new Uint8Array(readFileSync(resolve(dir, zipName))));
-    const key = Object.keys(files).find((k) => k.endsWith('lifepackage.json'));
-    const zdata = JSON.parse(strFromU8(files[key]));
-    zguides = zdata.guides || []; zgroups = zdata.guide_groups || [];
-  }
-  ok('.zip keeps draft guides (all 4) ', zguides.length === 4 && zguides.filter((g) => g.draft).length === 2);
-  ok('.zip keeps the all-draft group', zgroups.some((g) => g.name === 'New group'));
+  // Back to editing: the draft guide and its content must still be intact —
+  // hiding is view-only, nothing was actually removed from the plan.
+  await click('Edit'); await pause(300);
+  ok('the draft guide (and its content) survives the round trip', await page.evaluate(() => [...document.querySelectorAll('nav .navrow input')].some((i) => i.value === 'New Guide')));
 
   ok('no runtime errors', errors.length === 0);
 } catch (e) { ok('flow threw: ' + e.message, false); }
-finally { await browser.close(); rmSync(dir, { recursive: true, force: true }); }
+finally { await browser.close(); }
 
 console.log('\n=== Guide draft / publish ===');
 for (const [s, n] of results) console.log(`  [${s}] ${n}`);

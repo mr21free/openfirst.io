@@ -10,9 +10,9 @@
   import Icon from './Icon.svelte';
   import TrashIcon from './TrashIcon.svelte';
   import logo from '../assets/logo.svg';
-  import ExportDialog from './ExportDialog.svelte';
   import ExportSizeBanner from './ExportSizeBanner.svelte';
   import StalenessBanner from './StalenessBanner.svelte';
+  import FileSaveBanner from './FileSaveBanner.svelte';
   import AudienceGate from './AudienceGate.svelte';
   import GlobalSearch from './GlobalSearch.svelte';
   import ReadinessView from './ReadinessView.svelte';
@@ -21,8 +21,12 @@
   import { langValue } from '../lib/package.js';
   import { APP_DOMAIN } from '../lib/format.js';
   import { lockBodyScroll } from '../lib/scrollLock.js';
+  import { printAccessPath } from '../lib/printAccessPath.js';
 
-  let { store, onClose, onLock = null, readOnly = false, initialAudience = null, initialAdmin = false, initialView = null, initialDryRunPerson = null } = $props();
+  let {
+    store, onClose, onLock = null, readOnly = false, initialAudience = null, initialAdmin = false,
+    initialView = null, initialDryRunPerson = null, isDemo = false, pendingReconnectHandle = null, reconnectFile = null
+  } = $props();
 
   const pkg = $derived(store.pkg);
   const editing = $derived(!readOnly && store.mode === 'edit');
@@ -63,12 +67,30 @@
     const el = target instanceof Element ? target : null;
     return !!el?.closest('input, textarea, select, [contenteditable="true"]');
   }
+  // The access-path page is a heir's very first screen, full of in-app-only
+  // chrome (the "Continue to the guides" button, the accent side rule). Its
+  // print output should be the same calm envelope insert Drawer's "Print the
+  // envelope insert" button produces for this same person, not a printout of
+  // that chrome — so it's routed to the shared popup instead of window.print().
+  function printCurrent() {
+    if (view === 'access') {
+      printAccessPath({ person: pkg.entity(audience)?.obj, pkg });
+      return;
+    }
+    window.print();
+  }
   function onKeydown(e) {
     if (readOnly || showGate) return;
     // Ctrl+E (or Cmd+E) toggles edit mode.
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'e') {
       e.preventDefault();
       toggleEdit();
+      return;
+    }
+    // Ctrl+P (or Cmd+P) prints — same conditions as the Print button itself.
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'p') {
+      e.preventDefault();
+      if (!showGate && !editing && !noGuidesForAudience) printCurrent();
       return;
     }
     if (isTextEditingTarget(e.target)) return;
@@ -217,14 +239,19 @@
   function countLabel(count, singular, plural = `${singular}s`) {
     return `${count} ${count === 1 ? singular : plural}`;
   }
-  let showExport = $state(false);
   let fileInput = $state(null);
   let focusNewGuideTitle = $state(false);
 
   async function onFile(e) {
     const files = [...(e.target.files || [])];
     let lastId = null;
-    for (const f of files) lastId = await store.addAttachmentFile(f);
+    try {
+      for (const f of files) lastId = await store.addAttachmentFile(f);
+    } catch (err) {
+      await requestNotice({ title: 'Can’t add this file', message: err?.message || String(err) });
+      e.target.value = '';
+      return;
+    }
     if (files.length === 1 && lastId) { setDrawer(lastId); }
     else if (files.length > 1) { await tick(); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }
     e.target.value = '';
@@ -233,7 +260,13 @@
   async function uploadGuideMedia(guideId, file) {
     const kind = isImageFile(file) ? 'img' : isMp4File(file) ? 'video' : null;
     if (!kind) return null;
-    const id = await store.addAttachmentFile(file);
+    let id;
+    try {
+      id = await store.addAttachmentFile(file);
+    } catch (err) {
+      await requestNotice({ title: 'Can’t add this file', message: err?.message || String(err) });
+      return null;
+    }
     const att = store.data?.attachments?.find((a) => a.id === id);
     if (att) {
       if (!Array.isArray(att.guide_ids)) att.guide_ids = [];
@@ -259,6 +292,9 @@
   // popover anchored inside it gets clipped. Fixed-position + a rect computed
   // on open sidesteps that entirely.
   let newMenuPos = $state({ top: 0, left: 0 });
+  // Stamped once, not reactive — "today" for whatever moment this reader was
+  // opened, shown only in print output (see .print-date) as a "printed on" mark.
+  const printDate = new Date().toISOString().slice(0, 10);
   let query = $state('');
   let filters = $state({});  // faceted filters per list: { facetKey: [values] }
   let mapFilters = $state({}); // Map's own tag filter, kept separate so switching lists doesn't clear it and vice versa
@@ -592,7 +628,12 @@
   const canShowReadinessData = $derived(!readOnly && !dryRun && (editing || audience === null));
 
   const attachments = $derived(pkg.attachmentsOrdered());
-  const currentGuide = $derived(view === 'start' ? homeGuide : pkg.guides.find((g) => g.id === view) || null);
+  // Resolved from the same filtered list the nav is built from (not the raw
+  // pkg.guides) once we're not editing — otherwise a draft guide could still
+  // be reached by setting `view` to its id directly (a stale link, a typed
+  // hash), bypassing the nav entirely even though it's meant to be invisible
+  // to a reader.
+  const currentGuide = $derived(view === 'start' ? homeGuide : (editing ? pkg.guides : guides).find((g) => g.id === view) || null);
   // Language only matters where there are translations — i.e. when viewing a guide.
   const inGuideView = $derived(!!currentGuide);
   // Names the current section for the mobile off-canvas nav's toggle bar.
@@ -608,6 +649,12 @@
     : view === 'access' ? 'Your access path'
     : 'Menu'
   );
+  // The browser's print/save-as-PDF dialog suggests document.title as the
+  // filename — without this every printed page would save as the same
+  // static app title no matter which view/guide was on screen.
+  $effect(() => {
+    document.title = mobileNavLabel;
+  });
   // Icon shown before the toggle bar's label — matches the icon each section
   // uses in the nav below. Guides carry their own emoji in the title, so they
   // get none; access path reuses the clock glyph from its own nav row.
@@ -746,8 +793,11 @@
   }
   // A dry run only makes sense for people who actually have questions/tasks to
   // walk through — offered as a pick-a-person list, independent of "Reading as".
+  // Uses the full people list (not the role-based `audiences`/`gateRest`), since
+  // someone can have checks/tasks assigned without holding any role.
+  const dryRunCandidates = $derived(pkg.peopleOrdered().filter((p) => !primaryIds.includes(p.id)));
   const dryRunPrimary = $derived(gatePrimary.filter((p) => applicableReadinessChecks(p.id).length > 0));
-  const dryRunRest = $derived(gateRest.filter((p) => applicableReadinessChecks(p.id).length > 0));
+  const dryRunRest = $derived(dryRunCandidates.filter((p) => applicableReadinessChecks(p.id).length > 0));
   const anyDryRunPeople = $derived(dryRunPrimary.length > 0 || dryRunRest.length > 0);
   function cancelDryRun() {
     if (dryRunId) store.deleteReadinessRun(dryRunId);
@@ -780,7 +830,14 @@
   // what a pick / "see all" does. ----
   let gquery = $state('');
   const KIND_LABEL = { guide: 'Guide', person: 'Person', item: 'Item', location: 'Location', attachment: 'File', role: 'Role', readiness: 'Readiness' };
-  const visibleSearch = (results) => canShowReadinessData ? results : results.filter((r) => r.kind !== 'readiness');
+  // pkg.search() scans every guide's raw content (drafts included) purely to
+  // rank matches — the actual leak risk is showing a draft's title/entry in
+  // the results list itself, so drop those here rather than inside search().
+  const visibleSearch = (results) => results.filter((r) => {
+    if (r.kind === 'readiness' && !canShowReadinessData) return false;
+    if (r.kind === 'guide' && !editing && pkg.byId.get(r.id)?.obj?.draft) return false;
+    return true;
+  });
   const searchResults = $derived(view === 'search' ? visibleSearch(pkg.search(gquery, 50)) : []);
   function pickResult(id) { openEntity(id); }                                    // guide → navigate; entity → drawer
   function goSearch() { if (gquery.trim()) { view = 'search'; closeDrawer(); window.scrollTo({ top: 0 }); } }
@@ -868,7 +925,7 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<div class="shell with-actions" style="--reading-font: {readingFont};">
+<div class="shell with-actions" class:has-filestatus={editing} style="--reading-font: {readingFont};">
   {#if editing}
     <StalenessBanner {store} onReview={() => go('readiness')} />
     <ExportSizeBanner {store} />
@@ -935,14 +992,10 @@
               <span>Edit</span>
             {/if}
           </button>
-          <button class="abtn" onclick={() => (showExport = true)} aria-label="Export">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-            <span>Export</span>
-          </button>
         {/if}
         <!-- Printing an edit surface produces a broken page — print reads the
              view; nothing to print before a person is chosen either. -->
-        <button class="abtn" disabled={showGate || editing || noGuidesForAudience} data-tip={showGate ? "Choose who's reading first" : (editing ? 'Switch to view mode to print' : (noGuidesForAudience ? 'No guides for this person — nothing to print' : undefined))} data-tip-pos="right" onclick={() => window.print()} aria-label="Print">
+        <button class="abtn" disabled={showGate || editing || noGuidesForAudience} data-tip={showGate ? "Choose who's reading first" : (editing ? 'Switch to view mode to print' : (noGuidesForAudience ? 'No guides for this person — nothing to print' : 'Print — Ctrl+P'))} data-tip-pos="right" onclick={printCurrent} aria-label="Print">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
           <span>Print</span>
         </button>
@@ -975,8 +1028,8 @@
             {/if}
           </button>
         {:else}
-          {#if store.draftProtected}
-            <button class="abtn" onclick={lockDraft} aria-label="Lock plan" data-tip="Lock the plan and return to start" data-tip-pos="right">
+          {#if store.protected}
+            <button class="abtn" onclick={lockDraft} aria-label="Lock plan" data-tip="Lock the plan and clear it from memory" data-tip-pos="right">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
               <span>Lock</span>
             </button>
@@ -1091,7 +1144,6 @@
                       <input class="navguide-input navguide-child" class:active={view === target} value={langValue(g.title, g.title_i18n, lang)} oninput={(e) => store.setGuideTitle(g.id, lang, e.target.value)} onclick={() => go(target)} placeholder="Guide name" aria-label="Guide name" />
                       <button class="rowdel navdel" title="Delete" aria-label="Delete guide" onclick={() => removeEntity(g.id)}><TrashIcon /></button>
                     {:else}
-                      {#if g.draft}{@render draftMark()}{/if}
                       <button
                         class="navlink navlink-child"
                         class:active={view === target}
@@ -1121,7 +1173,6 @@
                 <input class="navguide-input" class:active={view === target} value={langValue(entry.guide.title, entry.guide.title_i18n, lang)} oninput={(e) => store.setGuideTitle(entry.guide.id, lang, e.target.value)} onclick={() => go(target)} placeholder="Guide name" aria-label="Guide name" />
                 <button class="rowdel navdel" title="Delete" aria-label="Delete guide" onclick={() => removeEntity(entry.guide.id)}><TrashIcon /></button>
               {:else}
-                {#if entry.guide.draft}{@render draftMark()}{/if}
                 <button class="navlink" class:active={view === target} onclick={() => go(target)}>{langValue(entry.guide.title, entry.guide.title_i18n, lang)}</button>
               {/if}
             </div>
@@ -1205,7 +1256,7 @@
           <div class="card empty-hint">
             <span class="eyebrow">New plan</span>
             <h3 style="margin-top:6px">Start building</h3>
-            <p class="soft small">Use the sections on the left to add <strong>People</strong>, <strong>Locations</strong> (countries, homes, safes…), <strong>Items</strong> (accounts, keys, documents), <strong>Files</strong>, and <strong>Guides</strong>. Everything auto-saves to this device — use <strong>Export</strong> for a copy on disk.</p>
+            <p class="soft small">Use the sections on the left to add <strong>People</strong>, <strong>Locations</strong> (countries, homes, safes…), <strong>Items</strong> (accounts, keys, documents), <strong>Files</strong>, and <strong>Guides</strong>. Everything auto-saves to this device as you go.</p>
           </div>
 
         {:else if view === 'start' && noGuidesForAudience}
@@ -1255,6 +1306,7 @@
                 <button class="btn btn-small btn-primary" onclick={addPerson}>+ New</button>
               </div>
             {/if}
+            <span class="print-only tiny print-date">Printed {printDate}</span>
           </div>
           {#if pkg.people.length > 0}<FilterBar facets={peopleFacets} sorts={SORTS_NAME} bind:filters bind:sort={sortBy} bind:search={query} placeholder="Search people…" />{/if}
           <div class="ulist">
@@ -1291,6 +1343,7 @@
                 <button class="btn btn-small btn-primary" onclick={addRole}>+ New</button>
               </div>
             {/if}
+            <span class="print-only tiny print-date">Printed {printDate}</span>
           </div>
           {#if pkg.roles.length > 0}<FilterBar sorts={SORTS_NAME} bind:sort={sortBy} bind:search={query} placeholder="Search roles…" />{/if}
           <div class="ulist">
@@ -1323,6 +1376,7 @@
                 <button class="btn btn-small btn-primary" onclick={() => addLocation(null)}>+ New</button>
               </div>
             {/if}
+            <span class="print-only tiny print-date">Printed {printDate}</span>
           </div>
           {#if pkg.locations.length > 0}<FilterBar facets={locationFacets} bind:filters bind:search={query} placeholder="Search locations…" />{/if}
           <div class="ulist">
@@ -1377,6 +1431,7 @@
                 <button class="btn btn-small btn-primary" onclick={addItem}>+ New</button>
               </div>
             {/if}
+            <span class="print-only tiny print-date">Printed {printDate}</span>
           </div>
           {#if pkg.items.length > 0}<FilterBar facets={itemFacets} sorts={SORTS_IMP} bind:filters bind:sort={sortBy} bind:search={query} placeholder="Search items…" />{/if}
           {#if editing && selectedIds.length}
@@ -1414,7 +1469,7 @@
         {:else if view === 'map'}
           <div class="map-row">
             <div class="map-col">
-              <div class="section-head"><h2 class="vh">Map</h2></div>
+              <div class="section-head"><h2 class="vh">Map</h2><span class="print-only tiny print-date">Printed {printDate}</span></div>
               {#if canSeeMap}
                 <MapView {pkg} onOpen={openEntity} bind:filters={mapFilters} />
               {:else}
@@ -1486,6 +1541,7 @@
                 <button class="btn btn-small btn-primary" onclick={() => fileInput?.click()}>+ New</button>
               </div>
             {/if}
+            <span class="print-only tiny print-date">Printed {printDate}</span>
           </div>
           {#if attachments.length > 0}<FilterBar facets={fileFacets} sorts={SORTS_NAME} bind:filters bind:sort={sortBy} bind:search={query} placeholder="Search files…" />{/if}
           {#if editing && selectedIds.length}
@@ -1539,15 +1595,18 @@
     <AudiencePicker {pkg} primary={gatePrimary} rest={gateRest} {adminLabel} onPick={pickAudience} onAdmin={pickAudienceAdmin} onCancel={() => (showAudiencePicker = false)} />
   {/if}
 
-  {#if showExport}
-    <ExportDialog data={store.data} blobs={store.attachmentBlobs} onClose={() => (showExport = false)} />
-  {/if}
-
   <ConfirmDialog prompt={modalPrompt} onResolve={resolveModal} />
+
+  {#if editing}
+    <FileSaveBanner {store} {isDemo} {pendingReconnectHandle} onReconnect={reconnectFile} />
+  {/if}
 </div>
 
 <style>
-  .shell { min-height: 100vh; --reader-section-gap: 18px; --topbar-h: 58px; }
+  /* --filestatus-h must match FileSaveBanner's own enforced min-height (see
+     .filestatus there) so the action rail's bottom-pinned Settings button
+     clears the bar in every one of its states, not just the tallest one. */
+  .shell { min-height: 100vh; --reader-section-gap: 18px; --topbar-h: 58px; --filestatus-h: 46px; }
   .topbar {
     position: sticky; top: 0; z-index: var(--z-topbar);
     background: color-mix(in oklch, var(--paper) 92%, transparent);
@@ -1662,6 +1721,17 @@
     display: flex; flex-direction: column; align-items: stretch; gap: 4px;
     padding: 10px 6px 14px;
   }
+  /* Edit mode adds the fixed bottom file-status bar (FileSaveBanner) — shrink
+     the sticky rail so its bottom-pinned Settings button clears it instead of
+     sitting underneath it. Desktop only: below 820px the rail becomes a
+     static, auto-height horizontal tab bar (see the max-width:820px block
+     below), and this rule's two-class specificity would otherwise beat that
+     media query's own override and force a near-viewport-height back onto
+     it — which is exactly what broke the mobile layout the first time this
+     was written without the min-width guard. */
+  @media (min-width: 821px) {
+    .has-filestatus .actionbar-in { height: calc(100vh - var(--topbar-h) - var(--filestatus-h)); padding-bottom: 0; }
+  }
   .aspacer { flex: 1; }
   .abtn {
     display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -1698,6 +1768,12 @@
        scrollbar-* shorthands. */
     scrollbar-width: thin;
     scrollbar-color: var(--rule) transparent;
+  }
+  /* Same reservation as .actionbar-in above, so the guide list's last row can
+     scroll clear of the fixed bottom file-status bar in edit mode. Desktop
+     only — see the min-width guard note on .has-filestatus .actionbar-in. */
+  @media (min-width: 821px) {
+    .has-filestatus .nav { max-height: calc(100vh - var(--topbar-h) - var(--filestatus-h)); }
   }
   .nav::-webkit-scrollbar { width: 12px; }
   .nav::-webkit-scrollbar-track { background: transparent; }
@@ -1843,9 +1919,30 @@
   .vh { font-size: clamp(22px, 3vw, 30px); }
   .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .head-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  /* "Printed <date>" — screen-invisible (.print-only), shown as a normal
+     flex child right-aligned in .section-head via justify-content:
+     space-between (same plain-row approach GuideView's "Updated <date>"
+     byline uses next to its title — see .ghead there). */
+  @media print {
+    /* The single print gutter for every view, guide included — GuideView's
+       own .guide-page print padding is zeroed so it doesn't stack a second
+       gutter on top of this one (see GuideView.svelte). */
+    .content { padding: clamp(12px, 3vw, 32px) clamp(0px, 4vw, 36px); }
+    /* Same byline-above-heading shape as GuideView's .ghead at its ≤820px
+       breakpoint (print always lays out at a physical page width, which is
+       under that threshold too) — keeps every view's printed top margin and
+       header treatment identical to a guide's. */
+    .section-head { flex-direction: column-reverse; align-items: stretch; gap: 10px; }
+    .section-head .print-date { align-self: flex-end; }
+  }
   /* The mobile nav toggle bar already names the current section — this
-     heading just repeats it and eats space that could go to the list. */
-  @media (max-width: 820px) {
+     heading just repeats it and eats space that could go to the list.
+     Screen-only: this is unrelated to the print stacking above, which is its
+     own separate rule — dropping the heading here would leave printed pages
+     with no title at all, and collapsing .section-head via display:contents
+     would drop "Printed <date>" into the normal flow under a hidden title
+     instead of above it. */
+  @media screen and (max-width: 820px) {
     .vh { display: none; }
     /* With the heading hidden, .section-head is often empty (read mode: no
        head-actions either) — as a flex item it still claims a full .content
@@ -2009,9 +2106,11 @@
     }
     .railcol.mobilenav-open { transform: translateX(0); }
     .nav { position: static; max-height: none; padding: 14px; }
-    /* Clears the fixed bottom tab bar (its own height plus the home-indicator
-       safe area) so the last bit of content isn't hidden underneath it. */
+    /* Clears the fixed bottom tab bar plus its home-indicator safe area. */
     .content { padding: var(--reader-section-gap) var(--mobile-gutter) calc(var(--actionbar-h) + env(safe-area-inset-bottom) + 16px); }
+    /* Edit mode adds the fixed file-status bar just above the tab bar —
+       reserve its height too, only while it's actually on screen. */
+    .has-filestatus .content { padding-bottom: calc(var(--actionbar-h) + env(safe-area-inset-bottom) + 16px + var(--filestatus-h)); }
     /* .body's min-height is zeroed above (the multi-row mobile topbar makes
        --topbar-h wrong here), so a short list (empty/near-empty search
        results) no longer stretches .content — the page background (a
@@ -2024,7 +2123,7 @@
     /* One shared side gutter for the whole mobile shell (bar, content, nav
        toggle) — wider than the old 14px so the edges breathe a bit more,
        Productboard-style, instead of controls sitting flush on the glass. */
-    .shell { --reader-section-gap: 12px; --actionbar-h: 58px; --mobile-gutter: var(--gutter-mobile); }
+    .shell { --reader-section-gap: 12px; --actionbar-h: 62px; --mobile-gutter: var(--gutter-mobile); }
     /* .content's 22px inter-section gap (set for desktop) is what was making
        the rule below the search bar sit further away than the padding-top
        rule above it — shrink it to match --reader-section-gap instead of

@@ -1,14 +1,12 @@
 /*
-  At-rest encryption for the in-progress draft (IndexedDB), so a copied disk,
-  browser profile, or un-encrypted backup doesn't expose the working plan.
+  Superseded by slotcrypto.js's multi-passphrase scheme (Iteration 3) — kept
+  only so App.svelte's migration path can still decrypt a draft that was
+  protected under this single-passphrase, IndexedDB-only scheme before that
+  update, then re-wrap it into a slot under the new scheme. Nothing writes
+  this format anymore.
 
   Same primitives as the export envelope (PBKDF2-SHA256 → AES-256-GCM), one
-  derived key per plan held ONLY in memory while editing. Forgetting the
-  passphrase loses the draft — the encrypted export is the durable backup.
-
-  Honest limit: while you're editing, the key and the plan are in memory, so
-  this protects at-rest copies — not a live-compromised browser or someone at
-  your unlocked screen.
+  derived key per plan held ONLY in memory while editing.
 */
 
 import { DEFAULT_ITERATIONS } from './crypto.js';

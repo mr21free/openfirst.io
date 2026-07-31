@@ -1,0 +1,40 @@
+{
+  "format": "lifepackage-plan/v1",
+  "formatVersion": 1,
+  "fixtures": [
+    {
+      "file": "plain.html",
+      "protection": "none",
+      "planId": "plan_fixture_plain",
+      "revision": 3
+    },
+    {
+      "file": "single-slot.html",
+      "protection": "passphrase",
+      "planId": "plan_fixture_single_slot",
+      "revision": 5,
+      "slots": [
+        {
+          "label": "Owner",
+          "passphrase": "correct horse battery staple"
+        }
+      ]
+    },
+    {
+      "file": "multi-slot.html",
+      "protection": "passphrase",
+      "planId": "plan_fixture_multi_slot",
+      "revision": 12,
+      "slots": [
+        {
+          "label": "Sarah",
+          "passphrase": "sarah-passphrase-example"
+        },
+        {
+          "label": "Lawyer",
+          "passphrase": "lawyer-passphrase-example"
+        }
+      ]
+    }
+  ]
+}

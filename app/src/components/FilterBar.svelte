@@ -17,6 +17,14 @@
   const activeFacets = $derived(facets.filter((f) => (filters[f.key] || []).length));
   const activeCount = $derived(activeFacets.reduce((n, f) => n + filters[f.key].length, 0));
   const usable = $derived(facets.filter((f) => f.options.length));
+  const searchLabel = $derived(search.trim());
+  // Plain-text readout of the current search/filter state — the interactive
+  // picker above is .no-print, so this is the only trace of "what was this
+  // filtered by" that survives onto a printed page.
+  const filterSummary = $derived([
+    ...activeFacets.map((f) => `${f.label}: ${filters[f.key].map((v) => labelFor(f, v)).join(', ')}`),
+    ...(searchLabel ? [`Search: "${searchLabel}"`] : [])
+  ].join(' · '));
 
   function toggle(key, val) {
     const cur = filters[key] || [];
@@ -95,6 +103,8 @@
   </div>
 {/if}
 
+{#if filterSummary}<p class="print-only tiny filter-summary">Filtered by: {filterSummary}</p>{/if}
+
 <style>
   .filterbar { display: flex; align-items: center; justify-content: flex-start; gap: 8px; flex-wrap: wrap; }
   /* Search, filter and sort share one height so they line up as equal controls. */
@@ -132,4 +142,5 @@
   .fpill-x:hover { background: var(--accent); color: var(--paper); }
   .pill-clear { font-size: 12.5px; color: var(--ink-mute); padding: 4px 8px; }
   .pill-clear:hover { color: var(--ink); }
+  .filter-summary { margin: 0; }
 </style>

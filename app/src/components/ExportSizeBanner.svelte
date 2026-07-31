@@ -1,12 +1,11 @@
 <script>
   /*
     Edit-mode-only strip across the very top of the screen, shown when the
-    plan's attachments would make the one-file reader export unwieldy.
+    plan's attachments would make the plan file itself unwieldy.
 
-    The self-contained start-here.html embeds every attachment as base64
-    (+~33%), and very large single HTML files open slowly or not at all in some
-    browsers — so past a threshold we tell the owner and point at the .zip
-    package export, which keeps attachments as ordinary files.
+    The plan .html embeds every attachment as base64 (+~33%), and very large
+    single HTML files open slowly or not at all in some browsers — so past a
+    threshold we tell the owner to keep photos/videos small.
   */
   let { store } = $props();
 
@@ -40,10 +39,9 @@
 {#if over && !dismissed}
   <div class="sizebar no-print" role="status">
     <span class="size-txt">
-      <strong>Your one-file reader would be ~{mb}&nbsp;MB.</strong>
-      A single start-here.html this big can open slowly (or fail) on some computers.
-      Best practice: keep photos/videos small, or export the <em>.zip package</em> instead —
-      it stores files normally and stays fast at any size. The heir opens it with the same reader.
+      <strong>Your plan file is getting large — ~{mb}&nbsp;MB.</strong>
+      A single file this big can open slowly, or fail, on some computers.
+      Keep photos and videos small to keep it fast to open.
     </span>
     <button class="iconbtn size-x" data-tip="Got it — don't show this again for this plan" data-tip-pos="left" aria-label="Dismiss" onclick={dismiss}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   </div>

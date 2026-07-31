@@ -21,6 +21,8 @@
     selectActions = null
   } = $props();
 
+  // Stamped once, not reactive — shown only in print output (see .print-date).
+  const printDate = new Date().toISOString().slice(0, 10);
   let tab = $state('questions');
   let query = $state('');
   let filters = $state({ scope: ['external'] });
@@ -145,19 +147,20 @@
 </script>
 
 <div class="readiness">
-  <div class="section-head no-print">
+  <div class="section-head">
     <h2 class="vh">Readiness</h2>
     {#if editing && tab === 'questions'}
-      <div class="head-actions">
+      <div class="head-actions no-print">
         {#if selectActions}{@render selectActions(ids, 'readiness checks')}{/if}
         <button class="btn btn-small btn-primary" onclick={() => onAdd?.()}>+ New</button>
       </div>
     {:else if tab === 'tests'}
-      <div class="head-actions">
+      <div class="head-actions no-print">
         {#if selectedRunIds.length}<button class="btn btn-small del-selected" onclick={deleteSelectedRuns}>Delete selected ({selectedRunIds.length})</button>{/if}
         {#if visibleRunIds.length}<button class="btn btn-small" onclick={toggleAllRuns}>{allRunsSelected ? 'Deselect all' : 'Select all'}</button>{/if}
       </div>
     {/if}
+    <span class="print-only tiny print-date">Printed {printDate}</span>
   </div>
   <div class="tabs no-print" role="tablist" aria-label="Readiness views">
     <button class:on={tab === 'questions'} onclick={() => (tab = 'questions')}>Questions / tasks</button>
@@ -231,6 +234,13 @@
 
 <style>
   .readiness { display: flex; flex-direction: column; gap: 14px; }
+  /* Same top-right "Printed <date>" corner as the other list views (see
+     Reader.svelte's .print-date) — anchored to .readiness itself since
+     .section-head can't be relied on to keep its flex row at print time. */
+  @media print {
+    .readiness { position: relative; }
+    .print-date { position: absolute; top: 0; right: 0; }
+  }
   .vh { font-size: clamp(22px, 3vw, 30px); }
   .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .head-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }

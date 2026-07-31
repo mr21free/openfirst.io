@@ -74,9 +74,6 @@
 
   {#if pkg.allItemTags().length}
     <FilterBar facets={mapFacets} sorts={[]} bind:filters hideSearch alignStart />
-    {#if tags.length}
-      <p class="print-only tiny">Filtered by tag{tags.length > 1 ? 's' : ''}: {tags.map((t) => '#' + t).join(', ')}</p>
-    {/if}
   {/if}
 
   {#each visibleRoots as r}{@render locNode(r, 0)}{/each}

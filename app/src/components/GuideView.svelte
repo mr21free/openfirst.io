@@ -170,7 +170,12 @@
   .ghead .tiny { flex: none; white-space: nowrap; }
   /* Side by side, a long emoji'd title has only half the row and wraps to
      3+ lines. Stack instead: the date sits above (still right-aligned, like
-     a byline), and the title drops below with the full row to itself. */
+     a byline), and the title drops below with the full row to itself. Print
+     always lays out at a physical page width under this same threshold, so
+     this also stacks on every printed guide — the byline-above-title shape
+     is deliberate there, not just a mobile-screen fallback (see the matching
+     print rule on Reader.svelte's .section-head, which mirrors this same
+     layout so every view's print header looks and sits the same way). */
   @media (max-width: 820px) {
     .ghead { flex-direction: column-reverse; align-items: stretch; gap: 10px; }
     .ghead .tiny { align-self: flex-end; }
@@ -193,7 +198,11 @@
      above) — the page's own top clamp on top of .content's gutter left too
      much dead air above it, so trim just the top inset here. */
   @media (max-width: 820px) { .guide-page { padding-inline: 0; padding-block-start: 6px; } }
-  @media print { .guide-page { padding: clamp(12px, 3vw, 32px) clamp(0px, 4vw, 36px); } }
+  /* .guide-page sits inside Reader's .content, which now supplies the single
+     print gutter shared by every view (see Reader.svelte's .content print
+     rule) — an extra padding layer here would double up Guide's margins
+     against every other view's. */
+  @media print { .guide-page { padding: 0; } }
   /* The page supplies the gutter, so the editor sits flush inside it — its
      toolbar and text line up with the read-mode text column. The toolbar still
      sticks just below the page's top bar (--ce-toolbar-top). */

@@ -81,12 +81,17 @@
     .topnav { display: flex; align-items: center; gap: 24px; }
     .topnav a { color: var(--ink-soft); font-size: 14px; font-weight: 500; }
     .topnav a:hover { color: var(--ink); text-decoration: none; }
+    .nav-links, .nav-cta { display: contents; }
     /* Small screens: nav drops to its own line under the logo (freedomclock-style). */
     @media (max-width: 760px) {
       .topbar > .container { height: auto; flex-wrap: wrap; row-gap: 2px; padding-top: 13px; padding-bottom: 9px; }
       .brand { flex: 1 0 100%; }
-      .topnav { flex: 1 0 100%; gap: 18px; }
-      .topnav a.btn-primary { margin-left: auto; }
+      .topnav { flex: 1 0 100%; flex-wrap: wrap; gap: 10px 18px; }
+      /* Links and buttons each get their own full-width row instead of
+         squeezing five items into one line — that let flex-shrink wrap
+         "How to use" mid-word instead of moving whole items down. */
+      .nav-links { display: flex; gap: 18px; flex: 1 0 100%; }
+      .nav-cta { display: flex; gap: 8px; flex: 1 0 100%; justify-content: flex-end; }
       .topnav a.btn-primary, .topnav a.btn { min-height: 34px; padding: 6px 14px; font-size: 13px; }
     }
 
@@ -299,11 +304,15 @@
       <a class="brand row" href="/"><img class="logo" src="/logo.svg" alt="" /><span class="brand-name"><b>open</b>first</span></a>
       <span class="spacer"></span>
       <nav class="topnav">
-        <a href="/demo/">Demo</a>
-        <a href="/guides/">Guides</a>
-        <a href="/how-to-use/">How to use</a>
-        <a class="btn btn-primary" href="/open/">Open the app</a>
-        <a class="btn" href="/download/openfirst.html" download="openfirst-__APP_VERSION__.html">Download</a>
+        <span class="nav-links">
+          <a href="/demo/">Demo</a>
+          <a href="/guides/">Guides</a>
+          <a href="/how-to-use/">How to use</a>
+        </span>
+        <span class="nav-cta">
+          <a class="btn btn-primary" href="/open/">Open the app</a>
+          <a class="btn" href="/download/openfirst.html" download="openfirst-__APP_VERSION__.html">Download</a>
+        </span>
       </nav>
     </div>
   </header>

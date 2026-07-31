@@ -8,8 +8,8 @@ included here since none of it is redistributed as part of the app.
 
 ## fflate
 
-- **Used for:** zip/unzip of `.zip` package exports and imports
-  (`app/src/lib/export.js`, `app/src/lib/load.js`)
+- **Used for:** unzipping legacy `.zip` package imports, kept for backward
+  compatibility with older backups (`app/src/lib/load.js`)
 - **Version:** 0.8.3
 - **License:** MIT
 - **Homepage:** https://github.com/101arrowz/fflate

@@ -7,8 +7,9 @@ single file they open with no app, no account, and no internet.
 Your family finds everything, even without you: you build a private map of everything
 that matters — the **people**, the **places** things live, the **items**
 (accounts, wallets, keys, documents), the **files**, and plain-language
-**guides** — then export one **self-contained `start-here.html`** your heirs
-just double-click. Optionally password-protected.
+**guides** — all inside **one self-contained `.html` file** your heirs just
+double-click. Optionally password-protected, with each person able to hold
+their own passphrase to the same file.
 
 Try it in 30 seconds: the **[Demo](https://openfirst.io/demo/)** opens a
 realistic sample plan exactly as the primary heir would see it.
@@ -16,21 +17,27 @@ realistic sample plan exactly as the primary heir would see it.
 ## Principles
 
 - **No data leaves your device.** No server, no account, no telemetry. The
-  builder auto-saves locally (IndexedDB); export writes a file to your disk.
+  builder auto-saves straight into your plan file (via the File System Access
+  API where supported, or repeated downloads otherwise) — there's no separate
+  export step.
 - **Provably offline.** The built app ships a strict CSP with
   `connect-src 'none'` — even a maliciously crafted plan cannot phone home.
 - **A map, not a vault.** The plan records *where* secrets live and *how* to
   find them — never seeds, PINs, or passwords themselves.
-- **Durable, open format.** A plan is plain **JSON + Markdown**
-  (`lifepackage/v1` in `lifepackage.json`) — readable for years without this
-  app. See [`docs/SCHEMA.md`](docs/SCHEMA.md).
+- **Durable, open format.** The plan file is a self-contained HTML container
+  (format v1) wrapping a plain **JSON + Markdown** data schema
+  (`lifepackage/v1`) — readable for years without this app. See
+  [`docs/SCHEMA.md`](docs/SCHEMA.md) for the data schema and
+  [`app/FORMAT.md`](app/FORMAT.md) for the container.
 - **Legacy-friendly.** Older packages named `inheritance.json` with
-  `schema: "inheritance-package/v1"` still open; re-exporting writes the new
+  `schema: "inheritance-package/v1"` still open; saving writes the current
   format.
-- **Honest security.** AES-256-GCM with PBKDF2-SHA256 at 600k iterations for
-  exports; optional draft-at-rest encryption with idle auto-lock while you
-  build; a tamper-evident password hint. Full threat model — including what is
-  deliberately *not* protected — in [`docs/SECURITY.md`](docs/SECURITY.md).
+- **Honest security.** A plan can be left passphrase-free, or protected with
+  AES-256-GCM + PBKDF2-SHA256 at 600k iterations, where each person holds
+  their own passphrase to the same file; optional draft-at-rest encryption
+  with idle auto-lock while you build; a tamper-evident passphrase hint. Full
+  threat model — including what is deliberately *not* protected — in
+  [`docs/SECURITY.md`](docs/SECURITY.md).
 
 ## What's inside a plan
 

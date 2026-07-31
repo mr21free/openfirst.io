@@ -5,10 +5,13 @@ and then refine. No data leaves your device.
 
 ## The 60-second picture
 
-1. **Build** your plan in the app (people, places, items, files, guides).
-2. **Export** a single `start-here.html` — optionally password-protected.
-3. **Share it** with your heirs (USB stick, drive, print the password separately).
-   They double-click it; it opens offline, no app or account needed.
+1. **Build** your plan in the app (people, places, items, files, guides) — it
+   autosaves straight into one `.html` file as you go.
+2. **Protect it**, optionally — each person can hold their own passphrase to
+   the same file, or leave it passphrase-free.
+3. **Share it** with your heirs (USB stick, drive, print any passphrase
+   separately). They double-click it; it opens offline, no app or account
+   needed.
 
 ---
 
@@ -61,20 +64,37 @@ example.
   control appears above the map to narrow it down to matching items and their
   parent locations; printing the map shows which tag(s) are applied as plain text.
 
-## Export for your heirs
+## Protect your working plan
 
-Top bar → **Export**:
-- **Self-contained reader** (`start-here.html`) — the one file your heir opens.
-  Drafts are excluded automatically.
-- **Password-protect** it for safety. Prefer the suggested **6-word passphrase**
-  over a short PIN (a 6-digit PIN can be brute-forced in under a minute; a 6-word
-  passphrase is effectively uncrackable). Store the password separately from the
-  file.
-- The plain `.zip` / encrypted `.json` exports keep *everything* (including
-  drafts) as your own durable backup.
+Settings → **Plan protection** encrypts the plan file itself, the same file
+you'll hand your heirs:
+- **+ Add a passphrase** for each person who might need to open it, with a
+  label and an optional hint (e.g. "For Amanda — our anniversary, reversed").
+  Any one passphrase opens the whole plan.
+- Add, change, or remove passphrases any time. Removing the last one turns
+  protection off again.
+- **Lock plan** (top bar) drops the plan from memory without losing your place
+  — reopening it asks for one of the passphrases again.
+
+## Share it with your heirs
+
+There's no separate export — the plan `.html` file you've been autosaving into
+is the one file your heirs open. Copy it wherever it needs to go (USB stick,
+drive, printed instructions on where to find it).
+
+- **Drafts never show up for a reader.** Anything marked Draft stays out of the
+  nav, direct links, and search for anyone opening the file read-only — even
+  you, previewing as a role — while still being right there in the file the
+  moment you open it for editing again.
+- If **Plan protection** is on, each heir uses their own passphrase (the one
+  you set up for them) to open the same file — nothing separate to add at
+  share time.
+- If you left the plan passphrase-free, anyone with the file can open it — an
+  explicit, honest tradeoff; make sure delivery itself is the safeguard.
 
 ## Keep it current
 
-Revisit every 6–12 months: update values that changed, re-export, and replace the
-copy you gave your heirs. The format is plain JSON + Markdown, so your plan stays
-readable far into the future — with or without this app.
+Revisit every 6–12 months: update values that changed, then give your heirs a
+fresh copy of the same plan file. The underlying data is plain JSON + Markdown
+inside the file, so your plan stays readable far into the future — with or
+without this app.

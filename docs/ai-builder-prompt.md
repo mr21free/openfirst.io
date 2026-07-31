@@ -118,7 +118,8 @@ every id is unique, then output the final JSON only.
    the AI and ask it to fix it.)
 3. Now do the parts that must stay local: fill in real values, set guides you're
    still drafting to **Draft**, and **upload your files** (and tag them). Then
-   **Export** the encrypted reader for your heirs.
+   optionally protect the plan with a passphrase and share the file with your
+   heirs — see [how-to-use.md](./how-to-use.md).
 
 The machine-readable contract is [`lifepackage.schema.json`](./lifepackage.schema.json);
 the human reference is [`SCHEMA.md`](./SCHEMA.md). Both are public, so a capable

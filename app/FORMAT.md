@@ -8,6 +8,163 @@ in 10+ years** with no server, account, or proprietary runtime. The authoritativ
 contract is [schema/lifepackage.schema.json](./schema/lifepackage.schema.json);
 this file is the friendly explanation.
 
+## The Plan File (.html) — Container Format v1
+
+The canonical artifact is a single `.html` file: the thing you double-click to
+read, the thing an heir opens, and the thing the app saves into while you
+edit. Everything below is the *container* — how that one file is put
+together. The data model it carries inside (people, items, guides, and so on)
+is the unchanged `lifepackage/v1` schema described later in this document.
+
+A plan file has three parts, in this order in the document:
+
+1. **A static front door.** Plain HTML, present in the markup itself (not
+   drawn by JavaScript), so it's readable even if the embedded app fails to
+   boot in some future browser. It shows: the app name and container format
+   version, the plan id, the revision number and a human-readable "last
+   saved" timestamp (informational only — see Revision, below), and, if the
+   plan is passphrase-protected, the label and hint for every passphrase slot
+   ("Sarah — hint: our anniversary"), so a reader knows whose passphrase to
+   try without ever seeing the plan's content.
+2. **A data island.** One `<script type="application/json">` tag holding the
+   container JSON described below.
+3. **The embedded app bundle** — the same self-contained build the app
+   already produces, which reads the data island and renders the interactive
+   read-only viewer (or, when opened through the app itself, the editor).
+
+### Container JSON shape
+
+```json
+{
+  "format": "lifepackage-plan/v1",
+  "formatVersion": 1,
+  "planId": "plan_8f2c1a90",
+  "revision": 7,
+  "updated": "2026-07-27T14:32:00Z",
+  "protection": "none",
+  "title": "Miro Family Plan",
+  "data": { "schema": "lifepackage/v1", "...": "the plan, as normal JSON" }
+}
+```
+
+or, passphrase-protected:
+
+```json
+{
+  "format": "lifepackage-plan/v1",
+  "formatVersion": 1,
+  "planId": "plan_8f2c1a90",
+  "revision": 7,
+  "updated": "2026-07-27T14:32:00Z",
+  "protection": "passphrase",
+  "kdf": "PBKDF2-SHA256",
+  "cipher": "AES-256-GCM",
+  "title": "Miro Family Plan",
+  "slots": [
+    {
+      "id": "slot_a1",
+      "label": "Sarah",
+      "hint": "our anniversary",
+      "iterations": 600000,
+      "salt": "<base64, 16 bytes>",
+      "iv": "<base64, 12 bytes>",
+      "wrappedKey": "<base64>"
+    }
+  ],
+  "iv": "<base64, 12 bytes>",
+  "data": "<base64 ciphertext>"
+}
+```
+
+Field notes:
+
+- **`planId` / `revision` / `title` are always plaintext**, protected or not.
+  `planId` and `revision` exist so the app can compare "is the file caught up
+  with my edits?" as a plain integer comparison — never by trusting clocks —
+  and so several plans can be told apart without decrypting anything. `title`
+  is plaintext for the same reason: it isn't a secret (the file name usually
+  already reveals it anyway), and hiding it would only get in the way of
+  labeling a saved-but-locked plan in a list. `updated` is a courtesy
+  timestamp for humans; nothing in the app's logic depends on it.
+- **One random master key encrypts `data`.** It is never derived from a
+  passphrase directly. Instead, each entry in `slots[]` is that same master
+  key, re-encrypted ("wrapped") under a key derived from one person's own
+  passphrase. Removing a person means deleting their slot; nobody else's slot
+  changes. Changing a passphrase re-wraps only that one slot.
+- **`protection: "none"`** means exactly what it says — `data` sits in the
+  file as plain JSON, and the front door says so plainly, so nobody mistakes
+  "the viewer folds drafts by default" for real protection.
+- **Slot labels and hints are visible pre-unlock, by design** — that's how a
+  reader knows which of several passphrases is theirs. They're bound into
+  each slot's authenticated encryption as additional data (AAD), so nobody
+  can rewrite a label or hint (say, into a phishing instruction) without
+  breaking that slot.
+- **Encryption reuses the app's existing primitives exactly**: PBKDF2-SHA256
+  → AES-256-GCM, the same as today's export envelope and draft-at-rest
+  encryption. Only the *container* around them is new.
+
+### AAD (additional authenticated data)
+
+Both the main ciphertext and every wrapped key are bound to context, so a
+tampered or swapped-in piece fails to decrypt rather than silently working
+somewhere it shouldn't:
+
+```text
+main data:   lifepackage-plan-aad/v1\n<planId>\n<revision>
+each slot:   lifepackage-plan-slot-aad/v1\n<planId>\n<slotId>\n<label>\n<hint>
+```
+
+### Recovering a plan without the app
+
+[`recover.js`](./recover.js) is the canonical recovery tool, and it is
+embedded verbatim inside every plan file (see below) — a plan never depends
+on this repository, this project, or a package index still being reachable,
+to be recovered. It needs nothing but a Node runtime: PBKDF2 and AES-GCM come
+from Node's built-in Web Crypto (`crypto.subtle`), the exact same API the
+embedded viewer itself uses. Zero install, zero third-party dependency, zero
+network request — a deliberate choice: a recovery tool whose first line is
+`pip install` already depends on a package index still existing, still
+serving wheels for whatever platform someone's on decades from now, and
+that's precisely the dependency class this format exists to remove.
+
+```text
+node recover.js my-plan.html
+node recover.js my-plan.html --passphrase "..."
+```
+
+[`recover.py`](./recover.py) is kept as a second worked example, for someone
+who only has Python, with its one real dependency documented up front
+(`pip install cryptography` — Python has no AES-GCM in its standard library,
+and hand-rolling AEAD is exactly the kind of bug a recovery-of-last-resort
+tool can't afford). Both scripts implement the same spec independently and
+are tested against the same fixtures — enforced in CI
+([`.github/workflows/format-v1.yml`](../.github/workflows/format-v1.yml) runs
+[`schema/fixtures/format-v1/verify.mjs`](./schema/fixtures/format-v1/verify.mjs)
+on every change to either script or the fixtures) — so they're auditable
+against each other, call by call, not just claimed to be.
+
+Worked examples of every shape above — passphrase-free, one slot, and
+multiple slots — are checked into
+[`schema/fixtures/format-v1/`](./schema/fixtures/format-v1/), together with
+the passphrases needed to open them, and they are kept forever: once a
+format version ships, its fixtures never change, so any implementation can
+always be tested against everything the format has ever had to open. The
+real acceptance test for this whole section is **"any engineer, any
+language, under an hour"** — not "as long as Node or Python still work."
+`recover.js` and `recover.py` are worked proofs that the spec above is
+sufficient on its own; they are not themselves the guarantee. `FORMAT.md`
+plus the fixtures are.
+
+### The recovery script travels with the file
+
+Every plan `.html` embeds the full text of `recover.js` in a plain
+`<script type="text/plain" id="openfirst-recover-js">` block (inert — never
+executed by a browser), with a comment near the top of the document pointing
+to it. Anyone with the file, a text editor, and "view source" can pull the
+script out, save it as `recover.js`, and run it against the very file they
+got it from — no internet connection and no copy of this repository
+required.
+
 ## Package Shapes
 
 The source of truth is always `lifepackage.json`. A package may be:
@@ -18,9 +175,14 @@ The source of truth is always `lifepackage.json`. A package may be:
 - a `.zip` of that folder,
 - or an encrypted JSON envelope whose plaintext is the package `.zip`.
 
+These shapes remain valid *inputs* for existing files, kept for backward
+compatibility with older backups, but `.zip` and the standalone encrypted-JSON
+envelope are retired as things the app *produces* — the plan `.html` container
+above is the one artifact going forward.
+
 Legacy packages named `inheritance.json` with `schema:
-"inheritance-package/v1"` still open in OpenFirst. When you re-export them, the
-new package uses `lifepackage.json` and `schema: "lifepackage/v1"`.
+"inheritance-package/v1"` still open in OpenFirst. When you save them, the new
+package uses `lifepackage.json` and `schema: "lifepackage/v1"`.
 
 ## Updating Old Packages
 
@@ -186,9 +348,10 @@ Recorded dry-run outcomes:
 `id`, `person_id`, `date`, `started_at`, `submitted_at`, `duration_ms`, and
 `results[]`, where each result stores `check_id`, `status`, and `notes`.
 
-Readiness checks and dry-run notes are owner data. They are kept in the working
-package/exported source, but removed from the final read-only `start-here.html`
-heir reader.
+Readiness checks and dry-run notes are owner data. They travel inside the plan
+file's data like everything else — the same as draft guides — but the app never
+renders them to a read-only heir reader. This is view-layer hiding, not a
+separate export with the data physically removed.
 
 ## Secrets
 

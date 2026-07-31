@@ -6,12 +6,14 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 
 // Strict CSP for the PRODUCTION single file only. Everything is inlined there,
-// so 'unsafe-inline' covers our own bundle while connect-src 'none' guarantees a
-// tampered package can never exfiltrate anything. Not applied in dev (Vite needs
-// the network for its client + HMR).
+// so 'unsafe-inline' covers our own bundle while connect-src 'self' still
+// guarantees a tampered package can never exfiltrate anything to an outside
+// destination — the only fetch the app ever makes is same-origin
+// /version.json for the manual "check for updates" button. Not applied in
+// dev (Vite needs the network for its client + HMR).
 const PROD_CSP =
   "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; " +
-  "font-src data:; img-src 'self' data: blob:; media-src data: blob:; frame-src data: blob:; connect-src 'none'; " +
+  "font-src data:; img-src 'self' data: blob:; media-src data: blob:; frame-src data: blob:; connect-src 'self'; " +
   "base-uri 'none'; form-action 'none'";
 
 function injectCspOnBuild() {
@@ -28,7 +30,7 @@ function injectCspOnBuild() {
 const MARKETING_HOME = fileURLToPath(new URL('./site/index.html', import.meta.url));
 const NOT_FOUND = fileURLToPath(new URL('./public/404.html', import.meta.url));
 const APP_ROUTES = ['build', 'open', 'demo'];
-const STATIC_PAGES = ['how-to-use', 'security', 'pricing', 'guides'];
+const STATIC_PAGES = ['how-to-use', 'security', 'guides'];
 
 // A request for a page (not an asset or a Vite internal) that matched no route.
 // On a static host an unknown path serves 404.html; mirror that locally so the

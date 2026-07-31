@@ -72,13 +72,16 @@ Under `public/`:
 Regenerate the `.zip` + encrypted variant (after editing `sample-package/`) with
 `node scripts/build-samples.mjs`.
 
-## Optional password encryption
+## Optional passphrase protection
 
-A package can be locked with a password (AES-256-GCM + PBKDF2-SHA256, the same
-scheme as freedomclock.io). The encrypted file is a self-describing JSON envelope
-whose plaintext is the package `.zip`; the app decrypts it on the device and the
-password never leaves it. It’s also decryptable **without this app** — see the
-standalone recipe in [FORMAT.md](./FORMAT.md). Minimum password length: 12.
+The plan `.html` file you save into can be locked with a passphrase (AES-256-GCM
++ PBKDF2-SHA256, the same scheme as freedomclock.io) — or left passphrase-free.
+Protecting it isn't a single shared secret: one random master key encrypts the
+plan data, and each person gets their own **slot**, that same master key wrapped
+under their own passphrase, so several people can each open the same file with a
+different word. The app decrypts on the device and a passphrase never leaves it.
+It's also decryptable **without this app** — see the standalone recipe in
+[FORMAT.md](./FORMAT.md).
 
 ## Layout
 

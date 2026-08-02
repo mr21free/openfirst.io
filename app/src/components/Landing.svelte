@@ -229,7 +229,7 @@
             <a href="/how-to-use/">How to use</a>
           </span>
           <span class="nav-cta">
-            <a class="btn" href="/download/openfirst.html" download={`openfirst-${APP_VERSION}.html`}>Download</a>
+            <a class="btn" href="/download/openfirst.html" download={`openfirst-app-${APP_VERSION}.html`}>Download</a>
           </span>
         </nav>
       {/if}

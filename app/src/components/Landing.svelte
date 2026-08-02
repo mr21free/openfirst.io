@@ -100,17 +100,6 @@
     if (ok) discardDraft?.(key);
   }
 
-  // Where-your-plans-live warning: a teaching banner above the plan list.
-  // Once dismissed the user knows the deal — never show it again (localStorage,
-  // same pattern as the draft explainer in GuideView).
-  const STORAGE_NOTE_KEY = 'openfirst.storageNote.dismissed';
-  let storageNoteDismissed = $state(false);
-  try { storageNoteDismissed = localStorage.getItem(STORAGE_NOTE_KEY) === '1'; } catch { /* private mode */ }
-  function dismissStorageNote() {
-    storageNoteDismissed = true;
-    try { localStorage.setItem(STORAGE_NOTE_KEY, '1'); } catch { /* private mode */ }
-  }
-
   let error = $state('');
   let busy = $state(false);
   let fileInput;
@@ -259,13 +248,6 @@
         >Open existing plan</button>
       </div>
 
-      {#if (drafts.length || recentPlans.length) && !storageNoteDismissed}
-        <p class="storage-note no-print">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span>Plans saved here live in this browser's own storage. They don't sync and aren't backed up — clearing this browser's site data removes them. <strong>Your exported file is the durable copy.</strong></span>
-          <button class="iconbtn note-x" data-tip="Got it — don't show this again" data-tip-pos="left" aria-label="Dismiss storage note" onclick={dismissStorageNote}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-        </p>
-      {/if}
       {#each recentPlans as rec (rec.planId)}
         <div class="draft card no-print">
           {#if recentRowErrors[rec.planId] === 'mismatch'}
@@ -423,18 +405,6 @@
   }
   .lede { margin-top: 18px; max-width: 58ch; font-size: 16.5px; line-height: 1.7; }
   .error-slot { margin-top: 14px; text-align: left; }
-
-  /* Where-plans-live warning above the list (dismissible, teaches once) */
-  .storage-note {
-    display: flex; align-items: center; gap: 10px;
-    margin: 26px 0 0; padding: 10px 13px;
-    border-left: 2px solid var(--warn); border-radius: 0;
-    background: var(--warn-wash);
-    color: var(--ink-soft); font-size: 13.5px; text-align: left;
-  }
-  .storage-note svg { flex: none; color: var(--warn); }
-  .storage-note .note-x { width: 26px; height: 26px; margin-left: auto; flex: none; color: var(--ink-mute); }
-  .storage-note + .draft:first-of-type { margin-top: 14px; }
 
   /* Draft cards */
   .draft {

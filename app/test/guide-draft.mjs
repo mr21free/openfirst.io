@@ -1,10 +1,13 @@
 // Draft / publish guides: a guide can be flagged draft (kept in the working
 // plan, marked in the tree). Since the container-v1 plan .html is now the
 // only real output (no more separate heir-facing export), draft guides ride
-// along in the file's data just like everything else — but they must never
-// render anywhere a reader (owner previewing, or a real heir) can see them:
-// not in the nav, not directly by id, not in search results. This file
-// covers the toggle/editing-side marking first, then the read-side hiding.
+// along in the file's data just like everything else. The owner reading
+// their own plan (View mode, not impersonating anyone) can still see and
+// search drafts — that's the whole point of drafting inside the live plan
+// instead of a separate scratch file. What must never see a draft is an
+// actual heir: either the owner previewing a specific person via "Reading
+// as", or a real read-only exported file. This file covers the
+// toggle/editing-side marking first, then both read-side cases.
 
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
@@ -77,25 +80,66 @@ try {
   });
   await pause(300);
 
-  // Switch to the reading side (owner preview) — 'New Guide' and 'New Guide
-  // (1)' are draft, 'New Guide (2)' is published.
+  // Add a role + a named heir before switching to the reading side, so we
+  // can later preview specifically as them (distinct from plain admin view).
+  const clickHeadNew = () => page.evaluate(() => [...document.querySelectorAll('.head-actions button')].find((b) => b.textContent.trim() === '+ New')?.click());
+  await page.evaluate(() => [...document.querySelectorAll('.navlink-section')].find((b) => b.textContent.includes('Roles'))?.click()); await pause();
+  await clickHeadNew(); await pause();
+  await page.evaluate(() => { const i = document.querySelector('[role="dialog"] input'); if (i) { i.focus(); i.value = 'Heir'; i.dispatchEvent(new Event('input', { bubbles: true })); } }); await pause();
+  await page.keyboard.press('Escape'); await pause(200);
+
+  await page.evaluate(() => [...document.querySelectorAll('.navlink-section')].find((b) => b.textContent.includes('People'))?.click()); await pause();
+  await clickHeadNew(); await pause();
+  await page.evaluate(() => {
+    const dlg = document.querySelector('[role="dialog"]');
+    const nameInput = dlg?.querySelector('input');
+    if (nameInput) { nameInput.focus(); nameInput.value = 'Test Heir'; nameInput.dispatchEvent(new Event('input', { bubbles: true })); }
+  }); await pause();
+  await page.evaluate(() => {
+    const chip = [...document.querySelectorAll('[role="dialog"] .tagchip')].find((c) => c.textContent.includes('Heir'));
+    chip?.querySelector('input[type="checkbox"]')?.click();
+  }); await pause();
+  await page.keyboard.press('Escape'); await pause(200);
+
+  // Switch to the reading side. Plain owner View (admin, no impersonation)
+  // must still show drafts — that's the whole point of this fix.
   await click('Read'); await pause(300);
   const navTitles = await page.evaluate(() => [...document.querySelectorAll('nav .navlink, nav .navlink-child')].map((b) => b.textContent.trim()));
-  ok('draft guides are gone from the reading nav', !navTitles.includes('New Guide') && !navTitles.includes('New Guide (1)'));
-  ok('the published guide is still there', navTitles.includes('New Guide (2)'));
+  ok('admin view mode still shows draft guides in the nav', navTitles.includes('New Guide') && navTitles.includes('New Guide (1)'));
+  ok('the published guide is there too', navTitles.includes('New Guide (2)'));
 
-  // Search must not surface a draft guide either — by name or by its content.
+  // Search must surface a draft guide for admin, by name and by content.
   await page.evaluate(() => { document.querySelector('.gs-input').focus(); document.querySelector('.gs-input').value = 'New Guide'; document.querySelector('.gs-input').dispatchEvent(new Event('input', { bubbles: true })); });
   await pause(250);
-  const searchNames = await page.evaluate(() => [...document.querySelectorAll('.gs-row:not(.gs-all)')].map((r) => r.textContent.trim()));
-  ok('search does not surface a draft guide by name', !searchNames.some((t) => t.includes('New Guide') && !t.includes('New Guide (2)')));
+  let searchNames = await page.evaluate(() => [...document.querySelectorAll('.gs-row:not(.gs-all)')].map((r) => r.textContent.trim()));
+  ok('admin search surfaces draft guides by name', searchNames.some((t) => t.includes('New Guide') && !t.includes('New Guide (2)')));
   await page.evaluate(() => { document.querySelector('.gs-input').value = 'zzz-unique-draft-marker-zzz'; document.querySelector('.gs-input').dispatchEvent(new Event('input', { bubbles: true })); });
   await pause(250);
-  ok('search does not surface a draft guide by its content', await page.evaluate(() => document.querySelectorAll('.gs-row').length === 0));
+  ok('admin search surfaces a draft guide by its content', await page.evaluate(() => document.querySelectorAll('.gs-row').length > 0));
   await page.evaluate(() => document.querySelector('.gs-input').blur());
 
-  // Back to editing: the draft guide and its content must still be intact —
-  // hiding is view-only, nothing was actually removed from the plan.
+  // Now preview as the specific heir — drafts must disappear again, both
+  // from the nav and from search, exactly like a real read-only file would.
+  await page.evaluate(() => document.querySelector('button[aria-label="Reading as"]')?.click());
+  await page.waitForFunction(() => !!document.querySelector('[aria-label="Choose who you\'re reading as"]'), { timeout: 6000 });
+  await page.evaluate(() => [...document.querySelectorAll('[aria-label="Choose who you\'re reading as"] button')].find((b) => b.textContent.includes('Test Heir'))?.click());
+  await pause(300);
+  const heirNavTitles = await page.evaluate(() => [...document.querySelectorAll('nav .navlink, nav .navlink-child')].map((b) => b.textContent.trim()));
+  ok('previewing as a specific heir hides draft guides from the nav', !heirNavTitles.includes('New Guide') && !heirNavTitles.includes('New Guide (1)'));
+
+  await page.evaluate(() => { document.querySelector('.gs-input').focus(); document.querySelector('.gs-input').value = 'New Guide'; document.querySelector('.gs-input').dispatchEvent(new Event('input', { bubbles: true })); });
+  await pause(250);
+  searchNames = await page.evaluate(() => [...document.querySelectorAll('.gs-row:not(.gs-all)')].map((r) => r.textContent.trim()));
+  ok('previewing as a specific heir hides draft guides from search', !searchNames.some((t) => t.includes('New Guide') && !t.includes('New Guide (2)')));
+  await page.evaluate(() => document.querySelector('.gs-input').blur());
+
+  // Switch back to admin (Edit is blocked while previewing a specific heir)
+  // before returning to editing: the draft guide and its content must still
+  // be intact — hiding is view-only, nothing was actually removed from the plan.
+  await page.evaluate(() => document.querySelector('button[aria-label="Reading as"]')?.click());
+  await page.waitForFunction(() => !!document.querySelector('[aria-label="Choose who you\'re reading as"]'), { timeout: 6000 });
+  await page.evaluate(() => [...document.querySelectorAll('[aria-label="Choose who you\'re reading as"] button')].find((b) => /^Admin/.test(b.textContent))?.click());
+  await pause(300);
   await click('Edit'); await pause(300);
   ok('the draft guide (and its content) survives the round trip', await page.evaluate(() => [...document.querySelectorAll('nav .navrow input')].some((i) => i.value === 'New Guide')));
 

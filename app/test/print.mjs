@@ -1,10 +1,9 @@
-// Print hygiene, plus a guard that a draft guide never reaches a reopened
-// file's reader view at all (so there's nothing to print in the first
-// place):
-//   1) A draft guide is absent from the nav once "Admin" is chosen for a
-//      reopened file — same hiding rule as any other reader, the owner's
-//      own admin identity is not an exception (drafts still ride along
-//      inside the file's data, just never rendered outside live editing).
+// Print hygiene, plus a guard on draft-guide visibility for a reopened file:
+//   1) A draft guide IS visible in the nav once "Admin" is chosen for a
+//      reopened file — the owner reading their own plan (not impersonating
+//      a specific heir, not a genuine read-only file) can see drafts, same
+//      as during live editing. Only an actual heir — previewing as a
+//      specific person, or a real read-only exported file — never sees one.
 //   2) The "Not available in <LANG> — showing the <other> version instead."
 //      language-fallback notice must be visible on screen and gone on
 //      paper. Verified via print-media emulation.
@@ -54,9 +53,9 @@ try {
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /show me everything|admin/i.test(b.textContent))?.click());
   await page.waitForFunction(() => !!document.querySelector('nav .navlink'), { timeout: 8000 });
 
-  // --- DRAFT GUIDE HIDDEN FROM THE REOPENED FILE'S READER, EVEN AS ADMIN ---
+  // --- DRAFT GUIDE VISIBLE TO ADMIN IN THE REOPENED FILE'S READER ---
   const navTitles = await page.evaluate(() => [...document.querySelectorAll('nav .navlink')].map((b) => b.textContent.trim()));
-  ok('draft guide is absent from the nav (not just marked, actually gone)', !navTitles.includes('Draft note'));
+  ok('draft guide is visible to admin in the nav', navTitles.includes('Draft note'));
   ok('the published guide is still there', navTitles.includes('EN only'));
 
   // --- FALLBACK NOTICE ---

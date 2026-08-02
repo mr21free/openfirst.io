@@ -286,15 +286,16 @@ export class InheritancePackage {
   itemsByImportance() { return this.itemsOrdered(); } // back-compat alias
 
   /** Guides ordered for reading, optionally filtered to an audience person.
-      Draft guides travel inside the file but are never part of the reading
-      experience — they're excluded here rather than gated by a flag in the
-      UI, so nothing downstream of this method can accidentally show one. */
-  guidesFor(personId = null) {
+      Draft guides travel inside the file but are excluded by default — only
+      the owner (not previewing a specific heir, not a real read-only file)
+      passes includeDrafts, so nothing else downstream can accidentally show
+      one to an heir. */
+  guidesFor(personId = null, { includeDrafts = false } = {}) {
     const person = personId ? this.byId.get(personId)?.obj : null;
     const roles = person ? person.roles || [] : null;
 
     const visible = this.guides.filter((g) => {
-      if (g.draft) return false;
+      if (g.draft && !includeDrafts) return false;
       if (!person) return true;
       const okPerson = (g.audience_person_ids || []).includes(personId);
       const okRole = (g.audience_roles || []).some((r) => roles.includes(r));

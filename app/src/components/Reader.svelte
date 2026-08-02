@@ -380,7 +380,11 @@
   // exported reader exactly — no builder-only affordances, so what the owner
   // sees while checking someone's view is what that heir actually gets.
   const previewingHeir = $derived(!readOnly && !editing && audience !== null);
-  const guides = $derived(editing ? pkg.guides : pkg.guidesFor(audience));
+  // Admin/owner reading their own plan (not impersonating a specific heir,
+  // not a real read-only exported file) may still see draft guides in View
+  // mode — only an actual heir's view (previewingHeir or readOnly) hides them.
+  const canSeeDrafts = $derived(editing || (!readOnly && !previewingHeir));
+  const guides = $derived(editing ? pkg.guides : pkg.guidesFor(audience, { includeDrafts: canSeeDrafts }));
   const navGuides = $derived(guides);
   const groupDefs = $derived(pkg.guideGroups());
   const hasMapContent = $derived((pkg.locations?.length || 0) > 0 || (pkg.items?.length || 0) > 0);
@@ -835,7 +839,7 @@
   // the results list itself, so drop those here rather than inside search().
   const visibleSearch = (results) => results.filter((r) => {
     if (r.kind === 'readiness' && !canShowReadinessData) return false;
-    if (r.kind === 'guide' && !editing && pkg.byId.get(r.id)?.obj?.draft) return false;
+    if (r.kind === 'guide' && !canSeeDrafts && pkg.byId.get(r.id)?.obj?.draft) return false;
     return true;
   });
   const searchResults = $derived(view === 'search' ? visibleSearch(pkg.search(gquery, 50)) : []);

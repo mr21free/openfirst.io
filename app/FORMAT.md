@@ -19,13 +19,17 @@ is the unchanged `lifepackage/v1` schema described later in this document.
 A plan file has three parts, in this order in the document:
 
 1. **A static front door.** Plain HTML, present in the markup itself (not
-   drawn by JavaScript), so it's readable even if the embedded app fails to
-   boot in some future browser. It shows: the app name and container format
-   version, the plan id, the revision number and a human-readable "last
-   saved" timestamp (informational only — see Revision, below), and, if the
-   plan is passphrase-protected, the label and hint for every passphrase slot
-   ("Sarah — hint: our anniversary"), so a reader knows whose passphrase to
-   try without ever seeing the plan's content.
+   drawn by JavaScript), so it's readable in the raw file — view source, or
+   open it in a text editor — even in 10+ years, or if the embedded app fails
+   to parse in some future browser. It's hidden from the rendered page by
+   default (the app removes it once it boots, and it never gets a chance to
+   paint) so it doesn't flash before the real content loads. It shows: the
+   app name and container format version, the plan id, the revision number
+   and a human-readable "last saved" timestamp (informational only — see
+   Revision, below), and, if the plan is passphrase-protected, the label and
+   hint for every passphrase slot ("Sarah — hint: our anniversary"), so a
+   reader knows whose passphrase to try without ever seeing the plan's
+   content.
 2. **A data island.** One `<script type="application/json">` tag holding the
    container JSON described below.
 3. **The embedded app bundle** — the same self-contained build the app

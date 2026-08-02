@@ -68,7 +68,7 @@ function frontDoorHtml(container) {
   const slotsHtml = container.protection === 'passphrase'
     ? `<ul>${(container.slots || []).map((s) => `<li>${s.label}${s.hint ? ` — hint: ${s.hint}` : ''}</li>`).join('')}</ul>`
     : `<p>No passphrase — this file opens for anyone who has it.</p>`;
-  return `<div id="openfirst-front-door">
+  return `<div id="openfirst-front-door" style="display:none">
   <p>OpenFirst plan file — container format v${container.formatVersion} (${container.format})</p>
   <h1>${container.title}</h1>
   <p>Plan id: ${container.planId} — revision ${container.revision} — last saved ${container.updated}</p>

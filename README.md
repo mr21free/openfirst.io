@@ -25,8 +25,8 @@ realistic sample plan exactly as the primary heir would see it.
 - **A map, not a vault.** The plan records *where* secrets live and *how* to
   find them — never seeds, PINs, or passwords themselves.
 - **Durable, open format.** The plan file is a self-contained HTML container
-  (format v1) wrapping a plain **JSON + Markdown** data schema
-  (`lifepackage/v1`) — readable for years without this app. See
+  wrapping a plain **JSON + Markdown** data schema (`lifepackage/v1`) —
+  readable for years without this app. See
   [`docs/SCHEMA.md`](docs/SCHEMA.md) for the data schema and
   [`app/FORMAT.md`](app/FORMAT.md) for the container.
 - **Legacy-friendly.** Older packages named `inheritance.json` with

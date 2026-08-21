@@ -1,0 +1,95 @@
+{
+  "schema": "lifepackage/v1",
+  "package": {
+    "id": "pkg_sample",
+    "title": "Sample Family Plan",
+    "owner_id": "per_owner",
+    "created": "2026-01-01T00:00:00Z",
+    "updated": "2026-07-27T14:32:00Z",
+    "languages": [
+      "en"
+    ],
+    "default_language": "en",
+    "primary_person_ids": [
+      "per_heir"
+    ]
+  },
+  "roles": [
+    {
+      "id": "owner",
+      "name": "Owner"
+    },
+    {
+      "id": "primary_heir",
+      "name": "Primary heir"
+    }
+  ],
+  "people": [
+    {
+      "id": "per_owner",
+      "name": "Miro",
+      "roles": [
+        "owner"
+      ]
+    },
+    {
+      "id": "per_heir",
+      "name": "Sarah",
+      "roles": [
+        "primary_heir"
+      ]
+    }
+  ],
+  "locations": [
+    {
+      "id": "loc_home_safe",
+      "name": "Home safe",
+      "order": 0
+    }
+  ],
+  "items": [
+    {
+      "id": "item_passport",
+      "name": "Passport",
+      "importance": "high",
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "access_person_ids": [
+        "per_heir"
+      ]
+    }
+  ],
+  "guides": [
+    {
+      "id": "guide_start",
+      "title": "Start here",
+      "order": 0,
+      "audience_person_ids": [
+        "per_heir"
+      ],
+      "content": {
+        "en": "## Start here\n\nRead this first."
+      }
+    }
+  ],
+  "folders": [],
+  "attachments": [
+    {
+      "id": "att_letter",
+      "filename": "letter.txt",
+      "path": "/attachments/letter.txt",
+      "mime": "text/plain",
+      "description": "A short note kept as a sample attachment.",
+      "item_id": "item_passport"
+    }
+  ],
+  "readiness_checks": [],
+  "readiness_runs": [],
+  "attachmentBlobs": {
+    "att_letter": {
+      "mime": "text/plain",
+      "b64": "VGhpcyBpcyBhIHNhbXBsZSBhdHRhY2htZW50IHVzZWQgb25seSBieSB0aGUgZm9ybWF0LXYyIGZpeHR1cmVzLgo="
+    }
+  }
+}

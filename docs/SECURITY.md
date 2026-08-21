@@ -20,9 +20,9 @@ If you find a vulnerability, please report it privately (see
   app removed the ability to store a raw secret on purpose, and strips any that
   a hand-edited or older file tries to smuggle in.
 - **Outlives the company.** The plan file is an open, documented format — one
-  self-contained HTML file, container format v1. It stays readable and
-  decryptable with standard tools in 10–20 years, with no OpenFirst in the loop.
-  See [FORMAT.md](../app/FORMAT.md).
+  self-contained HTML file. It stays readable and decryptable with standard
+  tools in 10–20 years, with no OpenFirst in the loop. See
+  [FORMAT.md](../app/FORMAT.md).
 - **Verifiable.** The whole app is open source and builds to one auditable file.
 
 ---

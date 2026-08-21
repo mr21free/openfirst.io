@@ -5,8 +5,10 @@ Standalone recovery tool for an OpenFirst plan (.html) file.
 This exists for the day the app itself is unavailable: it needs no build
 step, no browser, and no network. It only needs Python and the widely-used
 `cryptography` package (`pip install cryptography`), which supplies PBKDF2
-and AES-GCM. See FORMAT.md, section "The Plan File (.html) — Container
-Format v1", for the full container spec this script implements.
+and AES-GCM. See FORMAT.md, sections "Container Format v1" and "Container
+Format v2", for the full container spec this script implements — it reads
+both (every plan ever exported keeps opening, forever) and always prints
+the same plain JSON shape regardless of which one the file happens to be in.
 
 Usage:
     python3 recover.py PLAN.html                      # passphrase-free plan
@@ -44,12 +46,40 @@ def extract_container(html_text):
     return json.loads(m.group(1))
 
 
-def aad_main(plan_id, revision):
+# Binds `formatVersion` — otherwise-unauthenticated plaintext that decides
+# whether this script even looks at the top-level `attachments` map below.
+# Without this, flipping formatVersion from 2 to 1 on a tampered file makes
+# every attachment silently disappear instead of being caught as tampering.
+def aad_main(plan_id, revision, format_version):
+    return f'lifepackage-plan-aad/v2\n{plan_id}\n{revision}\n{format_version}'.encode('utf-8')
+
+
+# Pre-formatVersion-binding AAD, from before the guard above existed — kept
+# so a file written before this fix still opens (see decrypt_data). A newly
+# written, newly tampered file still fails here too: its ciphertext tag was
+# computed under aad_main's *real* formatVersion, which this legacy string
+# never included, so the two only ever coincide for a genuinely old file.
+def aad_main_legacy(plan_id, revision):
     return f'lifepackage-plan-aad/{AAD_VERSION}\n{plan_id}\n{revision}'.encode('utf-8')
 
 
 def aad_slot(plan_id, slot_id, label, hint):
     return f'lifepackage-plan-slot-aad/{AAD_VERSION}\n{plan_id}\n{slot_id}\n{label}\n{hint or ""}'.encode('utf-8')
+
+
+# Container Format v2 only — each attachment is its own independently
+# encrypted entry (own iv, AAD bound to plan + attachment id, not revision)
+# so an unchanged attachment's ciphertext can be cached and reused across
+# saves instead of re-encrypted every time. See FORMAT.md. `mime` is bound
+# too, so a tampered content-type on a protected attachment is caught rather
+# than silently trusted by whatever renders it.
+def aad_attachment(plan_id, attachment_id, mime):
+    return f'lifepackage-plan-attachment-aad/v2\n{plan_id}\n{attachment_id}\n{mime or ""}'.encode('utf-8')
+
+
+# Pre-mime-binding AAD — see aad_main_legacy above for why this has to stay.
+def aad_attachment_legacy(plan_id, attachment_id):
+    return f'lifepackage-plan-attachment-aad/{AAD_VERSION}\n{plan_id}\n{attachment_id}'.encode('utf-8')
 
 
 def derive_key(passphrase, salt, iterations):
@@ -74,12 +104,52 @@ def unwrap_master_key(slot, passphrase, plan_id):
     return aes_gcm_decrypt(key, iv, wrapped, aad)
 
 
-def decrypt_data(container, master_key_raw):
+def decrypt_main(container, master_key_raw):
+    # Tries the current formatVersion-bound AAD first, then falls back to the
+    # pre-fix AAD (see aad_main_legacy) — mirrors the per-slot try/fallback
+    # in recover() below.
     iv = base64.b64decode(container['iv'])
     ciphertext = base64.b64decode(container['data'])
-    aad = aad_main(container['planId'], container['revision'])
-    plaintext = aes_gcm_decrypt(master_key_raw, iv, ciphertext, aad)
-    return json.loads(plaintext.decode('utf-8'))
+    try:
+        aad = aad_main(container['planId'], container['revision'], container.get('formatVersion'))
+        return aes_gcm_decrypt(master_key_raw, iv, ciphertext, aad)
+    except Exception:
+        aad = aad_main_legacy(container['planId'], container['revision'])
+        return aes_gcm_decrypt(master_key_raw, iv, ciphertext, aad)
+
+
+def decrypt_attachment_entry(container, att_id, entry, master_key_raw):
+    # Tries the current mime-bound AAD first, then falls back to the pre-fix
+    # AAD (see aad_attachment_legacy) — mirrors decrypt_main's fallback.
+    entry_iv = base64.b64decode(entry['iv'])
+    entry_ciphertext = base64.b64decode(entry['data'])
+    try:
+        aad = aad_attachment(container['planId'], att_id, entry.get('mime'))
+        return aes_gcm_decrypt(master_key_raw, entry_iv, entry_ciphertext, aad)
+    except Exception:
+        aad = aad_attachment_legacy(container['planId'], att_id)
+        return aes_gcm_decrypt(master_key_raw, entry_iv, entry_ciphertext, aad)
+
+
+def decrypt_data(container, master_key_raw):
+    plaintext = decrypt_main(container, master_key_raw)
+    data = json.loads(plaintext.decode('utf-8'))
+    # Container Format v2: attachment bytes live in their own top-level
+    # `attachments` map, each independently encrypted (see aad_attachment
+    # above), not merged into `data`. Decrypt them and merge them back into
+    # `data['attachmentBlobs']` here so the JSON this script prints looks
+    # identical to what a v1 file (attachments embedded in `data` already)
+    # has always produced.
+    if container.get('formatVersion', 1) >= 2 and container.get('attachments'):
+        attachment_blobs = {}
+        for att_id, entry in container['attachments'].items():
+            entry_plain = decrypt_attachment_entry(container, att_id, entry, master_key_raw)
+            attachment_blobs[att_id] = {
+                'mime': entry.get('mime', ''),
+                'b64': base64.b64encode(entry_plain).decode('ascii'),
+            }
+        data['attachmentBlobs'] = attachment_blobs
+    return data
 
 
 def recover(container, passphrase):

@@ -14,7 +14,6 @@
   const checks = $derived(pkg.readinessOrdered().filter(applies));
 
   function applies(check) {
-    if ((check.scope || 'external') !== 'external') return false;
     if (!personId) return true;
     if ((check.person_ids || []).includes(personId)) return true;
     if ((check.role_ids || []).some((r) => (person?.roles || []).includes(r))) return true;

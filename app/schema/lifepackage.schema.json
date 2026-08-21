@@ -21,6 +21,7 @@
     "attachments": { "type": "array", "items": { "$ref": "#/$defs/attachment" } },
     "readiness_checks": { "type": "array", "items": { "$ref": "#/$defs/readinessCheck" } },
     "readiness_runs": { "type": "array", "items": { "$ref": "#/$defs/readinessRun" } },
+    "readiness_tasks": { "type": "array", "items": { "$ref": "#/$defs/readinessTask" } },
     "folders": {
       "type": "array",
       "description": "Legacy import compatibility only. Current packages should use guide_groups.",
@@ -285,7 +286,12 @@
         "id": { "$ref": "#/$defs/id" },
         "title": { "type": "string" },
         "importance": { "$ref": "#/$defs/importance" },
-        "scope": { "type": "string", "enum": ["external", "internal"], "default": "external" },
+        "scope": {
+          "type": "string",
+          "enum": ["external", "internal"],
+          "default": "external",
+          "description": "Legacy import compatibility only. \"internal\" checks are migrated into readiness_tasks on load; current packages never write this."
+        },
         "question": { "type": "string" },
         "expected": { "type": "string" },
         "owner_notes": { "type": "string" },
@@ -298,6 +304,23 @@
         "related_location_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
         "related_guide_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
         "related_attachment_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } }
+      }
+    },
+    "readinessTask": {
+      "type": "object",
+      "required": ["id", "title"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["", "planned", "in_progress", "completed"] },
+        "importance": { "$ref": "#/$defs/importance" },
+        "person_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "location_ids": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "order": { "$ref": "#/$defs/order" },
+        "created": { "$ref": "#/$defs/date" }
       }
     },
     "readinessRun": {

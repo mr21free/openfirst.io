@@ -59,6 +59,43 @@ export function normalizedRoles(data) {
   return [...byId.values()];
 }
 
+/** One-time, best-effort migration: an older plan's readiness checks flagged
+ *  `scope: 'internal'` ("Internal - hide during dry run") become standalone
+ *  Tasks instead — Tasks now own the builder-internal-checklist case, so the
+ *  scope concept goes away entirely (dropped from every remaining check too).
+ *  No dual-format support is kept after this runs. Mutates `data` in place. */
+export function migrateInternalTasks(data) {
+  if (!data || !Array.isArray(data.readiness_checks) || !data.readiness_checks.length) return;
+  const migrated = [];
+  const kept = [];
+  for (const c of data.readiness_checks) {
+    if (c.scope === 'internal') {
+      migrated.push({
+        id: c.id,
+        title: c.title || '',
+        description: c.question || c.owner_notes || '',
+        status: '',
+        importance: c.importance || 'medium',
+        // Internal-scope checks never showed the plain "Assigned people"
+        // picker (person_ids) — only "Related people" (related_person_ids)
+        // was reachable in the UI for them — so that's the field to migrate.
+        person_ids: c.related_person_ids || c.person_ids || [],
+        location_ids: c.related_location_ids || [],
+        tags: c.tags || [],
+        created: c.created || new Date().toISOString().slice(0, 10)
+      });
+    } else {
+      delete c.scope;
+      kept.push(c);
+    }
+  }
+  data.readiness_checks = kept;
+  if (migrated.length) {
+    if (!Array.isArray(data.readiness_tasks)) data.readiness_tasks = [];
+    data.readiness_tasks.push(...migrated);
+  }
+}
+
 const IMP_ORDER = { high: 0, medium: 1, low: 2, undefined: 3 };
 
 export class InheritancePackage {
@@ -79,6 +116,7 @@ export class InheritancePackage {
     this.attachments = data.attachments || [];
     this.readinessChecks = data.readiness_checks || [];
     this.readinessRuns = data.readiness_runs || [];
+    this.tasks = data.readiness_tasks || [];
     this.roles = normalizedRoles(data);
 
     // Indices
@@ -91,6 +129,7 @@ export class InheritancePackage {
     index(this.folders, 'folder');
     index(this.attachments, 'attachment');
     index(this.readinessChecks, 'readiness');
+    index(this.tasks, 'task');
     index(this.roles, 'role');
 
     // Reverse dependency edges: who depends on this item.
@@ -155,6 +194,10 @@ export class InheritancePackage {
     if (e.kind === 'readiness') {
       if (o.title) return o.title;
       return this.#nthEmpty(this.readinessChecks, (c) => c.title, o, 'New Check');
+    }
+    if (e.kind === 'task') {
+      if (o.title) return o.title;
+      return this.#nthEmpty(this.tasks, (t) => t.title, o, 'New Task');
     }
     if (e.kind === 'role') {
       if (o.name) return o.name;
@@ -242,6 +285,7 @@ export class InheritancePackage {
     for (const l of this.locations || []) add(l.id, 'location', this.name(l.id), [l.notes]);
     for (const a of this.attachments || []) add(a.id, 'attachment', this.name(a.id), [a.description, ...(a.tags || [])]);
     for (const c of this.readinessChecks || []) add(c.id, 'readiness', this.name(c.id), [c.question, c.expected, c.owner_notes, ...(c.tags || [])]);
+    for (const t of this.tasks || []) add(t.id, 'task', this.name(t.id), [t.description, ...(t.tags || [])]);
     for (const r of this.roles || []) add(r.id, 'role', this.name(r.id), []);
 
     out.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
@@ -327,6 +371,7 @@ export class InheritancePackage {
 
   attachmentsOrdered() { return this.ordered(this.attachments); }
   readinessOrdered() { return this.ordered(this.readinessChecks); }
+  tasksOrdered() { return this.ordered(this.tasks); }
 
   #tagsOf(collection) {
     const set = new Set();
@@ -351,6 +396,9 @@ export class InheritancePackage {
 
   allReadinessTags() { return this.#tagsOf(this.readinessChecks); }
   readinessWithTag(tag) { return this.#withTag(this.readinessChecks, tag); }
+
+  allTaskTags() { return this.#tagsOf(this.tasks); }
+  tasksWithTag(tag) { return this.#withTag(this.tasks, tag); }
 
   // --- Location nesting (arbitrary depth via parent_id) ---
   /** Locations use manual order (drag-and-drop), then name — never importance. */

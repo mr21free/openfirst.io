@@ -6,9 +6,9 @@
   import { loadDraft, loadAllDrafts, clearDraft, getFileHandle, getAllFileHandles, deleteFileHandle } from './lib/persist.js';
   import { decryptAndLoad, loadSample } from './lib/load.js';
   import { PACKAGE_SCHEMA } from './lib/format.js';
-  import { CONTAINER_FORMAT, parseContainerFromHtml } from './lib/planfile.js';
+  import { CONTAINER_FORMAT, parseContainerFromHtml, readContainer } from './lib/planfile.js';
   import { deriveDraftKey, decryptString, decryptToBlob } from './lib/draftcrypto.js';
-  import { unwrapMasterKey, decryptContainerData } from './lib/slotcrypto.js';
+  import { unwrapMasterKey } from './lib/slotcrypto.js';
   import { templateSeed } from './lib/templates.js';
 
   const store = new Store();
@@ -101,8 +101,7 @@
    *  retryable error. */
   async function unlockContainer(rawContainer, passphrase) {
     const { masterKeyRaw } = await unwrapMasterKey({ slots: rawContainer.slots, passphrase, planId: rawContainer.planId });
-    const decrypted = await decryptContainerData({ container: rawContainer, masterKeyRaw });
-    const loaded = loadContainerV1Plaintext({ ...rawContainer, data: decrypted });
+    const loaded = await readContainer({ container: rawContainer, masterKeyRaw });
     return { ...loaded, masterKeyRaw };
   }
 
@@ -148,23 +147,6 @@
     return { data: p.data, attachmentUrls, blobs };
   }
 
-  // Container Format v1 (see FORMAT.md / planfile.js): attachment bytes live
-  // in data.attachmentBlobs (so they inherit the same protection as the rest
-  // of `data` once passphrases land) — strip it out into the usual
-  // blobs/attachmentUrls shape before handing the plan to the store, so it's
-  // never part of the live editable data.
-  function loadContainerV1Plaintext(container) {
-    const { attachmentBlobs, ...data } = container.data || {};
-    const attachmentUrls = {};
-    const blobs = new Map();
-    for (const [id, a] of Object.entries(attachmentBlobs || {})) {
-      const att = data.attachments?.find((x) => x.id === id);
-      const blob = new Blob([base64ToBytes(a.b64)], { type: a.mime || att?.mime || '' });
-      blobs.set(id, blob);
-      attachmentUrls[id] = URL.createObjectURL(blob);
-    }
-    return { data, attachmentUrls, blobs };
-  }
 
   // Boot. Reader mode loads the embedded plan (or shows the password gate).
   // Builder mode: every time the landing is shown (store.pkg is null), re-check
@@ -174,7 +156,7 @@
       if (!store.pkg && !gateEnvelope && !containerGate) {
         if (embedded.format === 'lifepackage-plan/v1') {
           if (embedded.protection === 'none') {
-            store.load(loadContainerV1Plaintext(embedded));
+            (async () => store.load(await readContainer({ container: embedded })))();
           } else {
             containerGate = embedded;
           }
@@ -500,7 +482,7 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
         fileGate = { container, handle: rec.handle, name: rec.name, planId: rec.planId };
         return true;
       }
-      const loaded = loadContainerV1Plaintext(container);
+      const loaded = await readContainer({ container });
       rememberCurrentPlan(rec.planId);
       await store.openFromFile(loaded, container.revision, rec.handle, rec.name);
       showEditorUrl();
@@ -530,7 +512,7 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
         fileGate = { container, handle, name: handle.name, planId: container.planId };
         return true;
       }
-      const loaded = loadContainerV1Plaintext(container);
+      const loaded = await readContainer({ container });
       rememberCurrentPlan(container.planId);
       await store.openFromFile(loaded, container.revision, handle, handle.name);
       showEditorUrl();
@@ -609,7 +591,7 @@ When you are done, click **Export** in the top bar to save a plan your heirs can
       importGate = { container };
       return true;
     }
-    const loaded = loadContainerV1Plaintext(container);
+    const loaded = await readContainer({ container });
     store.load({ ...loaded, revision: container.revision, hasAddedEntity: true });
     store.startEditing();
     store.persistOnOpen();

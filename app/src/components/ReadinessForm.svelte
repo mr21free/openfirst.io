@@ -42,23 +42,12 @@
     <label class="f"><span class="lbl">Importance</span>
       <select bind:value={raw.importance}><option value={undefined}>—</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
     </label>
-    <label class="toggle">
-      <input type="checkbox" checked={raw.scope === 'internal'} onchange={(e) => raw.scope = e.target.checked ? 'internal' : 'external'} />
-      <span>Internal - hide during dry run</span>
-    </label>
-
-    {#if raw.scope === 'internal'}
-      <div class="f"><span class="lbl">Task / gap</span>
-        <GuideContentEditor {pkg} {raw} compact value={raw.owner_notes || ''} onValue={(v) => raw.owner_notes = v} placeholder="e.g. Update the Bitcoin guide because Amanda did not know where to start." />
-      </div>
-    {:else}
-      <div class="f"><span class="lbl">Question / task</span>
-        <GuideContentEditor {pkg} {raw} compact value={raw.question || ''} onValue={(v) => raw.question = v} placeholder="e.g. If I am gone, where do you find the inheritance package?" />
-      </div>
-      <label class="f"><span class="lbl">What a good answer proves</span><textarea rows="3" bind:value={raw.expected} placeholder="e.g. Amanda knows the USB is in the home safe and who has the password."></textarea></label>
-      <div class="f"><span class="lbl">Assigned people</span><EntityPicker {pkg} target={raw} key="person_ids" kinds={['person']} placeholder="Add a person…" /></div>
-      <label class="f"><span class="lbl">Owner notes</span><textarea rows="3" bind:value={raw.owner_notes} placeholder="Private context for improving the plan."></textarea></label>
-    {/if}
+    <div class="f"><span class="lbl">Question / task</span>
+      <GuideContentEditor {pkg} {raw} compact value={raw.question || ''} onValue={(v) => raw.question = v} placeholder="e.g. If I am gone, where do you find the inheritance package?" />
+    </div>
+    <label class="f"><span class="lbl">What a good answer proves</span><textarea rows="3" bind:value={raw.expected} placeholder="e.g. Amanda knows the USB is in the home safe and who has the password."></textarea></label>
+    <div class="f"><span class="lbl">Assigned people</span><EntityPicker {pkg} target={raw} key="person_ids" kinds={['person']} placeholder="Add a person…" /></div>
+    <label class="f"><span class="lbl">Owner notes</span><textarea rows="3" bind:value={raw.owner_notes} placeholder="Private context for improving the plan."></textarea></label>
 
     <div class="f"><span class="lbl">Tags</span>
       <TagInput target={raw} key="tags" suggestions={pkg.allReadinessTags()} placeholder="e.g. bitcoin, annual-review…" />

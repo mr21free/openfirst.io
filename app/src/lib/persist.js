@@ -143,6 +143,13 @@ export async function loadDraft(key = 'current') {
   try {
     const record = await run(STORE, 'readonly', (s) => s.get(key));
     if (!record) return null;
+    // A protected (Container Format v2) record carries its own encrypted
+    // `attachments` map (id -> {iv, mime, data}) — a completely different
+    // shape from the legacy blob-store merge below. Protected drafts never
+    // write to the plaintext 'blobs' store (see store.svelte.js's
+    // #syncBlobs), so there's nothing to merge in; doing so anyway would
+    // clobber the real encrypted map with the wrong shape.
+    if (record.slots?.length) return { ...record, legacyBlobs: false };
     const stored = await loadDraftBlobs(key).catch(() => []);
     if (stored.length || !record.attachments?.length) {
       return { ...record, attachments: stored, legacyBlobs: false };

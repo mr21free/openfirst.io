@@ -21,7 +21,7 @@ function b64FromBytes(bytes) {
   return btoa(s);
 }
 
-function mimeForAttachment(att) {
+export function mimeForAttachment(att) {
   const explicit = String(att?.mime || '').trim();
   if (explicit.includes('/')) return explicit;
   const name = `${att?.original_filename || ''} ${att?.path || ''} ${att?.filename || ''}`.toLowerCase();
@@ -37,6 +37,13 @@ function mimeForAttachment(att) {
 export async function blobToB64(blob, att = null) {
   const bytes = new Uint8Array(await blob.arrayBuffer());
   return { mime: blob.type || mimeForAttachment(att) || '', b64: b64FromBytes(bytes) };
+}
+
+export function b64ToBlob(b64, mime) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return new Blob([out], { type: mime || '' });
 }
 
 // reading_font choice → bundled @font-face family name. Plex Sans (the UI's

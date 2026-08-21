@@ -32,12 +32,45 @@ function b64decode(str) {
   return out;
 }
 
-function aadMain(planId, revision) {
+// Binds `formatVersion` — otherwise-unauthenticated plaintext that decides
+// whether readContainer even looks at the top-level `attachments` map (see
+// FORMAT.md). Without this, flipping formatVersion from 2 to 1 on a tampered
+// file makes every attachment silently disappear on open (no error) instead
+// of being caught as tampering.
+function aadMain(planId, revision, formatVersion) {
+  return ENC.encode(`lifepackage-plan-aad/v2\n${planId}\n${revision}\n${formatVersion}`);
+}
+
+// Pre-formatVersion-binding AAD, from before the guard above existed — kept
+// so a file written before this fix still opens (see decryptContainerData).
+// A newly-written, newly-tampered file still fails here too: its ciphertext
+// tag was computed under aadMain's *real* formatVersion, which this legacy
+// string never included, so the two only ever coincide for a genuinely old
+// file that predates the aadMain change.
+function aadMainLegacy(planId, revision) {
   return ENC.encode(`lifepackage-plan-aad/${AAD_VERSION}\n${planId}\n${revision}`);
 }
 
 function aadSlot(planId, slotId, label, hint) {
   return ENC.encode(`lifepackage-plan-slot-aad/${AAD_VERSION}\n${planId}\n${slotId}\n${label}\n${hint || ''}`);
+}
+
+// Deliberately NOT bound to `revision` (unlike aadMain) — this is what lets
+// Container Format v2 cache and reuse an unchanged attachment's ciphertext
+// across saves instead of re-encrypting it every time (see FORMAT.md). Same
+// (key, plaintext) reused across saves is fine for GCM; what GCM forbids is
+// reusing a (key, iv) pair for two *different* plaintexts, and a fresh random
+// iv is drawn on every encrypt below regardless of whether the plaintext
+// changed. `mime` *is* bound, though: it sits in plaintext right next to the
+// ciphertext (so the UI can pick a preview before unlock), and without this
+// it's a free, undetectable tamper target for whatever renders it.
+function aadAttachment(planId, attachmentId, mime) {
+  return ENC.encode(`lifepackage-plan-attachment-aad/v2\n${planId}\n${attachmentId}\n${mime || ''}`);
+}
+
+// Pre-mime-binding AAD — see aadMainLegacy above for why this has to stay.
+function aadAttachmentLegacy(planId, attachmentId) {
+  return ENC.encode(`lifepackage-plan-attachment-aad/${AAD_VERSION}\n${planId}\n${attachmentId}`);
 }
 
 async function deriveSlotKey(passphrase, salt, iterations, usage) {
@@ -95,26 +128,69 @@ export async function unwrapMasterKey({ slots, passphrase, planId }) {
 }
 
 /** Encrypt the plan data under the master key: `{ iv, data }` (both base64),
- *  AAD = `aadMain` — binds `revision`, so a stale ciphertext can never be
- *  replayed against a newer one. */
-export async function encryptContainerData({ masterKeyRaw, planId, revision, dataObj }) {
+ *  AAD = `aadMain` — binds `revision` (so a stale ciphertext can never be
+ *  replayed against a newer one) and `formatVersion` (see aadMain above). */
+export async function encryptContainerData({ masterKeyRaw, planId, revision, formatVersion, dataObj }) {
   const key = await crypto.subtle.importKey('raw', masterKeyRaw, 'AES-GCM', false, ['encrypt']);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const plaintext = ENC.encode(JSON.stringify(dataObj));
   const ciphertext = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv, additionalData: aadMain(planId, revision) },
+    { name: 'AES-GCM', iv, additionalData: aadMain(planId, revision, formatVersion) },
     key,
     plaintext
   );
   return { iv: b64encode(iv), data: b64encode(ciphertext) };
 }
 
-/** Decrypt a protected container's `data` back to the plain object. */
+/** Decrypt a protected container's `data` back to the plain object. Tries the
+ *  current formatVersion-bound AAD first, then falls back to the pre-fix AAD
+ *  (see aadMainLegacy) — mirrors unwrapMasterKey's per-slot try/fallback. */
 export async function decryptContainerData({ container, masterKeyRaw }) {
   const key = await crypto.subtle.importKey('raw', masterKeyRaw, 'AES-GCM', false, ['decrypt']);
   const iv = b64decode(container.iv);
   const ciphertext = b64decode(container.data);
-  const aad = aadMain(container.planId, container.revision);
-  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv, additionalData: aad }, key, ciphertext);
-  return JSON.parse(DEC.decode(plain));
+  try {
+    const aad = aadMain(container.planId, container.revision, container.formatVersion);
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv, additionalData: aad }, key, ciphertext);
+    return JSON.parse(DEC.decode(plain));
+  } catch {
+    const aad = aadMainLegacy(container.planId, container.revision);
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv, additionalData: aad }, key, ciphertext);
+    return JSON.parse(DEC.decode(plain));
+  }
+}
+
+/** Container Format v2 (see FORMAT.md): each attachment is encrypted
+ *  independently of the plan-data blob and of every other attachment, under
+ *  its own fresh random iv but the same master key, with AAD binding it to
+ *  this plan + this attachment id only (not `revision` — see aadAttachment).
+ *  That's what lets an unchanged attachment's ciphertext be cached and
+ *  reused across saves instead of re-encrypted every time. */
+export async function encryptAttachment({ masterKeyRaw, planId, attachmentId, mime, bytes }) {
+  const key = await crypto.subtle.importKey('raw', masterKeyRaw, 'AES-GCM', false, ['encrypt']);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv, additionalData: aadAttachment(planId, attachmentId, mime) },
+    key,
+    bytes
+  );
+  return { iv: b64encode(iv), mime: mime || '', data: b64encode(ciphertext) };
+}
+
+/** Decrypt one v2 attachment entry back to raw bytes. Tries the current
+ *  mime-bound AAD first, then falls back to the pre-fix AAD (see
+ *  aadAttachmentLegacy) — mirrors decryptContainerData's fallback. */
+export async function decryptAttachment({ masterKeyRaw, planId, attachmentId, entry }) {
+  const key = await crypto.subtle.importKey('raw', masterKeyRaw, 'AES-GCM', false, ['decrypt']);
+  const iv = b64decode(entry.iv);
+  const ciphertext = b64decode(entry.data);
+  try {
+    const aad = aadAttachment(planId, attachmentId, entry.mime);
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv, additionalData: aad }, key, ciphertext);
+    return new Uint8Array(plain);
+  } catch {
+    const aad = aadAttachmentLegacy(planId, attachmentId);
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv, additionalData: aad }, key, ciphertext);
+    return new Uint8Array(plain);
+  }
 }

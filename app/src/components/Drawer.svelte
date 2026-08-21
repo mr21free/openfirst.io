@@ -7,6 +7,7 @@
   import AttachmentForm from './AttachmentForm.svelte';
   import RoleForm from './RoleForm.svelte';
   import ReadinessForm from './ReadinessForm.svelte';
+  import TaskForm from './TaskForm.svelte';
   import MetaForm from './MetaForm.svelte';
   import MapForm from './MapForm.svelte';
   import Prose from './Prose.svelte';
@@ -14,6 +15,7 @@
   import TrashIcon from './TrashIcon.svelte';
   import { lockBodyScroll } from '../lib/scrollLock.js';
   import { printAccessPath as printAccessPathShared } from '../lib/printAccessPath.js';
+  import { formatBytes } from '../lib/bytes.js';
 
   let { pkg, id, onOpen, onClose, onBack = null, canBack = false, store = null, editing = false, showReadiness = false, onDelete = null, onTag = null, onView = null, requestConfirm = null, requestNotice = null } = $props();
 
@@ -27,6 +29,7 @@
   const runId = $derived(String(id || '').startsWith('__run:') ? String(id).slice(6) : null);
   const testRun = $derived(runId ? (store?.data?.readiness_runs || []).find((r) => r.id === runId) : null);
   const impLabel = (l) => ({ high: 'High', medium: 'Medium', low: 'Low' }[l] || l);
+  const statusLabel = (s) => ({ planned: 'Planned', in_progress: 'In Progress', completed: 'Completed' }[s] || 'None');
   const sectionOpen = (key, count) => count <= 3 || !!openSections[key];
   function toggleSection(key) {
     openSections = { ...openSections, [key]: !openSections[key] };
@@ -66,6 +69,7 @@
   // Full ancestor path (root → parent) for a location, e.g. Country › City › Home.
   const path = $derived(e?.kind === 'location' ? pkg.locationPath(id) : []);
   const attUrl = $derived(e?.kind === 'attachment' ? pkg.attachmentUrls[id] : null);
+  const attSize = $derived(e?.kind === 'attachment' ? store?.attachmentBlobs?.get(id)?.size : null);
   const attachmentParentIds = $derived.by(() => {
     if (e?.kind !== 'attachment') return [];
     return [...new Set([...(obj.item_ids || []), ...(obj.guide_ids || []), obj.item_id, obj.guide_id].filter(Boolean))];
@@ -115,7 +119,7 @@
   };
   function testName(run) {
     const iso = run?.submitted_at || run?.started_at;
-    if (!iso) return run?.date || 'Missing test';
+    if (!iso) return run?.date || 'Missing dry run';
     try {
       return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: 'numeric', minute: '2-digit' }).format(new Date(iso));
     } catch (_) {
@@ -123,7 +127,6 @@
     }
   }
   function checkAppliesToPerson(check, personId, personObj) {
-    if ((check.scope || 'external') !== 'external') return false;
     if ((check.person_ids || []).includes(personId)) return true;
     if ((check.role_ids || []).some((r) => (personObj?.roles || []).includes(r))) return true;
     return !(check.person_ids || []).length && !(check.role_ids || []).length;
@@ -183,7 +186,7 @@
   async function deleteResult(runId, checkId) {
     const ok = requestConfirm ? await requestConfirm({
       title: 'Delete dry-run answer?',
-      message: 'This removes this one answer and its notes from the test run.',
+      message: 'This removes this one answer and its notes from the dry run.',
       confirmLabel: 'Delete'
     }) : true;
     if (ok) store?.deleteReadinessResult?.(runId, checkId);
@@ -240,7 +243,7 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
         {/if}
-        <div><span class="eyebrow">Test</span><h2>{testRun ? testName(testRun) : 'Missing test'}</h2></div>
+        <div><span class="eyebrow">Dry run</span><h2>{testRun ? testName(testRun) : 'Missing dry run'}</h2></div>
       </div>
       {@render headActions()}
     </div>
@@ -266,12 +269,12 @@
               </div>
             {/if}
           {:else}
-            <p class="soft small">No answers recorded in this test.</p>
+            <p class="soft small">No answers recorded in this dry run.</p>
           {/if}
         </div>
       </div>
     {:else}
-      <p class="soft">This test no longer exists.</p>
+      <p class="soft">This dry run no longer exists.</p>
     {/if}
   {:else if !e}
     <div class="dhead">
@@ -295,6 +298,7 @@
           {:else if e.kind === 'attachment'}Attachment
           {:else if e.kind === 'role'}Role
           {:else if e.kind === 'readiness'}Readiness
+          {:else if e.kind === 'task'}Task
           {:else if e.kind === 'guide'}Guide settings
           {:else}{e.kind}{/if}
         </span>
@@ -319,6 +323,8 @@
         <RoleForm {pkg} {store} raw={store?.rawById(id)} onDelete={() => onDelete?.(id)} />
       {:else if e.kind === 'readiness'}
         <ReadinessForm {pkg} {store} raw={store?.rawById(id)} onDelete={() => onDelete?.(id)} />
+      {:else if e.kind === 'task'}
+        <TaskForm {pkg} raw={store?.rawById(id)} onDelete={() => onDelete?.(id)} />
       {:else}
         {@const fraw = store?.rawById(id)}
         <div class="frm">
@@ -330,7 +336,7 @@
     <div class="dbody stack">
       <!-- Human summary first: name (header) → description → attachments → notes. -->
       {#if obj.display_as}<p class="soft"><span class="muted">Known as</span> {obj.display_as}</p>{/if}
-      {#if obj.description}<p class="soft small">{obj.description}</p>{/if}
+      {#if obj.description && e.kind !== 'task'}<p class="soft small">{obj.description}</p>{/if}
       {#if e.kind === 'item' && attachmentsForItem.length}
         <div class="field">
           {@render fieldHead(`att:${id}`, 'Attachments', attachmentsForItem.length)}
@@ -350,10 +356,10 @@
 
       <!-- READINESS -->
       {#if e.kind === 'readiness'}
-        <div class="field"><span class="muted small">{obj.scope === 'internal' ? 'Task / gap' : 'Question / task'}</span>
-          <div class="notes-prose"><Prose {pkg} markdown={obj.scope === 'internal' ? (obj.owner_notes || '') : (obj.question || '')} {onOpen} {onTag} {onView} /></div>
+        <div class="field"><span class="muted small">Question / task</span>
+          <div class="notes-prose"><Prose {pkg} markdown={obj.question || ''} {onOpen} {onTag} {onView} /></div>
         </div>
-        {#if obj.scope !== 'internal' && obj.expected}
+        {#if obj.expected}
           <div class="field"><span class="muted small">What a good answer proves</span><p class="soft small">{obj.expected}</p></div>
         {/if}
         {#if obj.person_ids?.length}
@@ -392,6 +398,33 @@
             <p class="soft small">No dry-run results yet.</p>
           {/if}
         </div>
+      {/if}
+
+      <!-- TASK -->
+      {#if e.kind === 'task'}
+        <div class="field"><span class="muted small">Status</span><p class="soft small">{statusLabel(obj.status)}</p></div>
+        {#if obj.description}
+          <div class="field"><span class="muted small">Description</span>
+            <div class="notes-prose"><Prose {pkg} markdown={obj.description} {onOpen} {onTag} {onView} /></div>
+          </div>
+        {/if}
+        {#if obj.person_ids?.length}
+          <div class="field">
+            {@render fieldHead(`task-people:${id}`, 'Assigned people', obj.person_ids.length)}
+            {#if sectionOpen(`task-people:${id}`, obj.person_ids.length)}<EntityList {pkg} ids={obj.person_ids} {onOpen} />{/if}
+          </div>
+        {/if}
+        {#if obj.location_ids?.length}
+          <div class="field">
+            {@render fieldHead(`task-locations:${id}`, 'Locations', obj.location_ids.length)}
+            {#if sectionOpen(`task-locations:${id}`, obj.location_ids.length)}<EntityList {pkg} ids={obj.location_ids} {onOpen} />{/if}
+          </div>
+        {/if}
+        {#if obj.tags?.length}
+          <div class="field"><span class="muted small">Tags</span>
+            <div class="row wrap">{#each obj.tags as tag}<span class="chip"># {tag}</span>{/each}</div>
+          </div>
+        {/if}
       {/if}
 
       <!-- Importance gets a titled section like every other field; sensitive stays a chip. -->
@@ -616,6 +649,7 @@
       <!-- ATTACHMENT -->
       {#if e.kind === 'attachment'}
         {#if obj.path}<div class="field"><span class="muted small">Path</span><p class="soft small">{obj.path}</p></div>{/if}
+        {#if attSize != null}<div class="field"><span class="muted small">Size</span><p class="soft small">{formatBytes(attSize)}</p></div>{/if}
         {#if attUrl}
           {#if (obj.mime || '').startsWith('image/')}
             <img class="att-img" src={attUrl} alt={obj.description || obj.filename} />

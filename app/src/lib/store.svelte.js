@@ -8,11 +8,12 @@
 */
 
 import { InheritancePackage } from './package.js';
-import { collectRoleIds, humanizeKey, normalizedRoles, slugifyTag } from './package.js';
+import { collectRoleIds, humanizeKey, migrateInternalTasks, normalizedRoles, slugifyTag } from './package.js';
 import { saveDraft, saveDraftBlob, deleteDraftBlob, clearDraft, putFileHandle, loadDraft } from './persist.js';
-import { generateMasterKey, wrapMasterKeyForSlot, decryptContainerData } from './slotcrypto.js';
-import { buildContainer, buildPlanFileHtml, parseContainerFromHtml } from './planfile.js';
+import { generateMasterKey, wrapMasterKeyForSlot } from './slotcrypto.js';
+import { buildContainer, buildPlanFileHtml, parseContainerFromHtml, readContainer } from './planfile.js';
 import { fontsToKeep, triggerDownload } from './export.js';
+import { clearViewPrefs } from './viewPrefs.js';
 
 const FILE_WRITE_DEBOUNCE_MS = 2000;
 
@@ -22,15 +23,8 @@ const FILE_WRITE_DEBOUNCE_MS = 2000;
 // file. Estimate mirrors ExportSizeBanner's (+33% for base64 inflation).
 const ATTACHMENT_CEILING_BYTES = 250 * 1024 * 1024;
 
-function b64ToBlob(b64, mime) {
-  const bin = atob(b64);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return new Blob([out], { type: mime || '' });
-}
-
 const KINDS = ['people', 'locations', 'items', 'guides', 'folders', 'attachments'];
-const PLAN_ARRAYS = [...KINDS, 'readiness_checks', 'readiness_runs'];
+const PLAN_ARRAYS = [...KINDS, 'readiness_checks', 'readiness_runs', 'readiness_tasks'];
 const today = () => new Date().toISOString().slice(0, 10);
 const nowIso = () => new Date().toISOString();
 
@@ -97,6 +91,10 @@ export class Store {
   #baseline = null; // last-seen content key (excluding the auto "updated" date)
   #inFlight = null; // the save currently being written, if any (see #processChanges)
   #persistedBlobs = new Map(); // id -> Blob already written to IndexedDB
+  // buildContainer()'s per-attachment ciphertext/base64 cache (see planfile.js)
+  // — kept alive across saves so an unchanged attachment costs nothing on the
+  // next write. Reset whenever the plan/master key changes out from under it.
+  #attachmentCache = new Map();
   #fileHandle = null; // FileSystemFileHandle — memory only, never persisted directly
   #fileTimer = null;
 
@@ -138,12 +136,14 @@ export class Store {
     data, attachmentUrls = {}, blobs = new Map(), persistedDraft = false, masterKeyRaw = null, slots = [],
     revision = 0, hasAddedEntity = false, fileHandle = null, fileName = null, fileRevision = 0
   }) {
+    migrateInternalTasks(data);
     this.data = data;
     this.attachmentUrls = attachmentUrls;
     this.attachmentBlobs = blobs;
     // A resumed draft's blobs already live in IndexedDB — don't rewrite them on
     // the first save. Anything else (import, new plan) must be written once.
     this.#persistedBlobs = persistedDraft ? new Map(blobs) : new Map();
+    this.#attachmentCache = new Map();
     this.#masterKeyRaw = masterKeyRaw;
     this.slots = slots;
     this.locked = false;
@@ -162,10 +162,12 @@ export class Store {
   }
 
   reset() {
+    clearViewPrefs(this.data?.package?.id || 'current');
     this.data = null;
     this.attachmentUrls = {};
     this.attachmentBlobs = new Map();
     this.#persistedBlobs = new Map();
+    this.#attachmentCache = new Map();
     this.#masterKeyRaw = null;
     this.slots = [];
     this.locked = false;
@@ -192,7 +194,18 @@ export class Store {
     const slot = await wrapMasterKeyForSlot({ masterKeyRaw, passphrase, label, hint, planId });
     this.#masterKeyRaw = masterKeyRaw;
     this.slots = [slot];
+    // Any attachment blob already written to the plaintext blob store (from
+    // before this plan was protected) must not survive protection — from now
+    // on its bytes live only inside the encrypted container (see #syncBlobs,
+    // which never runs once this.slots is non-empty), so a leftover plaintext
+    // copy here would sit unencrypted at rest indefinitely.
+    for (const id of this.#persistedBlobs.keys()) await deleteDraftBlob(planId, id);
     this.#persistedBlobs = new Map();
+    // A fresh master key invalidates any stale 'encrypted' cache entries left
+    // over from a prior protect/unprotect cycle on this same plan — without
+    // this, buildContainer could reuse ciphertext encrypted under a key that
+    // no longer exists (see planfile.js's cachedEncryptedEntry).
+    this.#attachmentCache = new Map();
     this.#baseline = '';
     clearTimeout(this.#timer);
     await this.#processChanges();
@@ -252,6 +265,7 @@ export class Store {
     await this.#processChanges();
     clearTimeout(this.#fileTimer);
     this.#lockedPlanId = this.data?.package?.id || 'current';
+    clearViewPrefs(this.#lockedPlanId);
     this.data = null;
     this.attachmentUrls = {};
     this.attachmentBlobs = new Map();
@@ -284,6 +298,7 @@ export class Store {
    *  against `loadLockedContainer()`'s result — mirrors `load()` but keeps
    *  the file/draft connection (revision, fileName, slots, …) untouched. */
   async resumeAfterUnlock({ data, attachmentUrls, blobs, masterKeyRaw }) {
+    migrateInternalTasks(data);
     this.data = data;
     this.attachmentUrls = attachmentUrls;
     this.attachmentBlobs = blobs;
@@ -397,7 +412,8 @@ export class Store {
       if (this.slots.length) {
         record = await buildContainer({
           planId: planKey, revision: rev, data: snap, blobs: this.attachmentBlobs,
-          protection: { masterKeyRaw: this.#masterKeyRaw, slots: $state.snapshot(this.slots) }
+          protection: { masterKeyRaw: this.#masterKeyRaw, slots: $state.snapshot(this.slots) },
+          attachmentCache: this.#attachmentCache
         });
         record.savedAt = at;
         record.hasAddedEntity = this.hasAddedEntity;
@@ -440,7 +456,8 @@ export class Store {
     if (this.slots.length) {
       record = await buildContainer({
         planId: planKey, revision: this.revision, data: snap, blobs: this.attachmentBlobs,
-        protection: { masterKeyRaw: this.#masterKeyRaw, slots: $state.snapshot(this.slots) }
+        protection: { masterKeyRaw: this.#masterKeyRaw, slots: $state.snapshot(this.slots) },
+        attachmentCache: this.#attachmentCache
       });
       record.savedAt = at;
       record.hasAddedEntity = this.hasAddedEntity;
@@ -468,7 +485,8 @@ export class Store {
     try {
       const container = await buildContainer({
         planId, revision: rev, data: snap, blobs: this.attachmentBlobs,
-        protection: this.slots.length ? { masterKeyRaw: this.#masterKeyRaw, slots: $state.snapshot(this.slots) } : null
+        protection: this.slots.length ? { masterKeyRaw: this.#masterKeyRaw, slots: $state.snapshot(this.slots) } : null,
+        attachmentCache: this.#attachmentCache
       });
       const html = await buildPlanFileHtml(container, fontsToKeep(snap));
       const writable = await this.#fileHandle.createWritable();
@@ -546,7 +564,8 @@ export class Store {
     const rev = this.revision;
     const container = await buildContainer({
       planId, revision: rev, data: snap, blobs: this.attachmentBlobs,
-      protection: this.slots.length ? { masterKeyRaw: this.#masterKeyRaw, slots: $state.snapshot(this.slots) } : null
+      protection: this.slots.length ? { masterKeyRaw: this.#masterKeyRaw, slots: $state.snapshot(this.slots) } : null,
+      attachmentCache: this.#attachmentCache
     });
     const html = await buildPlanFileHtml(container, fontsToKeep(snap));
     triggerDownload(new Blob([html], { type: 'text/html' }), name);
@@ -593,21 +612,18 @@ export class Store {
     const planId = this.data?.package?.id || 'current';
     const d = await loadDraft(planId);
     if (!d?.data) { this.scratchAheadBy = 0; return; }
-    const attachmentUrls = {};
-    const blobs = new Map();
+    let attachmentUrls = {};
+    let blobs = new Map();
     let plainData;
     if (this.slots.length) {
-      // Protected scratch record is a container: `d.data` is ciphertext,
-      // decrypted with the already-in-memory master key (this is only
-      // reachable mid-session on an already-unlocked protected plan).
-      const decrypted = await decryptContainerData({ container: d, masterKeyRaw: this.#masterKeyRaw });
-      const { attachmentBlobs, ...rest } = decrypted;
-      plainData = rest;
-      for (const [id, a] of Object.entries(attachmentBlobs || {})) {
-        const blob = b64ToBlob(a.b64, a.mime);
-        blobs.set(id, blob);
-        attachmentUrls[id] = URL.createObjectURL(blob);
-      }
+      // Protected scratch record is a container (v1 or v2 — see planfile.js's
+      // readContainer): `d.data` is ciphertext, decrypted with the
+      // already-in-memory master key (this is only reachable mid-session on
+      // an already-unlocked protected plan).
+      const result = await readContainer({ container: d, masterKeyRaw: this.#masterKeyRaw });
+      plainData = result.data;
+      attachmentUrls = result.attachmentUrls;
+      blobs = result.blobs;
     } else {
       plainData = d.data;
       for (const a of d.attachments || []) {
@@ -618,6 +634,7 @@ export class Store {
         }
       }
     }
+    migrateInternalTasks(plainData);
     this.data = plainData;
     this.attachmentUrls = attachmentUrls;
     this.attachmentBlobs = blobs;
@@ -665,6 +682,8 @@ export class Store {
     for (const k of KINDS) { const o = this.data[k]?.find((x) => x.id === id); if (o) return o; }
     const check = this.data.readiness_checks?.find((x) => x.id === id);
     if (check) return check;
+    const task = this.data.readiness_tasks?.find((x) => x.id === id);
+    if (task) return task;
     const role = this.data.roles?.find((x) => x.id === id);
     if (role) return role;
     return null;
@@ -675,6 +694,7 @@ export class Store {
       KINDS.some((k) => this.data[k]?.some((o) => o.id === id)) ||
       this.data.readiness_checks?.some((o) => o.id === id) ||
       this.data.readiness_runs?.some((o) => o.id === id) ||
+      this.data.readiness_tasks?.some((o) => o.id === id) ||
       this.data.guide_groups?.some((o) => o.id === id) ||
       this.data.roles?.some((o) => o.id === id);
     let id;
@@ -1064,14 +1084,13 @@ export class Store {
   }
 
   // ---- Readiness checks + dry runs ----
-  addReadinessCheck(scope = 'external') {
+  addReadinessCheck() {
     this.ensureArrays();
     const id = this.genId('check');
     const check = {
       id,
       title: '',
       importance: 'medium',
-      scope: scope === 'internal' ? 'internal' : 'external',
       question: '',
       expected: '',
       person_ids: [],
@@ -1171,6 +1190,53 @@ export class Store {
     this.#addTagTo(this.data.readiness_checks, ids, tag);
   }
 
+  // ---- Tasks (internal builder checklist — never shown to an heir) ----
+  addReadinessTask() {
+    this.ensureArrays();
+    const id = this.genId('task');
+    const task = {
+      id, title: '', description: '', status: '',
+      person_ids: [], location_ids: [], tags: [], created: today()
+    };
+    this.data.readiness_tasks.push(task);
+    return id;
+  }
+
+  deleteReadinessTask(id) {
+    this.ensureArrays();
+    const i = this.data.readiness_tasks.findIndex((t) => t.id === id);
+    if (i >= 0) this.data.readiness_tasks.splice(i, 1);
+  }
+
+  addTagToReadinessTasks(ids, tag) {
+    this.ensureArrays();
+    this.#addTagTo(this.data.readiness_tasks, ids, tag);
+  }
+
+  /**
+   * Reorder a task in the flat "Manual" sort (drag-and-drop) — deliberately
+   * disconnected from importance, matching Todoist's model where Manual is
+   * its own sort you can freely interleave priorities in, rather than a
+   * per-priority tweak. Completed tasks are excluded: they're hidden from
+   * the list by default, so only what's actually draggable gets renumbered.
+   * `beforeId` null appends to the end.
+   */
+  moveTask(id, beforeId = null) {
+    this.ensureArrays();
+    const task = this.data.readiness_tasks.find((t) => t.id === id);
+    if (!task || id === beforeId) return;
+    // Sort by current manual order first, so splicing the dragged task into
+    // its new spot preserves everyone else's existing arrangement.
+    const siblings = this.data.readiness_tasks
+      .filter((t) => t.status !== 'completed')
+      .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity));
+    const ids = siblings.map((t) => t.id).filter((x) => x !== id);
+    const at = beforeId && beforeId !== id ? ids.indexOf(beforeId) : -1;
+    if (at >= 0) ids.splice(at, 0, id); else ids.push(id);
+    const byId = new Map(siblings.map((t) => [t.id, t]));
+    ids.forEach((tid, i) => { const t = byId.get(tid); if (t) t.order = i; });
+  }
+
   #rm(arr, id) {
     if (!Array.isArray(arr)) return;
     for (let i = arr.length - 1; i >= 0; i--) if (arr[i] === id) arr.splice(i, 1);
@@ -1182,6 +1248,8 @@ export class Store {
     for (const k of KINDS) { const o = this.data[k]?.find((x) => x.id === id); if (o) return { obj: o, kind: map[k] }; }
     const c = this.data.readiness_checks?.find((x) => x.id === id);
     if (c) return { obj: c, kind: 'readiness' };
+    const t = this.data.readiness_tasks?.find((x) => x.id === id);
+    if (t) return { obj: t, kind: 'task' };
     const r = this.data.roles?.find((x) => x.id === id);
     return r ? { obj: r, kind: 'role' } : null;
   }
@@ -1190,6 +1258,7 @@ export class Store {
     if (kind === 'attachment') return this.#attachmentNameWithExt(obj);
     if (kind === 'role') return obj.name || obj.id;
     if (kind === 'readiness') return obj.title || obj.id;
+    if (kind === 'task') return obj.title || obj.id;
     return obj.name || obj.title || obj.id;
   }
   #attachmentNameWithExt(obj, defaultExt = '') {
@@ -1278,6 +1347,10 @@ export class Store {
       this.deleteReadinessCheck(id);
       return;
     }
+    if (found?.kind === 'task') {
+      this.deleteReadinessTask(id);
+      return;
+    }
     for (const k of KINDS) {
       const arr = this.data[k]; if (!arr) continue;
       const i = arr.findIndex((o) => o.id === id);
@@ -1317,6 +1390,10 @@ export class Store {
       rm(c.related_location_ids);
       rm(c.related_guide_ids);
       rm(c.related_attachment_ids);
+    }
+    for (const t of this.data.readiness_tasks || []) {
+      rm(t.person_ids);
+      rm(t.location_ids);
     }
     if (this.data.package?.owner_id === id) delete this.data.package.owner_id;
     rm(this.data.package?.primary_person_ids);

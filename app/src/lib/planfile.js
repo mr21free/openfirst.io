@@ -7,12 +7,16 @@
   download.
 */
 
-import { readerTemplateRoot, stripUnusedFonts, fontsToKeep, blobToB64 } from './export.js';
-import { encryptContainerData } from './slotcrypto.js';
+import { readerTemplateRoot, stripUnusedFonts, fontsToKeep, blobToB64, b64ToBlob, mimeForAttachment } from './export.js';
+import { encryptContainerData, decryptContainerData, encryptAttachment, decryptAttachment } from './slotcrypto.js';
 import RECOVER_JS_SOURCE from '../../recover.js?raw';
 
 export const CONTAINER_FORMAT = 'lifepackage-plan/v1';
 export const CONTAINER_FORMAT_VERSION = 1;
+// Container Format v2 (see FORMAT.md): protected plans only. Every other
+// shape (unprotected, or an already-written v1 protected file) is read
+// forever — this only changes what *new* protected saves write.
+export const CONTAINER_FORMAT_VERSION_V2 = 2;
 
 /** Turn a plan title into a stable, filesystem-safe file name — no date, no
  *  suffix: this is the file the app keeps saving into (see the filename
@@ -27,41 +31,133 @@ export function suggestedFileName(title) {
   return `${base || 'Plan'}.html`;
 }
 
-/** Assemble the container-v1 JSON: plan data plus every attachment blob,
- *  base64-encoded and merged into `data.attachmentBlobs` so they inherit
- *  whatever protection the rest of `data` has. `protection = null` builds
- *  today's plaintext shape; `{ masterKeyRaw, slots }` encrypts `data` under
- *  the master key and lists the slots instead — see slotcrypto.js. */
-export async function buildContainer({ planId, revision, data, blobs = new Map(), protection = null }) {
-  const attachmentBlobs = {};
-  for (const att of data.attachments || []) {
-    const blob = blobs.get(att.id);
-    if (blob) attachmentBlobs[att.id] = await blobToB64(blob, att);
-  }
-  const dataObj = { ...data, attachmentBlobs };
+// A cache entry is only reused when the *same* Blob object (reference
+// equality) is still attached to this attachment id — any add/replace of a
+// file swaps in a new Blob, which naturally invalidates the old entry
+// without needing an explicit "did this change" check. `kind` lets a single
+// cache Map safely hold both plain and encrypted entries for the same id
+// across a protect/unprotect toggle (the wrong-kind entry just won't match
+// and gets recomputed) — see store.svelte.js's `#attachmentCache`.
+async function cachedPlainEntry(cache, att, blob) {
+  const cached = cache.get(att.id);
+  if (cached && cached.kind === 'plain' && cached.blob === blob) return cached.value;
+  const value = await blobToB64(blob, att);
+  cache.set(att.id, { kind: 'plain', blob, value });
+  return value;
+}
+
+async function cachedEncryptedEntry(cache, { masterKeyRaw, planId, att, blob }) {
+  const cached = cache.get(att.id);
+  if (cached && cached.kind === 'encrypted' && cached.blob === blob) return cached.value;
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const mime = blob.type || mimeForAttachment(att) || '';
+  const value = await encryptAttachment({ masterKeyRaw, planId, attachmentId: att.id, mime, bytes });
+  cache.set(att.id, { kind: 'encrypted', blob, value });
+  return value;
+}
+
+/** Assemble the container JSON.
+ *
+ *  Unprotected (`protection = null`): unchanged Container Format v1 shape —
+ *  every attachment blob is base64-encoded and merged into
+ *  `data.attachmentBlobs`.
+ *
+ *  Protected (`protection = { masterKeyRaw, slots }`): Container Format v2 —
+ *  two independently-encrypted buckets instead of one monolithic blob. The
+ *  plan JSON/text (`data`, *without* attachment bytes) is encrypted exactly
+ *  as v1 did (cheap, revision-bound AAD). Each attachment is encrypted
+ *  independently under its own fresh iv into the top-level `attachments`
+ *  map, keyed by attachment id, with AAD bound to the plan + that id only
+ *  (not revision) — see slotcrypto.js's `encryptAttachment`. That's what
+ *  makes an unchanged attachment's ciphertext cacheable: `attachmentCache`
+ *  (an id → {kind,blob,value} Map the caller persists across calls) is
+ *  consulted before re-encrypting/re-encoding anything, so a save where no
+ *  attachment changed does zero attachment crypto work.
+ *
+ *  A v1-protected file opened by this app and re-saved is transparently
+ *  upgraded to v2 the next time it's written — see FORMAT.md. */
+export async function buildContainer({ planId, revision, data, blobs = new Map(), protection = null, attachmentCache = new Map() }) {
   const base = {
     format: CONTAINER_FORMAT,
-    formatVersion: CONTAINER_FORMAT_VERSION,
     planId,
     revision,
     updated: new Date().toISOString()
   };
+  const title = data.package?.title || 'Untitled Plan';
+
   if (!protection) {
-    return { ...base, protection: 'none', title: data.package?.title || 'Untitled Plan', data: dataObj };
+    const attachmentBlobs = {};
+    for (const att of data.attachments || []) {
+      const blob = blobs.get(att.id);
+      if (blob) attachmentBlobs[att.id] = await cachedPlainEntry(attachmentCache, att, blob);
+    }
+    return {
+      ...base,
+      formatVersion: CONTAINER_FORMAT_VERSION,
+      protection: 'none',
+      title,
+      data: { ...data, attachmentBlobs }
+    };
+  }
+
+  const attachments = {};
+  for (const att of data.attachments || []) {
+    const blob = blobs.get(att.id);
+    if (blob) attachments[att.id] = await cachedEncryptedEntry(attachmentCache, { masterKeyRaw: protection.masterKeyRaw, planId, att, blob });
   }
   const { iv, data: cipherData } = await encryptContainerData({
-    masterKeyRaw: protection.masterKeyRaw, planId, revision, dataObj
+    masterKeyRaw: protection.masterKeyRaw, planId, revision, formatVersion: CONTAINER_FORMAT_VERSION_V2, dataObj: data
   });
   return {
     ...base,
+    formatVersion: CONTAINER_FORMAT_VERSION_V2,
     protection: 'passphrase',
     kdf: 'PBKDF2-SHA256',
     cipher: 'AES-256-GCM',
-    title: data.package?.title || 'Untitled Plan',
+    title,
     slots: protection.slots,
     iv,
-    data: cipherData
+    data: cipherData,
+    attachments
   };
+}
+
+/** Decrypt/unpack a container (either format version, protected or not) back
+ *  to `{ data, attachmentUrls, blobs }` — the one shape the store and
+ *  App.svelte's boot/unlock paths all want. `masterKeyRaw` is required only
+ *  for a passphrase-protected container (already unwrapped by the caller via
+ *  `unwrapMasterKey`). Handles every combination a real file can be in:
+ *  unprotected v1, protected v1 (attachments embedded in the encrypted
+ *  `data` blob), protected v2 (attachments independently encrypted in the
+ *  top-level `attachments` map). */
+export async function readContainer({ container, masterKeyRaw = null }) {
+  const version = container.formatVersion || 1;
+  const data = container.protection === 'passphrase'
+    ? await decryptContainerData({ container, masterKeyRaw })
+    : (container.data || {});
+
+  const attachmentUrls = {};
+  const blobs = new Map();
+
+  if (version >= 2 && container.attachments) {
+    for (const [id, entry] of Object.entries(container.attachments)) {
+      const bytes = await decryptAttachment({ masterKeyRaw, planId: container.planId, attachmentId: id, entry });
+      const att = data.attachments?.find((x) => x.id === id);
+      const blob = new Blob([bytes], { type: entry.mime || att?.mime || '' });
+      blobs.set(id, blob);
+      attachmentUrls[id] = URL.createObjectURL(blob);
+    }
+    return { data, attachmentUrls, blobs };
+  }
+
+  const { attachmentBlobs, ...rest } = data;
+  for (const [id, a] of Object.entries(attachmentBlobs || {})) {
+    const att = rest.attachments?.find((x) => x.id === id);
+    const blob = b64ToBlob(a.b64, a.mime || att?.mime || '');
+    blobs.set(id, blob);
+    attachmentUrls[id] = URL.createObjectURL(blob);
+  }
+  return { data: rest, attachmentUrls, blobs };
 }
 
 function frontDoorHtml(container) {

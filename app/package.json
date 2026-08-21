@@ -48,7 +48,8 @@
     "test:html-import": "node test/html-import.mjs",
     "test:debounce-race": "node test/debounce-race.mjs",
     "test:hasAddedEntity-selfheal": "node test/hasAddedEntity-selfheal.mjs",
-    "test:format-v1": "node schema/fixtures/format-v1/verify.mjs"
+    "test:format-v1": "node schema/fixtures/format-v1/verify.mjs",
+    "test:format-v2": "node schema/fixtures/format-v2/verify.mjs"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.0.3",

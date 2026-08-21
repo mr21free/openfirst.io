@@ -22,6 +22,8 @@
   import { APP_DOMAIN } from '../lib/format.js';
   import { lockBodyScroll } from '../lib/scrollLock.js';
   import { printAccessPath } from '../lib/printAccessPath.js';
+  import { formatBytes } from '../lib/bytes.js';
+  import { loadViewPref, saveViewPref } from '../lib/viewPrefs.js';
 
   let {
     store, onClose, onLock = null, readOnly = false, initialAudience = null, initialAdmin = false,
@@ -100,6 +102,7 @@
   function addLocation(parentId = null) { setDrawer(store.addLocation(parentId)); }
   function addItem() { setDrawer(store.addItem()); }
   function addReadiness() { view = 'readiness'; setDrawer(store.addReadinessCheck()); }
+  function addTask() { view = 'readiness'; setDrawer(store.addReadinessTask()); }
   function addGuide() {
     const id = store.addGuide();
     closeDrawer();
@@ -198,8 +201,8 @@
   }
   async function deleteReadinessRun(id) {
     const ok = await requestConfirm({
-      title: 'Delete test run?',
-      message: 'This removes the test run and all answers recorded in it. This cannot be undone here.',
+      title: 'Delete dry run?',
+      message: 'This removes the dry run and all answers recorded in it. This cannot be undone here.',
       confirmLabel: 'Delete'
     });
     if (ok) store.deleteReadinessRun(id);
@@ -207,8 +210,8 @@
   async function deleteReadinessRuns(ids) {
     if (!ids?.length) return;
     const ok = await requestConfirm({
-      title: `Delete ${ids.length} ${ids.length === 1 ? 'test' : 'tests'}?`,
-      message: 'This removes the selected tests and all answers recorded in them. This cannot be undone here.',
+      title: `Delete ${ids.length} ${ids.length === 1 ? 'dry run' : 'dry runs'}?`,
+      message: 'This removes the selected dry runs and all answers recorded in them. This cannot be undone here.',
       confirmLabel: 'Delete'
     });
     if (!ok) return;
@@ -301,6 +304,20 @@
   let sortBy = $state('name');
   // Items lead with importance; the other lists open alphabetically.
   const defaultSort = (v) => (v === 'items' ? 'importance' : 'name');
+  // Sections whose filters/sort are remembered per plan on this device (owner
+  // only — search text is deliberately excluded so a stale search term can
+  // never silently hide things on your next visit).
+  const PREF_SECTIONS = ['people', 'roles', 'locations', 'items', 'files'];
+  $effect(() => {
+    const planId = store.data?.package?.id;
+    if (!editing || !planId || !PREF_SECTIONS.includes(view)) return;
+    saveViewPref(planId, view, { filters: $state.snapshot(filters), sortBy });
+  });
+  $effect(() => {
+    const planId = store.data?.package?.id;
+    if (!editing || !planId || view !== 'map') return;
+    saveViewPref(planId, 'map', { filters: $state.snapshot(mapFilters) });
+  });
   let bulkTag = $state(''); // pending tag to apply to selected files/items
   function applyBulkTag() {
     const t = bulkTag.trim();
@@ -325,11 +342,14 @@
     return true;
   }
   const entityName = (o) => (o?.name || o?.title || o?.filename || '').toString();
+  const fileSize = (id) => store.attachmentBlobs?.get(id)?.size || 0;
   function sortList(arr, by) {
     if (by === 'name') return [...arr].sort((a, b) => entityName(a).localeCompare(entityName(b)));
     if (by === 'name_desc') return [...arr].sort((a, b) => entityName(b).localeCompare(entityName(a)));
     // 'importance' is a stable re-sort of the already importance-then-name list.
     if (by === 'importance') return [...arr].sort((a, b) => (IMP_RANK[a.importance] ?? 9) - (IMP_RANK[b.importance] ?? 9));
+    if (by === 'size') return [...arr].sort((a, b) => fileSize(b.id) - fileSize(a.id));
+    if (by === 'size_asc') return [...arr].sort((a, b) => fileSize(a.id) - fileSize(b.id));
     return arr;
   }
   const IMAGE_FILE_EXT = /\.(png|jpe?g|gif|webp|avif|bmp|svg|heic|tiff?)$/i;
@@ -340,6 +360,7 @@
   // Lists that carry importance lead with it; the rest sort by name only.
   const SORTS_IMP = [{ value: 'importance', label: 'Importance' }, { value: 'name', label: 'Name (A→Z)' }, { value: 'name_desc', label: 'Name (Z→A)' }];
   const SORTS_NAME = [{ value: 'name', label: 'Name (A→Z)' }, { value: 'name_desc', label: 'Name (Z→A)' }];
+  const SORTS_FILE = [...SORTS_NAME, { value: 'size', label: 'Size (high to low)' }, { value: 'size_asc', label: 'Size (low to high)' }];
   const peopleFacets = $derived([
     { key: 'role', label: 'Role', test: (p, v) => (p.roles || []).includes(v), options: pkg.roles.map((r) => ({ value: r.id, label: pkg.roleLabel(r.id), count: pkg.people.filter((p) => (p.roles || []).includes(r.id)).length })).filter((o) => o.count) }
   ]);
@@ -621,7 +642,12 @@
   const homeGuide = $derived(editing ? (flatNav[0] || null) : (guides[0] || null));
   const owner = $derived(pkg.owner);
   const readinessChecks = $derived(pkg.readinessOrdered());
-  const readinessCount = $derived(readinessChecks.length);
+  const readinessTasks = $derived(pkg.tasksOrdered());
+  // Nav badge: open tasks (the actionable to-do signal) plus all questions
+  // (dry-run content, which has no "done" state of its own) — so the number
+  // still means "how much is waiting for you here," not just a raw total.
+  const openTaskCount = $derived(readinessTasks.filter((t) => t.status !== 'completed').length);
+  const readinessCount = $derived(openTaskCount + readinessChecks.length);
   const readinessRuns = $derived([...(store.data?.readiness_runs || [])].sort((a, b) => {
     const at = Date.parse(a.submitted_at || a.started_at || a.date || '');
     const bt = Date.parse(b.submitted_at || b.started_at || b.date || '');
@@ -728,9 +754,15 @@
     query = '';
     selectedIds = [];
     anchorIndex = null;
-    filters = {};
-    if (v !== 'map') mapFilters = {};
-    sortBy = defaultSort(v);
+    const planId = store.data?.package?.id;
+    const saved = editing && planId ? loadViewPref(planId, v) : null;
+    filters = (PREF_SECTIONS.includes(v) && saved?.filters) || {};
+    if (v === 'map') {
+      mapFilters = saved?.filters || {};
+    } else {
+      mapFilters = {};
+    }
+    sortBy = (PREF_SECTIONS.includes(v) && saved?.sortBy) || defaultSort(v);
     bulkTag = '';
     window.scrollTo({ top: 0 });
   }
@@ -779,7 +811,6 @@
   }
   function applicableReadinessChecks(personId = audience) {
     return readinessChecks.filter((check) => {
-      if ((check.scope || 'external') !== 'external') return false;
       if (!personId) return true;
       const person = pkg.entity(personId)?.obj;
       if ((check.person_ids || []).includes(personId)) return true;
@@ -833,12 +864,12 @@
   // parent keeps the query (so the full "search" view can read it) and decides
   // what a pick / "see all" does. ----
   let gquery = $state('');
-  const KIND_LABEL = { guide: 'Guide', person: 'Person', item: 'Item', location: 'Location', attachment: 'File', role: 'Role', readiness: 'Readiness' };
+  const KIND_LABEL = { guide: 'Guide', person: 'Person', item: 'Item', location: 'Location', attachment: 'File', role: 'Role', readiness: 'Readiness', task: 'Task' };
   // pkg.search() scans every guide's raw content (drafts included) purely to
   // rank matches — the actual leak risk is showing a draft's title/entry in
   // the results list itself, so drop those here rather than inside search().
   const visibleSearch = (results) => results.filter((r) => {
-    if (r.kind === 'readiness' && !canShowReadinessData) return false;
+    if ((r.kind === 'readiness' || r.kind === 'task') && !canShowReadinessData) return false;
     if (r.kind === 'guide' && !canSeeDrafts && pkg.byId.get(r.id)?.obj?.draft) return false;
     return true;
   });
@@ -859,7 +890,7 @@
   });
   $effect(() => {
     if (view === 'readiness' && !canSeeReadiness) view = defaultViewFor(audience);
-    if (!canShowReadinessData && drawerId && pkg.entity(drawerId)?.kind === 'readiness') closeDrawer();
+    if (!canShowReadinessData && drawerId && ['readiness', 'task'].includes(pkg.entity(drawerId)?.kind)) closeDrawer();
   });
 
   // Apply appearance. The plan's saved theme is the default; the top-bar toggle
@@ -1522,13 +1553,18 @@
           <ReadinessView
             {pkg}
             {editing}
+            planId={store.data?.package?.id}
             checks={readinessChecks}
+            tasks={readinessTasks}
             {selectedIds}
             onSelect={rowSelect}
             onOpen={rowClick}
             onDelete={removeEntity}
             onAdd={addReadiness}
+            onAddTask={addTask}
             onBulkTag={(ids, tag) => store.addTagToReadinessChecks(ids, tag)}
+            onBulkTaskTag={(ids, tag) => store.addTagToReadinessTasks(ids, tag)}
+            onReorderTask={(id, beforeId) => store.moveTask(id, beforeId)}
             runs={readinessRuns}
             onDeleteRun={deleteReadinessRun}
             onDeleteRuns={deleteReadinessRuns}
@@ -1547,7 +1583,7 @@
             {/if}
             <span class="print-only tiny print-date">Printed {printDate}</span>
           </div>
-          {#if attachments.length > 0}<FilterBar facets={fileFacets} sorts={SORTS_NAME} bind:filters bind:sort={sortBy} bind:search={query} placeholder="Search files…" />{/if}
+          {#if attachments.length > 0}<FilterBar facets={fileFacets} sorts={SORTS_FILE} bind:filters bind:sort={sortBy} bind:search={query} placeholder="Search files…" />{/if}
           {#if editing && selectedIds.length}
             <div class="bulk-tag">
               <span class="tiny muted">Tag {selectedIds.length} selected:</span>
@@ -1564,7 +1600,7 @@
                 <button class="ulist-click" onclick={() => rowClick(att.id)}>
                   <span class="ulist-main">
                     <span class="ulist-name">{pkg.name(att.id)}</span>
-                    <span class="ulist-desc">{att.description || att.path}</span>
+                    <span class="ulist-desc">{att.description || att.path}{#if fileSize(att.id)} · {formatBytes(fileSize(att.id))}{/if}</span>
                     {#if att.tags?.length}<span class="row-tags">{#each att.tags as t}<span class="row-tag"># {t}</span>{/each}</span>{/if}
                   </span>
                 </button>

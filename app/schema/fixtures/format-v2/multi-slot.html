@@ -1,4 +1,25 @@
-#!/usr/bin/env node
+<!doctype html>
+<!--
+  This is an OpenFirst plan file. To read it without OpenFirst: open this
+  file in a text editor, find the recovery script marker further down (view
+  source, then search for OPENFIRST-RECOVERY-SCRIPT), copy everything below
+  that marker up to the closing tag into a new file named recover.js, then
+  run: node recover.js THIS-FILE.html
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<title>Sample Family Plan</title>
+</head>
+<body>
+<div id="openfirst-front-door">
+  <p>OpenFirst plan file — container format v2 (lifepackage-plan/v1)</p>
+  <p>Plan id: plan_fixture_v2_multi_slot — revision 12 — last saved 2026-07-27T15:10:00Z</p>
+  <ul><li>Sarah — hint: ask Sarah directly</li><li>Lawyer — hint: in our engagement letter</li></ul>
+</div>
+<script type="application/json" id="openfirst-plan-data">{"format":"lifepackage-plan/v1","formatVersion":2,"planId":"plan_fixture_v2_multi_slot","revision":12,"updated":"2026-07-27T15:10:00Z","protection":"passphrase","kdf":"PBKDF2-SHA256","cipher":"AES-256-GCM","title":"Sample Family Plan","slots":[{"id":"slot_sarah","label":"Sarah","hint":"ask Sarah directly","iterations":600000,"salt":"dOfsxUtl1eMc9zBiIC3dVw==","iv":"OkVMJUcwBgpxozZe","wrappedKey":"PV06Vj4z7rhKhpWtJCieBX/EbBxYIvVDpGTQsQg1uyOJtXQ1If2W4DCZo26rqocL"},{"id":"slot_lawyer","label":"Lawyer","hint":"in our engagement letter","iterations":600000,"salt":"sxXzLIBHq2CNfxw8UeDtmg==","iv":"/1Ct/d7aHUNvyLZW","wrappedKey":"giQAbOUmoSsz+0pC74Ov2dqExvIYacQhZvl4n3S51ataxYj2lWDoJw+JqwWhKM+D"}],"iv":"WiWEYWwpnPs6/Ag4","data":"eLO5sOB1jHFQiorimucOzaJ6J+n7OaOy38rcca4oyyn/oLEgXYe+uNO3Xun2UWbarTU+fv2GxPOXUyZGgI1FahhSCnqc/XmdsOOT6LfxVzxKDECRajdJ9bBPcpm77ZqTeuqMxZyiSg+l/xPbwAG8RE1wFub1YPLREUM/93rArCKfe2tjI91aTs+A9XQU98mgI3V/1cNWswAgEpkSBEXE68rivY3RQiSrXqU5Z7YAQ68M4mk1kxttGJ+2xOZ1bF/RkBC0Aym6tPCLQqStM4+QgIy8hpHJGHLH68aWmIEh5h5XgitoOZbSicY17odyP0u5+sjKe92GAm4GQTuj/gFzo76C6sDGpMZSR9fXXRdUqleOmWGbqj17PIDJdGDfIiQ4S/dRBc5ZGMZZV9QVc5iUjhVjZchzBOPQ4Tt45gQPcaPM9z3DLYi5lZfm9H1wZ1Arh9jqfhloO12EioUey9JTLmSIbJCPaGqV9WDiYaTmUHEETLK53ILvK59fD1OdJ4mQuiL457Ldt8LLlD0oyjihfS7e5dWkmJjkO1i73KY8ZoBZZ4XcAW3XpJbSJGrJUjjK9BchFpWV9FV7or6rjqY9IAFE+3P36TGL6b+nYzON6Ayc+93wWvCvynpPjOsEXv5lPaabPSVET3LEix2cJeIeTtCOEpLUxRSF53SfTPxPZwI5mKswam5vpObyp/5JoZ/EgqxxCUSzZz9FjaNLyGCCvYPc99uCRI6N5YJ3qVkCxU9u9nFcW5iQXVvEVz52NyIc203c2W4p3SRl3J/fQhNO13P16z7f211BwbwHK/EAJthqE8RCptoWMl86bQq8aCfrdHqaflEITtqxdiOFoyjq4Yc879Bf0JvTAuhw6rH7EP3WWiSW7udx/5w73Hm0+zc2mNi7e5qXavUMP9BYPY6gMzE49CKSIOFguQHHSPVadDxzjDKErcDkToHIoxlxx6mZsVtxJlVAnYWMJ0k2DeLoiubM5/Ode21Zzw6SFQ/5PZxkzMB0Zxjrr4U+SDpptr0kgLFGPIlHgEF/8dHFf9Gg9shCMvtPb4Hc8SiPagfRWfn9zZh1e1+uLS0dbLcCdSUk5YNJyo5USWdrHotlbZohM5igdf9gRBDThfxyAIrVGth5oXCa2VbHfwa+NIiycDroM/+v2ogrDoPvaPq2b5aJWgqmxuo03/HumzQo8WECEj6iucssF3j6KXFq7UoN2kLq/CYyGsQncypf0IOpa2YO5k7m2/o1x3uEVnpQMr6MPhIATseuWMZYQemV/cYeG8VX6G88ZVMXuWAPca6uktmsH0MDjADpl1x9PnkVvL3SeoRz3IjWkRgoQvwz3vkdcEak0GIvtneQYwCPkfKpyRYBtUvyibwA7mwWkCSvZ9+Ebgg1l28YQKIteP85X9uh9oWOvGtbneMC/FXvjgLSYvVxWCETjjNLwA==","attachments":{"att_letter":{"iv":"FtQyuQL+6k/4ZsfN","mime":"text/plain","data":"k8x7Dk/3tcFsn4dq1voLzZgDBsJETd4m5xjuPjIR+rgFw7bYaeOU7SlqYGcC+zSDMn7uTO70VFfSmmm6oVuaVnkc1BJ4CjeYdC5MNzSM53fc"}}}</script>
+<!-- OPENFIRST-RECOVERY-SCRIPT: everything in the next tag is recover.js, verbatim -->
+<script type="text/plain" id="openfirst-recover-js">#!/usr/bin/env node
 /**
  * Standalone recovery tool for an OpenFirst plan (.html) file. Canonical
  * implementation — this is the copy embedded verbatim inside every plan
@@ -51,20 +72,7 @@ function b64decode(str) {
   return new Uint8Array(Buffer.from(str, 'base64'));
 }
 
-// Binds `formatVersion` — otherwise-unauthenticated plaintext that decides
-// whether this script even looks at the top-level `attachments` map below.
-// Without this, flipping formatVersion from 2 to 1 on a tampered file makes
-// every attachment silently disappear instead of being caught as tampering.
-function aadMain(planId, revision, formatVersion) {
-  return ENC.encode(`lifepackage-plan-aad/v2\n${planId}\n${revision}\n${formatVersion}`);
-}
-
-// Pre-formatVersion-binding AAD, from before the guard above existed — kept
-// so a file written before this fix still opens (see decryptData). A newly
-// written, newly tampered file still fails here too: its ciphertext tag was
-// computed under aadMain's *real* formatVersion, which this legacy string
-// never included, so the two only ever coincide for a genuinely old file.
-function aadMainLegacy(planId, revision) {
+function aadMain(planId, revision) {
   return ENC.encode(`lifepackage-plan-aad/${AAD_VERSION}\n${planId}\n${revision}`);
 }
 
@@ -75,15 +83,8 @@ function aadSlot(planId, slotId, label, hint) {
 // Container Format v2 only — each attachment is its own independently
 // encrypted entry (own iv, AAD bound to plan + attachment id, not revision)
 // so an unchanged attachment's ciphertext can be cached and reused across
-// saves instead of re-encrypted every time. See FORMAT.md. `mime` is bound
-// too, so a tampered content-type on a protected attachment is caught rather
-// than silently trusted by whatever renders it.
-function aadAttachment(planId, attachmentId, mime) {
-  return ENC.encode(`lifepackage-plan-attachment-aad/v2\n${planId}\n${attachmentId}\n${mime || ''}`);
-}
-
-// Pre-mime-binding AAD — see aadMainLegacy above for why this has to stay.
-function aadAttachmentLegacy(planId, attachmentId) {
+// saves instead of re-encrypted every time. See FORMAT.md.
+function aadAttachment(planId, attachmentId) {
   return ENC.encode(`lifepackage-plan-attachment-aad/${AAD_VERSION}\n${planId}\n${attachmentId}`);
 }
 
@@ -107,36 +108,11 @@ async function unwrapMasterKey(slot, passphrase, planId) {
   return subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt']);
 }
 
-// Tries the current formatVersion-bound AAD first, then falls back to the
-// pre-fix AAD (see aadMainLegacy) — mirrors the per-slot try/fallback below.
-async function decryptMain(container, masterKey) {
+async function decryptData(container, masterKey) {
   const iv = b64decode(container.iv);
   const ciphertext = b64decode(container.data);
-  try {
-    const aad = aadMain(container.planId, container.revision, container.formatVersion);
-    return await subtle.decrypt({ name: 'AES-GCM', iv, additionalData: aad }, masterKey, ciphertext);
-  } catch {
-    const aad = aadMainLegacy(container.planId, container.revision);
-    return await subtle.decrypt({ name: 'AES-GCM', iv, additionalData: aad }, masterKey, ciphertext);
-  }
-}
-
-// Tries the current mime-bound AAD first, then falls back to the pre-fix AAD
-// (see aadAttachmentLegacy) — mirrors decryptMain's fallback.
-async function decryptAttachmentEntry(container, id, entry, masterKey) {
-  const iv = b64decode(entry.iv);
-  const ciphertext = b64decode(entry.data);
-  try {
-    const aad = aadAttachment(container.planId, id, entry.mime);
-    return await subtle.decrypt({ name: 'AES-GCM', iv, additionalData: aad }, masterKey, ciphertext);
-  } catch {
-    const aad = aadAttachmentLegacy(container.planId, id);
-    return await subtle.decrypt({ name: 'AES-GCM', iv, additionalData: aad }, masterKey, ciphertext);
-  }
-}
-
-async function decryptData(container, masterKey) {
-  const plain = await decryptMain(container, masterKey);
+  const aad = aadMain(container.planId, container.revision);
+  const plain = await subtle.decrypt({ name: 'AES-GCM', iv, additionalData: aad }, masterKey, ciphertext);
   const data = JSON.parse(DEC.decode(plain));
   // Container Format v2: attachment bytes live in their own top-level
   // `attachments` map, each independently encrypted (see aadAttachment
@@ -147,7 +123,10 @@ async function decryptData(container, masterKey) {
   if ((container.formatVersion || 1) >= 2 && container.attachments) {
     const attachmentBlobs = {};
     for (const [id, entry] of Object.entries(container.attachments)) {
-      const entryPlain = await decryptAttachmentEntry(container, id, entry, masterKey);
+      const entryIv = b64decode(entry.iv);
+      const entryCiphertext = b64decode(entry.data);
+      const entryAad = aadAttachment(container.planId, id);
+      const entryPlain = await subtle.decrypt({ name: 'AES-GCM', iv: entryIv, additionalData: entryAad }, masterKey, entryCiphertext);
       attachmentBlobs[id] = { mime: entry.mime || '', b64: Buffer.from(entryPlain).toString('base64') };
     }
     data.attachmentBlobs = attachmentBlobs;
@@ -219,3 +198,9 @@ async function main() {
 }
 
 main();
+</script>
+<!-- The real exported file also inlines the full app bundle here, which reads
+     #openfirst-plan-data and renders the interactive viewer/editor. Omitted
+     from this fixture: it isolates the container format from the app build. -->
+</body>
+</html>

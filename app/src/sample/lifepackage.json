@@ -106,10 +106,11 @@
           },
           {
             "id": "st_amanda_4",
-            "text": "Plug the USB into the laptop, double-click the plan file, and enter the passphrase from the sealed card. Then read “Read me first” — slowly. There is no rush."
+            "text": "Plug the USB into the laptop, open start-here.html, and enter the password from the sealed card. Then read “Read me first” — slowly. There is no rush."
           }
         ]
-      }
+      },
+      "readiness_score": "9/10 passed on the last dry run (2026-06-18) — only the Bitcoin recovery map needs a follow-up walkthrough."
     },
     {
       "id": "person_thomas_james",
@@ -915,7 +916,9 @@
       "container_ids": [
         "item_red_folder"
       ],
-      "tags": ["bitcoin"]
+      "tags": [
+        "bitcoin"
+      ]
     },
     {
       "id": "item_bitcoin_multisig_wallet",
@@ -943,7 +946,9 @@
         "item_bitcoin_passphrase_location_note"
       ],
       "notes": "Amanda should not move funds alone. Josh may explain the process, but must not be given unilateral access.",
-      "tags": ["bitcoin"]
+      "tags": [
+        "bitcoin"
+      ]
     },
     {
       "id": "item_bitcoin_watch_only_wallet",
@@ -966,7 +971,9 @@
         "item_laptop_john",
         "item_wallet_descriptor_printout"
       ],
-      "tags": ["bitcoin"]
+      "tags": [
+        "bitcoin"
+      ]
     },
     {
       "id": "item_coldcard_device",
@@ -987,7 +994,9 @@
         "item_seed_backup_uk",
         "item_bitcoin_passphrase_location_note"
       ],
-      "tags": ["bitcoin"]
+      "tags": [
+        "bitcoin"
+      ]
     },
     {
       "id": "item_trezor_device",
@@ -1008,7 +1017,9 @@
         "item_seed_backup_milan",
         "item_bitcoin_passphrase_location_note"
       ],
-      "tags": ["bitcoin"]
+      "tags": [
+        "bitcoin"
+      ]
     },
     {
       "id": "item_seed_backup_uk",
@@ -1025,7 +1036,9 @@
         "guide_bitcoin_recovery"
       ],
       "sensitive": true,
-      "tags": ["bitcoin"]
+      "tags": [
+        "bitcoin"
+      ]
     },
     {
       "id": "item_seed_backup_milan",
@@ -1043,7 +1056,9 @@
         "guide_milan_property"
       ],
       "sensitive": true,
-      "tags": ["bitcoin"]
+      "tags": [
+        "bitcoin"
+      ]
     },
     {
       "id": "item_seed_backup_solicitor",
@@ -1062,7 +1077,9 @@
         "guide_professionals"
       ],
       "sensitive": true,
-      "tags": ["bitcoin"]
+      "tags": [
+        "bitcoin"
+      ]
     },
     {
       "id": "item_bitcoin_passphrase_location_note",
@@ -1082,7 +1099,9 @@
       "container_ids": [
         "item_red_folder"
       ],
-      "tags": ["bitcoin"]
+      "tags": [
+        "bitcoin"
+      ]
     },
     {
       "id": "item_wallet_descriptor_printout",
@@ -1103,7 +1122,9 @@
       "container_ids": [
         "item_red_folder"
       ],
-      "tags": ["bitcoin"]
+      "tags": [
+        "bitcoin"
+      ]
     },
     {
       "id": "item_bitcoin_node",
@@ -1125,7 +1146,9 @@
       "depends_on_ids": [
         "item_laptop_john"
       ],
-      "tags": ["bitcoin"]
+      "tags": [
+        "bitcoin"
+      ]
     },
     {
       "id": "item_exchange_account",
@@ -1148,7 +1171,9 @@
         "item_main_email_account",
         "item_phone_john"
       ],
-      "tags": ["bitcoin"]
+      "tags": [
+        "bitcoin"
+      ]
     },
     {
       "id": "item_funeral_wishes",
@@ -2152,88 +2177,208 @@
         "item_children_memory_box",
         "item_funeral_wishes"
       ]
-    },
+    }
+  ],
+  "readiness_runs": [
     {
-      "id": "ready_owner_print_amanda_sheet",
+      "id": "run_amanda_annual_review",
+      "person_id": "person_amanda_james",
+      "date": "2026-06-18",
+      "started_at": "2026-06-18T14:02:00Z",
+      "submitted_at": "2026-06-18T14:17:00Z",
+      "duration_ms": 900000,
+      "results": [
+        {
+          "check_id": "ready_amanda_find_package",
+          "status": "pass"
+        },
+        {
+          "check_id": "ready_amanda_first_24_hours",
+          "status": "pass"
+        },
+        {
+          "check_id": "ready_amanda_find_safe_folder",
+          "status": "pass",
+          "notes": "Found the safe on the second try — the red folder inside was easy to miss at first glance."
+        },
+        {
+          "check_id": "ready_amanda_legal_contacts",
+          "status": "pass"
+        },
+        {
+          "check_id": "ready_amanda_money_overview",
+          "status": "pass"
+        },
+        {
+          "check_id": "ready_amanda_digital_access",
+          "status": "pass"
+        },
+        {
+          "check_id": "ready_amanda_bitcoin_do_not_panic",
+          "status": "pass"
+        },
+        {
+          "check_id": "ready_amanda_bitcoin_map",
+          "status": "not_sure",
+          "notes": "Found the folder, but wasn't sure the recovery map was the current version. Ask Josh to walk through it with her once he's back from Milan."
+        },
+        {
+          "check_id": "ready_amanda_milan_property",
+          "status": "pass"
+        },
+        {
+          "check_id": "ready_amanda_children_support",
+          "status": "pass"
+        }
+      ]
+    }
+  ],
+  "readiness_tasks": [
+    {
+      "id": "task_owner_print_amanda_sheet",
       "title": "Print Amanda's annual dry-run sheet",
+      "description": "Once a year, filter Readiness to Amanda's dry-run checks, print the list, and ask her to work through it without coaching. Record what confused her.",
+      "status": "",
       "importance": "medium",
-      "order": 11,
-      "scope": "internal",
-      "question": "",
-      "expected": "",
-      "owner_notes": "Once a year, filter Readiness to Amanda's dry-run checks, print the list, and ask her to work through it without coaching. Record what confused her.",
+      "person_ids": [
+        "person_amanda_james"
+      ],
+      "location_ids": [
+        "loc_home_safe"
+      ],
       "tags": [
         "annual-review",
         "owner-todo"
       ],
-      "person_ids": [
-        "person_john_james"
-      ],
-      "role_ids": [
-        "role_owner"
-      ],
-      "related_person_ids": [
-        "person_amanda_james"
-      ],
-      "related_guide_ids": [
-        "guide_owner_maintenance"
-      ]
+      "order": 1,
+      "created": "2026-06-10"
     },
     {
-      "id": "ready_owner_verify_contacts",
-      "title": "Verify professional contacts",
-      "importance": "medium",
-      "order": 12,
-      "scope": "internal",
-      "question": "",
-      "expected": "",
-      "owner_notes": "Confirm that Eleanor, Rachel, Luca, and Josh are still willing and reachable. Replace anyone who is no longer appropriate.",
-      "tags": [
-        "annual-review",
-        "contacts"
-      ],
+      "id": "task_owner_verify_contacts",
+      "title": "Verify professional contacts are still current",
+      "description": "Confirm that Eleanor, Rachel, Luca, and Josh are still willing and reachable. Replace anyone who is no longer appropriate, and update the contact sheet in the red folder.",
+      "status": "planned",
+      "importance": "high",
       "person_ids": [
-        "person_john_james"
-      ],
-      "role_ids": [
-        "role_owner"
-      ],
-      "related_person_ids": [
         "person_eleanor_price",
         "person_rachel_green",
         "person_luca_bianchi",
         "person_josh_miller"
       ],
-      "related_guide_ids": [
-        "guide_professionals",
-        "guide_owner_maintenance"
-      ]
+      "location_ids": [
+        "loc_home_safe"
+      ],
+      "tags": [
+        "annual-review",
+        "contacts"
+      ],
+      "order": 2,
+      "created": "2026-06-12"
     },
     {
-      "id": "ready_owner_test_without_secrets",
+      "id": "task_owner_test_without_secrets",
       "title": "Check that dry runs never collect secrets",
-      "importance": "medium",
-      "order": 13,
-      "scope": "internal",
-      "question": "",
-      "expected": "",
-      "owner_notes": "Review every external question and make sure it asks Amanda to prove access or understanding without typing safe codes, passwords, PINs, seed words, private keys, or passphrases into the app.",
+      "description": "Review every dry-run question and make sure it asks Amanda to prove access or understanding without typing safe codes, passwords, PINs, seed words, private keys, or passphrases into the app.",
+      "status": "completed",
+      "importance": "high",
+      "person_ids": [],
+      "location_ids": [],
       "tags": [
         "opsec",
         "owner-todo"
       ],
+      "order": 3,
+      "created": "2026-06-15"
+    },
+    {
+      "id": "task_owner_update_bitcoin_guide",
+      "title": "Update the Bitcoin guide with the new wallet steps",
+      "description": "Amanda got lost in last year's dry run trying to find the Coldcard. Rewrite the recovery section so it matches the current 2-of-3 multisig setup, not the old single-device one.",
+      "status": "in_progress",
+      "importance": "high",
+      "person_ids": [],
+      "location_ids": [
+        "loc_home_office"
+      ],
+      "tags": [
+        "bitcoin",
+        "guides"
+      ],
+      "order": 4,
+      "created": "2026-06-20"
+    },
+    {
+      "id": "task_owner_rekey_password_vault",
+      "title": "Rotate the password manager master password",
+      "description": "It has been over a year since the last rotation. Generate a new master passphrase, update the sealed card in the safe, and confirm the YubiKey still pairs.",
+      "status": "planned",
+      "importance": "medium",
+      "person_ids": [],
+      "location_ids": [
+        "loc_password_manager_vault",
+        "loc_home_safe"
+      ],
+      "tags": [
+        "digital",
+        "opsec"
+      ],
+      "order": 5,
+      "created": "2026-06-22"
+    },
+    {
+      "id": "task_owner_milan_notary_check",
+      "title": "Confirm the Milan property paperwork with the notary",
+      "description": "Ask Luca to double-check the ownership documents are still in the document cabinet and that the property manager notes are up to date before next year's review.",
+      "status": "in_progress",
+      "importance": "medium",
       "person_ids": [
-        "person_john_james"
+        "person_luca_bianchi"
       ],
-      "role_ids": [
-        "role_owner"
+      "location_ids": [
+        "loc_milan_document_cabinet"
       ],
-      "related_guide_ids": [
-        "guide_best_practices_demo",
-        "guide_owner_maintenance"
-      ]
+      "tags": [
+        "property",
+        "annual-review"
+      ],
+      "order": 6,
+      "created": "2026-06-25"
+    },
+    {
+      "id": "task_owner_josh_boundaries_reminder",
+      "title": "Reconfirm Josh's Bitcoin helper boundaries",
+      "description": "Check in with Josh that he's still comfortable being a co-signer, and remind him he's never meant to hold a key alone.",
+      "status": "",
+      "importance": "low",
+      "person_ids": [
+        "person_josh_miller"
+      ],
+      "location_ids": [],
+      "tags": [
+        "bitcoin",
+        "helper-boundaries"
+      ],
+      "order": 7,
+      "created": "2026-06-28"
+    },
+    {
+      "id": "task_owner_digitize_will_backup",
+      "title": "Scan a backup copy of the will",
+      "description": "The original sits at Eleanor's office. Scan a copy for cloud storage so Amanda isn't stuck if the office is unreachable.",
+      "status": "planned",
+      "importance": "low",
+      "person_ids": [],
+      "location_ids": [
+        "loc_solicitor_office",
+        "loc_cloud_storage"
+      ],
+      "tags": [
+        "legal",
+        "digital"
+      ],
+      "order": 8,
+      "created": "2026-07-01"
     }
   ],
-  "readiness_runs": [],
   "attachments": []
 }

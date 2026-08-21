@@ -231,9 +231,13 @@ strong { font-weight: 600; }
 
 /* Chips — 8px rounded rects, same as buttons (map chips set the look). */
 .chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  /* inline-block, not inline-flex: text-overflow ellipsis doesn't apply
+     inside flex containers, and chips are plain text today. Long content
+     (e.g. several joined location/people names) truncates with an ellipsis
+     instead of overflowing its row — important inside fixed-width
+     containers like board columns, which clip overflow outright. */
+  display: inline-block;
+  vertical-align: middle;
   padding: 3px 10px;
   border-radius: 8px;
   border: 1px solid var(--rule);
@@ -241,6 +245,9 @@ strong { font-weight: 600; }
   font-size: 12px;
   color: var(--ink-soft);
   white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .chip-link { cursor: pointer; transition: border-color .12s, color .12s; }
 .chip-link:hover { border-color: var(--accent-deep); color: var(--accent-deep); }

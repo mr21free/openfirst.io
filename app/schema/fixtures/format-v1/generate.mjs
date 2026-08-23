@@ -19,6 +19,27 @@ const ENC = new TextEncoder();
 const ITERATIONS = 600000;
 const AAD_VERSION = 'v1';
 
+// Fixtures must be byte-identical across runs (CI regenerates them and diffs
+// against what's committed — see format-v1.yml), so salts/IVs/keys come from
+// a seeded PRNG rather than real crypto.getRandomValues. Only fixture inputs
+// are deterministic; the actual encrypt/decrypt still goes through real
+// crypto.subtle.
+function makeSeededRng(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const rng = makeSeededRng(0x0f1cf1de);
+function detRandomBytes(n) {
+  const out = new Uint8Array(n);
+  for (let i = 0; i < n; i++) out[i] = Math.floor(rng() * 256);
+  return out;
+}
+
 const SAMPLE_PACKAGE = {
   schema: 'lifepackage/v1',
   package: {
@@ -98,8 +119,8 @@ async function deriveKey(passphrase, salt, iterations, usage) {
 }
 
 async function makeSlot(passphrase, label, hint, slotId, planId, masterKeyRaw) {
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const salt = detRandomBytes(16);
+  const iv = detRandomBytes(12);
   const key = await deriveKey(passphrase, salt, ITERATIONS, ['encrypt']);
   const wrapped = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv, additionalData: aadSlot(planId, slotId, label, hint) },
@@ -169,12 +190,12 @@ async function buildPlain() {
 async function buildSingleSlot() {
   const planId = 'plan_fixture_single_slot';
   const revision = 5;
-  const masterKeyRaw = crypto.getRandomValues(new Uint8Array(32));
+  const masterKeyRaw = detRandomBytes(32);
   const masterKey = await crypto.subtle.importKey('raw', masterKeyRaw, 'AES-GCM', false, ['encrypt']);
 
   const slot = await makeSlot('correct horse battery staple', 'Owner', 'the diceware phrase from the safe', 'slot_owner', planId, masterKeyRaw);
 
-  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const iv = detRandomBytes(12);
   const plaintext = ENC.encode(JSON.stringify(SAMPLE_PACKAGE));
   const ciphertext = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv, additionalData: aadMain(planId, revision) },
@@ -202,13 +223,13 @@ async function buildSingleSlot() {
 async function buildMultiSlot() {
   const planId = 'plan_fixture_multi_slot';
   const revision = 12;
-  const masterKeyRaw = crypto.getRandomValues(new Uint8Array(32));
+  const masterKeyRaw = detRandomBytes(32);
   const masterKey = await crypto.subtle.importKey('raw', masterKeyRaw, 'AES-GCM', false, ['encrypt']);
 
   const slotSarah = await makeSlot('sarah-passphrase-example', 'Sarah', 'ask Sarah directly', 'slot_sarah', planId, masterKeyRaw);
   const slotLawyer = await makeSlot('lawyer-passphrase-example', 'Lawyer', 'in our engagement letter', 'slot_lawyer', planId, masterKeyRaw);
 
-  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const iv = detRandomBytes(12);
   const plaintext = ENC.encode(JSON.stringify(SAMPLE_PACKAGE));
   const ciphertext = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv, additionalData: aadMain(planId, revision) },

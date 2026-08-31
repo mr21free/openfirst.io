@@ -183,6 +183,15 @@ function frontDoorHtml(container) {
 export async function buildPlanFileHtml(container, keepFonts = null) {
   const docEl = (await readerTemplateRoot()).cloneNode(true);
   docEl.removeAttribute('data-theme');
+  // If a Drawer/dialog/etc. happened to be open (and thus scroll-locked, see
+  // scrollLock.js) at the moment this snapshot was cloned, that lock's inline
+  // styles would otherwise be baked into the exported file verbatim — with no
+  // component left to ever release them, permanently freezing scroll for
+  // whoever opens this file next.
+  docEl.style.removeProperty('overflow');
+  const clonedBody = docEl.querySelector('body');
+  clonedBody?.style.removeProperty('overflow');
+  clonedBody?.style.removeProperty('touch-action');
   if (keepFonts) stripUnusedFonts(docEl, keepFonts);
   const app = docEl.querySelector('#app');
   if (app) app.innerHTML = '';

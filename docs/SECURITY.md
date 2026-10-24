@@ -30,10 +30,16 @@ If you find a vulnerability, please report it privately (see
 ## What is protected
 
 ### Provably offline
-The production build ships a strict Content-Security-Policy with
-`connect-src 'none'` (see `app/vite.config.js`). Even a maliciously crafted
-package cannot make the reader phone home — the browser forbids every network
-connection. All code, fonts, and styles are inlined; nothing is fetched.
+The production build ships a strict Content-Security-Policy (see
+`app/vite.config.js`) that locks `connect-src` to exactly two origins: `'self'`
+and `https://openfirst.io`. The second exists only so the manual "check for
+updates" button can reach the real site's `/version.json` when you're running
+a standalone copy (`file://` or a local server) where `'self'` wouldn't
+resolve there — it fires on a user click, never automatically, carries no
+plan data, and isn't reachable from package content. Every other connection,
+including anything a maliciously crafted package could try to trigger, is
+forbidden by the browser. All code, fonts, and styles are inlined; nothing
+else is ever fetched.
 
 ### Plan file encryption (optional, per-person passphrases)
 The plan `.html` you already save into can be left passphrase-free, or

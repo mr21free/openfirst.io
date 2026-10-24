@@ -10,6 +10,7 @@
 import { InheritancePackage } from './package.js';
 import { collectRoleIds, humanizeKey, migrateInternalTasks, normalizedRoles, slugifyTag } from './package.js';
 import { saveDraft, saveDraftBlob, deleteDraftBlob, clearDraft, putFileHandle, loadDraft } from './persist.js';
+import { withFaviconActivity } from './favicon.js';
 import { generateMasterKey, wrapMasterKeyForSlot } from './slotcrypto.js';
 import { buildContainer, buildPlanFileHtml, parseContainerFromHtml, readContainer } from './planfile.js';
 import { fontsToKeep, triggerDownload } from './export.js';
@@ -420,7 +421,7 @@ export class Store {
       } else {
         record = { data: snap, savedAt: at, revision: rev, hasAddedEntity: this.hasAddedEntity };
       }
-      const ok = await saveDraft(record, planKey);
+      const ok = await withFaviconActivity(saveDraft(record, planKey));
       if (!this.slots.length) await this.#syncBlobs();
       if (ok) {
         this.#baseline = key;
@@ -464,7 +465,7 @@ export class Store {
     } else {
       record = { data: snap, savedAt: at, revision: this.revision, hasAddedEntity: this.hasAddedEntity };
     }
-    const ok = await saveDraft(record, planKey);
+    const ok = await withFaviconActivity(saveDraft(record, planKey));
     if (ok) this.savedAt = at;
     if (!this.slots.length) await this.#syncBlobs();
   }
@@ -489,9 +490,11 @@ export class Store {
         attachmentCache: this.#attachmentCache
       });
       const html = await buildPlanFileHtml(container, fontsToKeep(snap));
-      const writable = await this.#fileHandle.createWritable();
-      await writable.write(html);
-      await writable.close();
+      await withFaviconActivity((async () => {
+        const writable = await this.#fileHandle.createWritable();
+        await writable.write(html);
+        await writable.close();
+      })());
       this.fileRevision = rev;
       this.fileSavedAt = new Date().toISOString();
       this.fileWriteFailed = false;
@@ -658,7 +661,7 @@ export class Store {
     const planKey = this.data?.package?.id || 'current';
     for (const [id, blob] of this.attachmentBlobs) {
       if (this.#persistedBlobs.get(id) !== blob) {
-        if (await saveDraftBlob(planKey, id, blob)) this.#persistedBlobs.set(id, blob);
+        if (await withFaviconActivity(saveDraftBlob(planKey, id, blob))) this.#persistedBlobs.set(id, blob);
       }
     }
     for (const id of [...this.#persistedBlobs.keys()]) {
